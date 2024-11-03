@@ -5,7 +5,7 @@ from supabase_client import supabase
 from datetime import datetime
 from utils.request_models import CreateFlightRequest
 
-router = APIRouter(prefix="/flights")
+router = APIRouter(prefix="/flights", tags=["flights"])
 
 
 @router.get("/search", description="Get all flights that match the search criteria")

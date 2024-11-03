@@ -6,7 +6,7 @@ from supabase_client import supabase
 from datetime import datetime
 from utils.request_models import CreateBookingRequest
 
-router = APIRouter(prefix="/bookings")
+router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
 @router.get("", description="Get all bookings")
@@ -18,7 +18,7 @@ async def get_bookings(flight_id: Optional[str] = None, user_id: Optional[str] =
     
     return {"status" : "success", "data": bookings}
 
-router.post("/", description="Create a new booking")
+@router.post("/", description="Create a new booking")
 async def create_booking(req: CreateBookingRequest):
 
     res = supabase.table("bookings").insert({

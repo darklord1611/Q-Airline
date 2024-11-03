@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body
 from supabase_client import supabase
 from utils.request_models import SignupRequest, LoginRequest
 
-router = APIRouter(prefix="/auth")
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/signup")
 async def signup(req: SignupRequest = Body(...)):
