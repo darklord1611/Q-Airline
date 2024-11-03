@@ -14,7 +14,7 @@ async def signup(req: SignupRequest = Body(...)):
 )
     print(response)
     supabase.table('users').insert({"id": response.user.id, "first_name": req.first_name, "last_name": req.last_name, "username": req.username, "phone": req.phone, "role": req.role}).execute()
-    return response
+    return {"status": "success", "user": response.user}
 
 @router.post("/login")
 async def login(req: LoginRequest = Body(...)):

@@ -4,7 +4,6 @@ from supabase import create_client, Client
 from fastapi import Body
 from api.index import router as api_router
 
-
 app = FastAPI()
 
 
@@ -17,3 +16,4 @@ app.include_router(
     api_router,
     tags=["api"],
 )
+
