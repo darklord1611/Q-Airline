@@ -15,10 +15,11 @@ async def get_bookings(flight_id: Optional[str] = None, user_id: Optional[str] =
         bookings = supabase.from_("booking_flight").select("bookings!booking_flight_booking_id_fkey(*)").eq("flight_id", flight_id).execute().data
     elif user_id:
         bookings = supabase.table("bookings").select().eq("user_id", user_id).execute().data
-    
+    else:
+        bookings = supabase.table("bookings").select().execute().data
     return {"status" : "success", "data": bookings}
 
-@router.post("/", description="Create a new booking")
+@router.post("", description="Create a new booking")
 async def create_booking(req: CreateBookingRequest):
 
     res = supabase.table("bookings").insert({
