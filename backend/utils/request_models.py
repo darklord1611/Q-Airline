@@ -59,4 +59,4 @@ class CreateBookingRequest(BaseModel):
     total_amount: float = 0
     class_name: str
     trip_type: TRIP_TYPE = TRIP_TYPE.one_way
-    passengers: list
+    passengers: List[Passenger]

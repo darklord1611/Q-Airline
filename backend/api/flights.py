@@ -8,6 +8,18 @@ from utils.request_models import CreateFlightRequest
 router = APIRouter(prefix="/flights", tags=["flights"])
 
 
+
+@router.get("", description="Get all flights")
+async def get_all_flights():
+    flights = supabase.table("flights").select().execute().data
+
+    for flight in flights:
+        flight["class_pricing"] = supabase.table("flight_class_pricing").select("class_name", "base_price", "tax_percentage", "discount_percentage").eq("flight_id", flight["id"]).execute().data
+
+        flight["aircraft_info"] = supabase.table("aircrafts").select("model", "manufacturer").eq("id", flight["aircraft_id"]).execute().data
+    
+    return {"status" : "success", "data": flights}
+
 @router.get("/search", description="Get all flights that match the search criteria")
 async def get_flights(
     arrival_airport_id: int = Form(...),
@@ -40,6 +52,7 @@ async def get_available_seats(
 
 @router.post("")
 async def create_flight(req: CreateFlightRequest):
+
     route_id = supabase.table("routes").select("id").eq("arrival_airport_id", req.arrival_airport_id).eq("departure_airport_id", req.departure_airport_id).execute().data[0]["id"]
     res = supabase.table("flights").insert({
         "route_id": route_id,
@@ -59,6 +72,17 @@ async def create_flight(req: CreateFlightRequest):
             "base_price": pricing["base_price"],
             "tax_percentage": pricing["tax_percentage"]
         }).execute()
+    
+    seats = supabase.table("seats").select("id").eq("aircraft_id", req.aircraft_id).execute().data
+
+    seats_in_flight = []
+    for seat in seats:
+        seats_in_flight.append({
+            "flight_id": flight_id,
+            "seat_id": seat["id"],
+        })
+    
+    res = supabase.table("flight_seat_availability").insert(seats_in_flight).execute()
 
     return {"status": "success", "data": res.data[0]}
 
@@ -78,8 +102,12 @@ async def update_flight(req: CreateFlightRequest, flight_id: int):
         "aircraft_id": req.aircraft_id,
         "flight_status": req.flight_status,
     }).eq("id", flight_id).execute()
+    
+    # send out notifications about changes to customers
 
-    return {"status": "success", "data": response.data[0]}
+    flight_users = supabase.table("booking_flight").select("booking_id, bookings!booking_flight_booking_id_fkey(user_id)").eq("flight_id", flight_id).execute().data
+
+    return {"status": "success", "data": flight_users}
 
 @router.delete("/{flight_id}")
 async def delete_flight(flight_id: int):
@@ -88,8 +116,10 @@ async def delete_flight(flight_id: int):
 
 @router.get("/{flight_id}/history", description="Get history of a flight")
 async def get_flight_history(flight_id: int):
-    flight_history = supabase.table("flights").select().eq("id", flight_id).execute().data
+    flight_history = supabase.table("flight_audit").select().eq("flight_id", flight_id).execute().data
     return {"status": "success", "data": flight_history}
+
+
 
 @router.get("/{flight_id}/analytics", description="Get analytics of a flight")
 async def get_flight_statistics(flight_id: int):

@@ -23,3 +23,7 @@ async def create_notification(req):
 
     return {"status": "success", "data": res.data[0]}
 
+@router.get("/{user_id}")
+async def get_user_notifications(user_id: str):
+    notifications = supabase.table("notifications").select().eq("user_id", user_id).execute().data
+    return {"status": "success", "data": notifications}

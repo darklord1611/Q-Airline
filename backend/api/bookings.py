@@ -30,7 +30,6 @@ async def create_booking(req: CreateBookingRequest):
         "class_name": req.class_name,
         "trip_type": req.trip_type
     }).execute()
-    # create passenger records for that booking
 
     booking_id = res.data[0]['id']
     # associate booking with flight
@@ -50,18 +49,17 @@ async def create_booking(req: CreateBookingRequest):
             "last_name": req.passengers[i].last_name,
             "email": req.passengers[i].email,
             "gender": req.passengers[i].gender,
-            "birthday": req.passengers[i].birthday.strftime("%Y-%m-%d %H:%M:%S"),
+            "birthday": req.passengers[i].birthday,
             "phone": req.passengers[i].phone,
         })
     
-    res = supabase.table("passengers").insert(passenger_records).execute()
+    passenger_res = supabase.table("passengers").insert(passenger_records).execute()
 
     # associate seats with passengers
-
-    for i in range(res.data):
-        passenger_id = res.data[i]['id']
+    for i in range(len(passenger_res.data)):
+        passenger_id = passenger_res.data[i]['id']
         seat_id = req.passengers[i].seat_id
-        res = supabase.table("booking_passenger_seat").insert({
+        relation_res = supabase.table("booking_passenger_seat").insert({
             "booking_flight_id": booking_flight_id,
             "passenger_id": passenger_id,
             "seat_id": seat_id
@@ -74,3 +72,7 @@ async def create_booking(req: CreateBookingRequest):
     return {"status" : "success", "data": res.data}
 
 
+@router.delete("/{booking_id}", description="Cancel a booking")
+async def cancel_booking(booking_id: str):
+    res = supabase.table("bookings").update({"booking_status": "CANCELLED"}).eq("id", booking_id).execute()
+    return {"status" : "success", "data": res.data[0]}
