@@ -8,12 +8,12 @@ export default defineConfig({
   plugins: [
     vue(),
   ],
-  server:{
+  server: {
     port: 3000,
   },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('Q-Airline/frontend/src', import.meta.url))
     }
   }
 })
