@@ -14,6 +14,8 @@ TEMPLATE_PRICING = {
     }
 }
 
+
+################## AUTH ##################
 class SignupRequest(BaseModel):
     password: str
     email: str
@@ -32,7 +34,7 @@ class LoginRequest(BaseModel):
 class LogoutRequest(BaseModel):
     token: str
 
-
+################## FLIGHTS ##################
 class CreateFlightRequest(BaseModel):
     departure_airport_id: int
     arrival_airport_id: int
@@ -42,6 +44,38 @@ class CreateFlightRequest(BaseModel):
     flight_status: str = "SCHEDULED"
     is_active: bool = True
     class_pricing: dict = TEMPLATE_PRICING
+
+
+class UpdateFlightRequest(BaseModel):
+    departure_time: str
+    arrival_time: str
+    aircraft_id: int
+    flight_status: str = "SCHEDULED"
+
+class GetFlightRequest(BaseModel):
+    arrival_airport_id: int
+    departure_airport_id: int
+    departure_date: str
+
+
+################## AIRCRAFTS ##################
+class SeatLayout(BaseModel):
+    class_name: str
+    rows: int
+    columns: int
+    seat_number: List[str] = ["A", "B", "C", "D", "E", "F"]
+
+class CreateAircraftRequest(BaseModel):
+    model: str
+    manufacturer: str
+    total_capacity: int
+    seat_configuration: List[SeatLayout]
+
+
+################## BOOKINGS ##################
+class InFlightService(BaseModel):
+    service_id: int
+    quantity: int
 
 class Passenger(BaseModel):
     first_name: str
@@ -56,7 +90,14 @@ class CreateBookingRequest(BaseModel):
     user_id: str
     flight_id: int
     booking_status: BOOKING_STATUS = BOOKING_STATUS.pending
-    total_amount: float = 0
     class_name: str
     trip_type: TRIP_TYPE = TRIP_TYPE.one_way
     passengers: List[Passenger]
+    services: List[InFlightService]
+
+
+################## NOTIFICATIONS ##################
+class CreateNotificationRequest(BaseModel):
+    title: str
+    description: str
+    type: str = "info"

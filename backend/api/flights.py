@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Body, Form
 from supabase_client import supabase
 from datetime import datetime
-from utils.request_models import CreateFlightRequest
+from utils.request_models import CreateFlightRequest, GetFlightRequest, UpdateFlightRequest
 
 router = APIRouter(prefix="/flights", tags=["flights"])
 
@@ -21,14 +21,10 @@ async def get_all_flights():
     return {"status" : "success", "data": flights}
 
 @router.get("/search", description="Get all flights that match the search criteria")
-async def get_flights(
-    arrival_airport_id: int = Form(...),
-    departure_airport_id: int = Form(...),
-    departure_date: str = Form("2024-11-02"),
-):
+async def get_flights(arrival_airport_id: int, departure_airport_id: int, departure_date: str):
 
     # Parse the input date to get the date part only
-    date_obj = datetime.fromisoformat(departure_date)
+    date_obj = datetime.fromisoformat(departure_date.rstrip("Z") + "+00:00")
     date_str = date_obj.strftime('%Y-%m-%d')  # Format to 'YYYY-MM-DD'
     route_id = supabase.table("routes").select("id").eq("arrival_airport_id", arrival_airport_id).eq("departure_airport_id", departure_airport_id).execute().data[0]["id"]
 
@@ -44,7 +40,7 @@ async def get_flights(
 
 @router.get("/{flight_id}/seats", description="Get available seats of a flight")
 async def get_available_seats(
-    flight_id
+    flight_id : int
 ):
     available_seats = supabase.table("flight_seat_availability").select("seat_id, seats!flight_seat_availability_seat_id_fkey(class_name, seat_number)").eq("flight_id", flight_id).eq("is_available", True).execute().data
 
@@ -66,28 +62,19 @@ async def create_flight(req: CreateFlightRequest):
     flight_id = res.data[0]["id"]
 
     for class_name, pricing in req.class_pricing.items():
-        res = supabase.table("flight_class_pricing").insert({
+        pricing_res = supabase.table("flight_class_pricing").insert({
             "flight_id": flight_id,
             "class_name": class_name,
             "base_price": pricing["base_price"],
             "tax_percentage": pricing["tax_percentage"]
         }).execute()
     
-    seats = supabase.table("seats").select("id").eq("aircraft_id", req.aircraft_id).execute().data
-
-    seats_in_flight = []
-    for seat in seats:
-        seats_in_flight.append({
-            "flight_id": flight_id,
-            "seat_id": seat["id"],
-        })
-    
-    res = supabase.table("flight_seat_availability").insert(seats_in_flight).execute()
+    seat_associate_response = supabase.rpc("associate_seats_with_flight", {"flight_id": flight_id, "_aircraft_id" : req.aircraft_id}).execute()
 
     return {"status": "success", "data": res.data[0]}
 
 @router.put("/{flight_id}")
-async def update_flight(req: CreateFlightRequest, flight_id: int):
+async def update_flight(req: UpdateFlightRequest, flight_id: int):
     # deactivate the old flight
     response = supabase.table("flights").select().eq("id", flight_id).execute()
 
@@ -123,6 +110,9 @@ async def get_flight_history(flight_id: int):
 
 @router.get("/{flight_id}/analytics", description="Get analytics of a flight")
 async def get_flight_statistics(flight_id: int):
+    # seat + class utilization
+    # revenue generated
+    # customer demographics
     pass
 
 

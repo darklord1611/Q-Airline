@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Body
 from supabase_client import supabase
+from utils.request_models import CreateNotificationRequest
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -13,12 +14,11 @@ async def get_notifications():
 
 
 @router.post("")
-async def create_notification(req):
+async def create_notification(req: CreateNotificationRequest):
     res = supabase.table("notifications").insert({
-        "user_id": req.user_id,
         "title": req.title,
-        "message": req.message,
-        "is_read": req.is_read
+        "description": req.description,
+        "type": req.type
     }).execute()
 
     return {"status": "success", "data": res.data[0]}

@@ -1,0 +1,7 @@
+// flight_id 22
+{
+    "departure_time": "2011-11-07T14:48:00.000Z",
+    "arrival_time": "2011-11-07T23:50:00.000Z",
+    "aircraft_id": 1,
+    "flight_status": "DELAYED"
+}
