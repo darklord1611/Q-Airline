@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
+    "baseUrl": "frontend",
     "paths": {
       "@/*": [
-        "Q-Airline/frontend/src/*"
+        "src/*"
       ]
     }
   },
