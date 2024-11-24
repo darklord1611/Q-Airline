@@ -5,7 +5,7 @@
     </div>
 
     <div class="bookingfaceflex">
-      <div class="videoD"> 
+      <div class="videoD">
         <video :src="video" autoplay muted loop class="video"></video>
       </div>
       <img :src="image" class="planeimage" />
@@ -13,99 +13,145 @@
 
     <div class="flight-search-container">
       <div class="class-selection">
-        <button 
-          class="class-option" 
-          v-for="(option, index) in classOptions" 
-          :key="index" 
-          :class="{ active: selectedClass === option }" 
-          @click="selectedClass = option"
-        >
+        <button class="class-option" v-for="(option, index) in classOptions" :key="index"
+          :class="{ active: selectedClass === option }" @click="selectedClass = option">
           {{ option }}
         </button>
       </div>
 
       <div class="input-group">
         <div class="input-field">
-          <label>From</label>
-          <input type="text" v-model="from" placeholder="Type your location">
+          <div class="input-icon">
+            <img :src="fromTo" class="fromToImage" />
+          </div>
+          <div class="input-type">
+            <label class="large-label">
+              From
+            </label>
+            <input type="text" v-model="from" placeholder="Hanoi" class="typeIn" />
+          </div>
         </div>
         <div class="input-field">
-          <label>To</label>
-          <input type="text" v-model="to" placeholder="Type where do you want to go">
+          <div class="input-icon">
+            <img :src="fromTo" class="fromToImage" />
+          </div>
+          <div class="input-type">
+            <label class="large-label">
+              To
+            </label>
+            <input type="text" v-model="to" placeholder="Ho Chi Minh" class="typeIn" />
+          </div>
         </div>
         <div class="input-field">
-          <label>Check In</label>
-          <input type="date" ref="checkInDate" @change="handleDateChange('checkInDate')" />
+          <div class="input-icon">
+            <img :src="calendar" class="fromToImage" />
+          </div>
+          <div class="input-type">
+            <label class="large-label">
+              Check In
+            </label>
+            <input type="date" ref="checkInDate" @change="handleDateChange('checkInDate')" class="typeIn" />
+          </div>
         </div>
         <div class="input-field">
-          <label>Check Out</label>
-          <input type="date" ref="checkOutDate" @change="handleDateChange('checkOutDate')" />
+          <div class="input-icon">
+            <img :src="calendar" class="fromToImage" />
+          </div>
+          <div class="input-type">
+            <label class="large-label">
+              Check Out
+            </label>
+            <input type="date" ref="checkOutDate" @change="handleDateChange('checkOutDate')" class="typeIn" />
+          </div>
         </div>
+        <button class="search-btn" @click="searchFlights">Search Flight</button>
       </div>
-      
-      <button class="search-button" @click="searchFlights">Search Flight</button>
     </div>
 
     <div class="flight-list" v-if="isSearched">
       <h2>Available Flights</h2>
-      <div 
-  class="flight-card" 
-  v-for="flight in flights" 
-  :key="flight.flightNumber"
->
-<div class="flight-info-horizontal">
-  <!-- Cột trái: Thời gian -->
-  <div class="time-column">
-    <div class="time-block departure-time">
-      <span class="time">{{ flight.departureTime }}</span>
-      <div class="date">{{ formattedDates.checkIn }}</div>
+      <div class="flight-card" v-for="flight in filteredFlights" :key="flight.flightNumber">
+        <div class="ticket-icon">
+          <img src="@/assets/flight.png" alt="take off icon" class="takeOff" />
+        </div>
+        <div class="headerInfo">
+          <div class="airlineText">
+            Qairline
+          </div>
+          <div class="flightnumber">
+            {{ flight.flightNumber }} - {{ selectedClass }}
+          </div>
+        </div>
+        <div class="time">
+          <div class="departureTime"> {{ flight.departureTime }}</div>
+          <div class="dateConvert"> {{ formattedDates.checkIn }}</div>
+        </div>
+        <div class="ticket-tour">
+          <div class="icons">
+            <img src="@/assets/take-off (1).png" alt="takeoff icon" class="icon takeoff" />
+            <div class="duration">
+              Duration: <span class="time2">{{ flight.duration }}</span>
+            </div>
+            <img src="@/assets/landing.png" alt="landing icon" class="icon landing" />
+          </div>
+          <div class="progress-bar">
+            <div class="line"></div>
+            <div class="circle left"></div>
+            <div class="circle right"></div>
+          </div>
+          <div class="labels">
+            <span class="label">{{ flight.departureAirport }}</span>
+            <span class="label">Direct</span>
+            <span class="label">{{ flight.arrivalAirport }}</span>
+          </div>
+        </div>
+        <div class="time">
+          <div class="arivalTime"> {{ flight.arrivalTime }}</div>
+          <div class="dateConvert"> {{ formattedDates.checkOut }}</div>
+        </div>
+        <!-- Thông tin giá và nút chọn -->
+        <div class="price-info">
+          <span class="price">USD {{ flight.price }}</span>
+          <button class="select-button" v-if="!isChoosed" @click="selectFlight(flight)">Booking Now!</button>
+          <button class="select-button" v-if="isChoosed" @click="undo()">Undo</button>
+        </div>
+      </div>
     </div>
-    <div class="spacer"></div>
-    <div class="duration"><span>{{ flight.duration }}</span></div>
-    <div class="time-block arrival-time">
-      <span class="time">{{ flight.arrivalTime }}</span>
-      <div class="date">{{ formattedDates.checkOut }}</div>
+    <!-- lựa chọn meal -->
+    <div class="meal-container" v-if="isService">
+      <h2>Qmeal Service</h2>
+      <div class="meal-list">
+        <div class="meal-card" v-for="meal in meals" :key="meal.name">
+          <img class="meal-img" :src="meal.imgSrc" alt="meal image" />
+          <div class="meal-description">
+            <h3 class="large-label">{{ meal.name }}</h3>
+            <p>{{ meal.description }}</p>
+          </div>
+          <div class="meal-price"></div>
+          <div class="meal-quantity">
+            <input type="number" v-model="meal.quantity" min="0" class="input-quantity" />
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-
-  <!-- Cột giữa: Đường bay -->
-  <div class="route-column">
-    <div class="icon icon-departure">●</div>
-    <div class="line"></div>
-    <div class="icon icon-plane">
-      <img src="@/assets/plane.png" alt="plane icon" />
-    </div>
-    <div class="line"></div>
-    <div class="icon icon-location">
-      <img src="@/assets/location-sign.png" alt="location icon" />
-    </div>
-  </div>
-
-  <!-- Cột phải: Sân bay -->
-  <div class="airport-column">
-    <div class="airport-block departure-airport">
-      <span>{{ flight.departureAirport }}</span>
-      <div class="from"> {{ from }}</div>
-    </div>
-    <div class="spacer"></div>
-    <div class="airport-block arrival-airport">
-      <span>{{ flight.arrivalAirport }}</span>
-      <div class="to"> {{ to }}</div>
-    </div>
-  </div>
-
-</div>
-
-
-  <!-- Thông tin giá và nút chọn -->
-  <div class="price-info-horizontal">
-    <span class="price">USD {{ flight.price }}</span>
-    <button class="select-button">Select Flight</button>
-  </div>
-</div>
-
-
-
+    <div class="baggage-slider" v-if="isService">
+      <h2>Qluggage Service</h2>
+      <!-- Thanh kéo -->
+      <div class="slider-container">
+        <div class="track">
+          <!-- Phần màu sắc hiển thị khi kéo -->
+          <div class="filled" :style="{ width: `${(selectedWeight / maxWeight) * 100}%` }"></div>
+        </div>
+        <div class="thumb" :style="{ left: `${(selectedWeight / maxWeight) * 100}%` }" @mousedown="startDragging">
+          <img src="@/assets/suitcase.png" alt="Luggage Icon" class="luggage-icon" draggable="false" />
+        </div>
+      </div>
+      <!-- Hiển thị cân nặng -->
+      <div class="weight-display">
+        <span>{{ selectedWeight }} kg</span>
+        <span> - </span>
+        <span>{{ calculatePrice(selectedWeight) }} $USD</span>
+      </div>
     </div>
   </div>
 </template>
@@ -113,11 +159,21 @@
 <script>
 import video from "@/assets/58475-488682084_small.mp4";
 import image from "@/assets/vecteezy_plane-png-with-ai-generated_26773766.png";
+import fromTo from "@/assets/pin.png";
+import calendar from "@/assets/calendar.png";
+import standardMeal from "@/assets/h2-meal.jpg";
+import premiumMeal from "@/assets/premium.jpg";
+import vegeMeal from "@/assets/vege.jpg";
+import kidMeal from "@/assets/kid.jpg";
 
 export default {
   name: "booking",
   data() {
     return {
+      selectedWeight: 0, // Giá trị ban đầu của số cân nặng
+      maxWeight: 20, // Số cân tối đa
+      dragging: false, // Trạng thái kéo
+      pricePerKg: 50,
       from: '', // Lưu giá trị của ô "From"
       to: '',    // Lưu giá trị của ô "To"
       formattedDates: {
@@ -126,43 +182,100 @@ export default {
       },
       video,
       image,
+      standardMeal,
+      premiumMeal,
+      vegeMeal,
+      kidMeal,
+      fromTo,
+      calendar,
       classOptions: ['Economy', 'Business Class', 'First Class'],
       selectedClass: 'Economy',
       isSearched: false,
+      isChoosed: false,
+      isService: false,
       flights: [
         {
           departureAirport: "JFK",
-          departureTime: "08:00 AM",
+          departureTime: "08:00",
           arrivalAirport: "LAX",
-          arrivalTime: "11:30 AM",
+          arrivalTime: "11:30",
           flightNumber: "AA123",
           duration: "5h30m",
           price: "$299"
         },
         {
           departureAirport: "SFO",
-          departureTime: "09:15 AM",
+          departureTime: "09:15",
           arrivalAirport: "ORD",
-          arrivalTime: "03:45 PM",
+          arrivalTime: "03:45",
           flightNumber: "UA456",
           duration: "4h30m",
           price: "$259"
         },
         {
           departureAirport: "LHR",
-          departureTime: "02:30 PM",
+          departureTime: "02:30",
           arrivalAirport: "DXB",
-          arrivalTime: "12:15 AM",
+          arrivalTime: "12:15",
           flightNumber: "EK789",
           duration: "7h45m",
           price: "$599"
         }
-      ]
+      ],
+      selectedFlight: null,
+      meals: [
+        {
+          name: 'Standard Meal',
+          description: 'A common meal with options like chicken, beef, or fish with rice, mashed potatoes, or pasta.',
+          imgSrc: standardMeal,
+          quantity: 0
+        },
+        {
+          name: 'Premium Meal',
+          description: 'A luxurious meal with options like filet mignon, grilled salmon, or lobster with special sauces.',
+          imgSrc: premiumMeal,
+          quantity: 0
+        },
+        {
+          name: 'Vegetarian Meal',
+          description: 'A plant-based meal including options like mushroom rice, pasta with lentils, and fresh salads.',
+          imgSrc: vegeMeal,
+          quantity: 0
+        },
+        {
+          name: 'Kid Meal',
+          description: 'A kid-friendly meal with chicken nuggets, macaroni and cheese, and small sandwiches.',
+          imgSrc: kidMeal,
+          quantity: 0
+        }
+      ],
     };
   },
+
+  computed: {
+    filteredFlights() {
+      if (!this.selectedFlight) return this.flights;
+      return this.flights.filter(
+        (flight) => flight.flightNumber === this.selectedFlight.flightNumber
+      );
+    },
+  },
+
   methods: {
     searchFlights() {
       this.isSearched = true; // Đặt thành true khi bấm nút Search Flight
+    },
+
+    selectFlight(flight) {
+      this.selectedFlight = flight; // Cập nhật chuyến bay được chọn
+      this.isChoosed = true;
+      this.isService = true;
+    },
+
+    undo() {
+      this.selectedFlight = null;
+      this.isChoosed = false;
+      this.isService = false;
     },
 
     handleDateChange(refName) {
@@ -175,150 +288,302 @@ export default {
       const date = new Date(inputDate);
       const options = { weekday: 'short', day: 'numeric', month: 'short' };
       return date.toLocaleDateString('en-US', options);
-    }  
+    },
+
+    startDragging() {
+      this.dragging = true;
+      window.addEventListener("mousemove", this.onDrag);
+      window.addEventListener("mouseup", this.stopDragging);
+    },
+    onDrag(event) {
+      if (!this.dragging) return;
+
+      const slider = this.$el.querySelector(".slider-container");
+      const sliderRect = slider.getBoundingClientRect();
+      const offsetX = event.clientX - sliderRect.left;
+      const percentage = Math.max(0, Math.min(offsetX / sliderRect.width, 1));
+      this.selectedWeight = Math.round(percentage * this.maxWeight);
+    },
+    stopDragging() {
+      this.dragging = false;
+      window.removeEventListener("mousemove", this.onDrag);
+      window.removeEventListener("mouseup", this.stopDragging);
+    },
+
+    calculatePrice(weight) {
+      return weight * this.pricePerKg; // Tính giá tiền dựa trên số kg
+    },
   }
 };
 </script>
 
 <style scoped>
-  .bookingflexcontainer {
-      align-items: center;
-      text-align: center;
-      gap: 2rem;
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
-  }
+.bookingflexcontainer {
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
 
-  .slogan {
-  font-family: 'Pacifico', cursive; /* Sử dụng Pacifico */
-  font-weight: normal; /* Không cần in đậm vì font đã có kiểu chữ đẹp */
-  font-size: 40px; /* Kích thước chữ */
-  line-height: 2rem; /* Khoảng cách dòng */
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Đổ bóng chữ */
-  font-style: italic; /* Để chữ in nghiêng */
-  }
+.slogan {
+  font-family: 'Pacifico', cursive;
+  /* Sử dụng Pacifico */
+  font-weight: normal;
+  /* Không cần in đậm vì font đã có kiểu chữ đẹp */
+  font-size: 40px;
+  /* Kích thước chữ */
+  line-height: 2rem;
+  /* Khoảng cách dòng */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  /* Đổ bóng chữ */
+  font-style: italic;
+  /* Để chữ in nghiêng */
+  margin-bottom: 20px;
+}
 
 
 
-  .bookingfaceflex {
-      width: 90%;
-      margin: 1rem auto 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      border-radius: 5rem;
-  }
+.bookingfaceflex {
+  width: 90%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  border-radius: 5rem;
+  margin-bottom: 40px;
+}
 
-  .videoD {
-  width: 90%; /* Giữ 100% để video chiếm toàn bộ chiều rộng */
-  display: flex; /* Thêm flexbox cho videoD để căn giữa video */
-  justify-content: center; /* Căn giữa video theo chiều ngang */
-  align-items: center; /* Căn giữa video theo chiều dọc nếu có chiều cao */
+.videoD {
+  width: 90%;
+  /* Giữ 100% để video chiếm toàn bộ chiều rộng */
+  display: flex;
+  /* Thêm flexbox cho videoD để căn giữa video */
+  justify-content: center;
+  /* Căn giữa video theo chiều ngang */
+  align-items: center;
+  /* Căn giữa video theo chiều dọc nếu có chiều cao */
   height: 300px;
 }
 
-  .video {
-      border-radius: 15rem;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-  }
+.video {
+  border-radius: 15rem;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-  .planeimage {
-      position: absolute;
-      width: 85%;
-      top: -12%;
-  }
+.planeimage {
+  position: absolute;
+  width: 85%;
+  top: -12%;
+}
 
-  .flight-search-container {
-display: flex;
-flex-direction: column;
-gap: 20px;
-padding: 20px;
-border-radius: 10px;
-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-background-color: #fff;
+.flight-search-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
 }
 
 .class-selection {
-display: flex;
-justify-content: space-around;
+  display: flex;
+  justify-content: center;
+  /* Các nút nằm sát nhau */
+  align-items: center;
+  /* Căn giữa theo chiều dọc */
+  padding: 10px 0;
+  /* Khoảng cách trên dưới */
 }
 
 .class-option {
-padding: 10px 20px;
-border: none;
-background-color: #f0f0f0;
-border-radius: 5px;
-cursor: pointer;
-transition: background-color 0.3s;
+  padding: 10px 20px;
+  /* Khoảng cách bên trong nút */
+  border: none;
+  /* Loại bỏ viền */
+  background-color: #f0f0f0;
+  /* Màu nền cho nút */
+  border-radius: 4px;
+  /* Bo tròn nút */
+  cursor: pointer;
+  /* Hiển thị con trỏ khi hover */
+  transition: background-color 0.3s, transform 0.2s;
+  /* Hiệu ứng hover */
+  margin-right: 0;
+  /* Loại bỏ khoảng cách phải giữa các nút */
+}
+
+.class-option:last-child {
+  margin-right: 0;
+  /* Đảm bảo nút cuối không có margin phải */
 }
 
 .class-option.active {
-background-color: #007bff;
-color: #fff;
+  background-color: #377fcd;
+  /* Màu cho nút đang chọn */
+  font-weight: bold;
+  /* Chữ đậm */
 }
 
 .class-option:hover {
-background-color: #e0e0e0;
+  background-color: #e0e0e0;
+  /* Hiệu ứng hover */
+  transform: scale(1.05);
+  /* Hiệu ứng phóng to nhẹ */
 }
 
+
+
 .input-group {
-display: flex;
-justify-content: space-between;
-gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .input-field {
-display: flex;
-flex-direction: column;
-flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  gap: 5px;
+  width: 100%;
+}
+
+.input-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 30%;
+  background-color: #f5f7f9;
+  margin: 0;
+  padding: 0;
+}
+
+.ticket-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  height: 90px;
+  border-radius: 30%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  /* Đảm bảo nội dung không vượt khỏi khung */
+}
+
+.input-type {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  justify-content: center;
+  height: 60px;
 }
 
 .input-field label {
-margin-bottom: 5px;
-font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: bold;
 }
 
 .input-field input {
-padding: 8px;
-border: 1px solid #ccc;
-border-radius: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin-top: 0.2rem;
+  font-size: 1rem;
+  width: 100%;
 }
 
-.search-button {
-padding: 10px;
-background-color: #007bff;
-color: #fff;
-border: none;
-border-radius: 5px;
-cursor: pointer;
-font-size: 16px;
-transition: background-color 0.3s;
+.takeOff {
+  width: 95%;
+  /* Chiếm toàn bộ chiều rộng của .ticket-icon */
+  height: 95%;
+  /* Chiếm toàn bộ chiều cao của .ticket-icon */
+  object-fit: cover;
+  /* Giữ tỷ lệ hình ảnh và lấp đầy khung */
+  border-radius: inherit;
+  /* Giữ kiểu bo tròn giống .ticket-icon */
+  margin: 0;
+  padding: 0;
+  border: none;
+  /* Loại bỏ viền nếu không cần thiết */
+  object-fit: contain;
+  /* Đảm bảo hình ảnh hiển thị đầy đủ */
 }
 
-.search-button:hover {
-background-color: #0056b3;
+.fromToImage {
+  width: 20px !important;
+  /* Chiều rộng của hình ảnh */
+  height: 20px;
+  /* Chiều cao của hình ảnh */
+  border-radius: 20%;
+  /* Tạo hình tròn */
+  background-color: #f5f7f9;
+  /* Màu nền tương tự ảnh mẫu */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  object-fit: cover;
+  /* Đảm bảo hình ảnh hiển thị đầy đủ */
+  border: 1px solid #e0e0e0;
+  /* Viền nhạt bao quanh */
+  max-width: 20px;
+  max-height: 20px;
+  margin: 0;
+  padding: 0;
+}
+
+.search-btn {
+  background-color: #377fcd;
+  color: black;
+  font-weight: bold;
+  border: none;
+  border-radius: 20px;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.search-btn:hover {
+  background-color: #0056b3;
+}
+
+.large-label {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.typeIn {
+  border: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .flight-list {
-width: 100%;
-margin: auto;
-padding: 20px;
-font-family: Arial, sans-serif;
-display: flex;
-flex-direction: column;
-gap: 40px;
-align-items: center;
+  width: 100%;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 10px !important;
 }
 
 h2 {
-text-align: center;
-color: #333;
-font-size: 1.8rem;
-margin-bottom: 20px;
+  text-align: center;
+  color: #333;
+  font-size: 1.8rem;
+  margin-bottom: 10px !important;
 }
 
 .flight-card {
@@ -326,114 +591,20 @@ margin-bottom: 20px;
   border: 1px solid #ddd;
   padding: 20px;
   border-radius: 10px;
-  margin-bottom: 60px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  max-width: 800px;
-  background-image: url(@/assets/bookingbg.jpg); /* Đặt đường dẫn đến ảnh nền */
-  background-size: cover; /* Đảm bảo ảnh phủ toàn bộ diện tích của flight-card */
-  background-position: center; /* Căn giữa ảnh */
-  justify-content: space-between;
-}
-
-.flight-info-horizontal {
+  margin-bottom: 30px;
   display: flex;
   flex-direction: row;
-  width: 100%;
-  height: 200px; /* Chiều cao cố định để dễ căn chỉnh */
-  gap: 40px;
-}
-
-/* Cột trái: Thời gian */
-.time-column {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* Đẩy thời gian lên đầu và xuống cuối */
-}
-
-/* Cột giữa: Đường bay */
-.route-column {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  gap: 5px;
+  max-width: 800px;
   justify-content: space-between;
 }
 
-.icon-departure,
-.icon-arrival {
-  font-size: 1.2em;
-}
-
-.line {
-  width: 2px;
-  flex: 1;
-  background-color: #ccc;
-}
-
-.icon-plane {
-  width: 26px;   /* Kích thước nhỏ tùy chọn */
-  height: 26px;  /* Kích thước nhỏ tùy chọn */
-}
-
-.icon-location {
-  margin-top: 10px;
-  width: 24px;   /* Kích thước nhỏ tùy chọn */
-  height: 24px;  /* Kích thước nhỏ tùy chọn */
-}
-
-
-/* Cột phải: Sân bay */
-.airport-column {
+.price-info {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* Đẩy tên sân bay lên đầu và xuống cuối */
-  align-items: center; /* Căn các phần tử theo chiều ngang */
-  height: 100%;
-}
-
-/* Các class căn chỉnh cụ thể */
-.departure-time,
-.departure-airport {
-  align-self: flex-start;
-}
-
-.arrival-time,
-.arrival-airport {
-  align-self: flex-end;
-  margin: 0;
-}
-
-.duration {
-  font-size: 1.0em;
-  font-weight: bold;
-  justify-content: center; 
-  margin-top: auto; /* Tạo khoảng trống phía trên, đẩy xuống giữa */
-  margin-bottom: auto; /* Tạo khoảng trống phía dưới, giữ ở giữa */
-}
-/* Kiểu chữ cho thời gian và sân bay */
-.time-block {
-  font-size: 1.2em;
-  font-weight: bold;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.airport-block {
-  font-size: 1.2em;
-  font-weight: bold;
-  justify-content: left;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.price-info-horizontal {
-  display: flex;
-  justify-content: space-between;
+  justify-content: center;
   width: 100%;
   align-items: center;
+  flex-direction: column;
 }
 
 .price {
@@ -444,22 +615,293 @@ margin-bottom: 20px;
 
 .select-button {
   padding: 10px 20px;
-  background-color: #000;
-  color: #fff;
+  background-color: #c7eded;
+  color: black;
   border: none;
   border-radius: 5px;
   cursor: pointer;
 }
 
+.select-button:hover {
+  background-color: #0056b3;
+}
+
 .date {
   font-size: 0.8em;
-  color: #3331319a; 
+  color: #3331319a;
 }
 
 .from,
 .to {
   font-size: 0.8em;
-  color: #3331319a; 
+  color: #3331319a;
 }
 
+.meal-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.meal-list {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+}
+
+.meal-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 200px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.meal-img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.meal-description {
+  margin-bottom: 10px;
+}
+
+.meal-quantity {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: auto;
+}
+
+.meal-quantity button {
+  background-color: #377fcd;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.meal-quantity input {
+  width: 50px;
+  text-align: center;
+  margin: 0 10px;
+  font-size: 16px;
+}
+
+.input-quantity {
+  width: 50px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  border: 2px solid #ccc;
+  /* Viền cơ bản */
+  border-radius: 5px;
+  /* Bo góc */
+  box-sizing: border-box;
+  /* Bao gồm padding và viền trong kích thước */
+  margin: 0 10px;
+  /* Khoảng cách hai bên */
+  background-color: #f9f9f9;
+  /* Màu nền nhạt */
+  font-size: 16px;
+  /* Kích thước chữ lớn hơn */
+  color: #333;
+  /* Màu chữ đậm */
+  transition: all 0.3s ease;
+  /* Hiệu ứng mượt mà khi hover */
+}
+
+.input-quantity:focus,
+.input-quantity:hover {
+  border-color: #007bff;
+  /* Màu viền khi hover/focus */
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+  /* Hiệu ứng đổ bóng */
+  background-color: #e9f5ff;
+  /* Màu nền sáng hơn */
+  outline: none;
+  /* Loại bỏ viền mặc định khi focus */
+}
+
+.time {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 160px;
+}
+
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-right: 20px;
+}
+
+.arivalTime,
+.departureTime,
+.airlineText {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.dateConvert,
+.flightnumber {
+  font-size: 1.0em;
+}
+
+.ticket-tour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: Arial, sans-serif;
+  color: #555;
+  width: 600px;
+  justify-content: center;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+.icons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 8px;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+}
+
+.duration {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.time2 {
+  font-weight: bold;
+  color: #000;
+}
+
+.progress-bar {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  height: 4px;
+  background-color: #d3d3d3;
+  margin-bottom: 8px;
+}
+
+.line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #d3d3d3;
+  z-index: 1;
+}
+
+.circle {
+  position: absolute;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #007bff;
+  /* Màu xanh của vòng tròn */
+  z-index: 2;
+}
+
+.left {
+  left: 0;
+}
+
+.right {
+  right: 0;
+}
+
+.labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 300px;
+  font-size: 14px;
+  color: #555;
+}
+
+.label {
+  text-align: center;
+}
+
+.baggage-slider {
+  width: 500px;
+  margin: 20px auto;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+.slider-container {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  background-color: #d3d3d3;
+  border-radius: 5px;
+}
+
+.track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+}
+
+.filled {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: #ef325e;
+  /* Màu xanh dương */
+  border-radius: 5px;
+  z-index: 1;
+}
+
+.thumb {
+  position: absolute;
+  top: -15px;
+  width: 40px;
+  height: 40px;
+  transform: translateX(-50%);
+  cursor: grab;
+  z-index: 2;
+}
+
+.thumb:active {
+  cursor: grabbing;
+}
+
+.luggage-icon {
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  /* Ngăn người dùng chọn ảnh */
+}
+
+.weight-display {
+  margin-top: 20px;
+  font-size: 16px;
+  font-weight: bold;
+  color: red;
+}
 </style>
