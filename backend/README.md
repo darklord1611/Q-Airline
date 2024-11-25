@@ -1,6 +1,6 @@
 
 
-Create and et env variables in .env file
+Create and set env variables in .env file
 
 ```sh
 $ pip install -r requirements.txt
