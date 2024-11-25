@@ -16,7 +16,7 @@ TEMPLATE_PRICING = {
 
 
 ################## AUTH ##################
-class SignupRequest(BaseModel):
+class RegisterRequest(BaseModel):
     password: str
     email: str
     first_name: str
