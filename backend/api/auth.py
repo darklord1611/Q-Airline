@@ -2,12 +2,12 @@
 
 from fastapi import APIRouter, Body
 from supabase_client import supabase
-from utils.request_models import SignupRequest, LoginRequest
+from utils.request_models import RegisterRequest, LoginRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/signup")
-async def signup(req: SignupRequest = Body(...)):
+@router.post("/register")
+async def register(req: RegisterRequest = Body(...)):
     print(req)
     response = supabase.auth.sign_up(
     {"email": req.email, "password": req.password}
@@ -22,5 +22,6 @@ async def login(req: LoginRequest = Body(...)):
     response = supabase.auth.sign_in_with_password(
     {"email": req.email, "password": req.password}
 )
-    return {"status": "success", "access_token": response.session.access_token, "refresh_token": response.session.refresh_token}
+    user = supabase.table('users').select("id", "first_name", "last_name").eq('id', response.user.id).execute().data[0]
+    return {"status": "success", "user": user, "access_token": response.session.access_token, "refresh_token": response.session.refresh_token}
 

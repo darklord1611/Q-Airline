@@ -4,7 +4,8 @@ import dashboard from '../pages/master/dashboard.vue';
 import booking from '../pages/master/booking.vue';
 import myFlight from "@/pages/master/myflight.vue";
 import flightSchedule from "@/pages/master/flightSchedule.vue";
-
+import login from "@/pages/auth/login.vue";
+import register from "@/pages/auth/register.vue";
 
 const routes = [
     {
@@ -27,10 +28,19 @@ const routes = [
                 name: 'flightSchedule',
                 path: '/flightSchedule',
                 component: flightSchedule
+            },
+            {
+                name: 'Login',
+                path: '/login',
+                component: login,
+            },
+            {
+                name: 'Register',
+                path: '/register',
+                component: register,
             }
         ]
     },
-
 ];
 
 const router = Router();
