@@ -1,6 +1,5 @@
 <template>
     <div class="flight-list">
-        <h2>Your Flights</h2>
         <div class="flight-card" v-for="flight in flights" :key="flight.flightNumber">
             <div class="flight-info-horizontal">
                 <!-- Cột trái: Thời gian -->
@@ -71,10 +70,15 @@
             </div>
         </div>
     </div>
+    <Footer />
 </template>
 
 <script>
+import Footer from '@/pages/master/footer.vue';
 export default {
+    components: {
+        Footer
+    },
     data() {
         return {
             flights: [
@@ -369,16 +373,16 @@ h2 {
 }
 
 .service-icon {
-    width: 24px;
+    width: 18px;
     /* Kích thước nhỏ gọn */
-    height: 24px;
+    height: 18px;
     object-fit: contain;
     align-items: flex-start !important;
     /* Đảm bảo không bị méo hình */
 }
 
 .service-text {
-    font-size: 1.0em;
+    font-size: 0.7em;
     color: #3331319a;
     /* Màu xám nhẹ */
     font-weight: bold;
