@@ -1,0 +1,19 @@
+{
+    "departure_airport_id": 2,
+    "arrival_airport_id": 13,
+    "departure_time": "2011-11-05T14:48:00.000Z",
+    "arrival_time": "2011-11-05T23:50:00.000Z",
+    "aircraft_id": 1,
+    "flight_status": "SCHEDULED",
+    "is_active": true,
+    "class_pricing": {
+        "ECONOMY": {
+            "base_price": 50,
+            "tax_percentage": 10
+        },
+        "BUSINESS": {
+            "base_price": 250,
+            "tax_percentage": 10
+        }
+    }
+}

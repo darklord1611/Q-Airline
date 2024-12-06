@@ -80,7 +80,14 @@
 </template>
 
 <script>
+import { useUserStore } from '@/stores/user';
+import login from "@/pages/auth/login.vue";
+import { computed } from 'vue';
+
 export default {
+  components: {
+    login,
+  },
   data() {
     return {
       showDropDown: false,
@@ -88,11 +95,35 @@ export default {
   },
   methods: {
     toggleDrop() {
-      this.showDropDown = !this.showDropDown;
-    },
+      this.showDropDown = !this.showDropDown
+
+    }
   },
-};
+  setup() {
+    const userStore = useUserStore();
+
+    // Use computed properties to ensure the dashboard re-renders when the store state changes
+    const isLoggedIn = computed(() => userStore.isLoggedIn);
+    const user = computed(() => userStore.user);
+
+    // Handle logout by calling the logout method from the store
+    const handleLogout = () => {
+      userStore.logout();
+    };
+
+    return {
+      isLoggedIn,
+      user,
+      handleLogout,
+    };
+  },
+
+
+}
+
 </script>
+
+
 
 <style scoped>
 /* Đảm bảo không có tràn màn hình */

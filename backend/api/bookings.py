@@ -9,27 +9,31 @@ from utils.request_models import CreateBookingRequest
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
-@router.get("", description="Get all bookings")
+@router.get("", description="Get all bookings of a specific condition")
 async def get_bookings(flight_id: Optional[str] = None, user_id: Optional[str] = None):
     if flight_id:
         bookings = supabase.from_("booking_flight").select("bookings!booking_flight_booking_id_fkey(*)").eq("flight_id", flight_id).execute().data
     elif user_id:
         bookings = supabase.table("bookings").select().eq("user_id", user_id).execute().data
-    
+    else:
+        bookings = supabase.table("bookings").select().execute().data
     return {"status" : "success", "data": bookings}
 
-@router.post("/", description="Create a new booking")
+@router.post("", description="Create a new booking")
 async def create_booking(req: CreateBookingRequest):
+
+    ticket_price = supabase.table("flight_class_pricing").select("base_price").eq("flight_id", req.flight_id).eq("class_name", req.class_name).execute().data[0]['base_price']
+    # total amount here is the ticket price alone
+    total_amount = ticket_price * len(req.passengers)
 
     res = supabase.table("bookings").insert({
         "user_id": req.user_id,
         "booking_status": req.booking_status,
-        "total_amount": req.total_amount,
+        "total_amount": total_amount,
         "number_of_passengers": len(req.passengers),
         "class_name": req.class_name,
         "trip_type": req.trip_type
     }).execute()
-    # create passenger records for that booking
 
     booking_id = res.data[0]['id']
     # associate booking with flight
@@ -49,18 +53,17 @@ async def create_booking(req: CreateBookingRequest):
             "last_name": req.passengers[i].last_name,
             "email": req.passengers[i].email,
             "gender": req.passengers[i].gender,
-            "birthday": req.passengers[i].birthday.strftime("%Y-%m-%d %H:%M:%S"),
+            "birthday": req.passengers[i].birthday,
             "phone": req.passengers[i].phone,
         })
     
-    res = supabase.table("passengers").insert(passenger_records).execute()
+    passenger_res = supabase.table("passengers").insert(passenger_records).execute()
 
     # associate seats with passengers
-
-    for i in range(res.data):
-        passenger_id = res.data[i]['id']
+    for i in range(len(passenger_res.data)):
+        passenger_id = passenger_res.data[i]['id']
         seat_id = req.passengers[i].seat_id
-        res = supabase.table("booking_passenger_seat").insert({
+        relation_res = supabase.table("booking_passenger_seat").insert({
             "booking_flight_id": booking_flight_id,
             "passenger_id": passenger_id,
             "seat_id": seat_id
@@ -69,7 +72,21 @@ async def create_booking(req: CreateBookingRequest):
         # update seat availability
         _ = supabase.table("flight_seat_availability").update({"is_available": False}).eq("flight_id", req.flight_id).eq("seat_id", seat_id).execute()
 
+    # associate services with booking
+    for service in req.services:
+        service_price = supabase.table("services").select("price").eq("id", service.service_id).execute().data[0]['price']
+        _ = supabase.table("booking_flight_service").insert({
+            "booking_flight_id": booking_flight_id,
+            "service_id": service.service_id,
+            "quantity": service.quantity,
+            "total_price": service_price * service.quantity
+        }).execute()
     
     return {"status" : "success", "data": res.data}
 
 
+@router.patch("/{booking_id}", description="Cancel a booking")
+async def cancel_booking(booking_id: str):
+    res = supabase.table("bookings").update({"booking_status": "CANCELLED"}).eq("id", booking_id).execute()
+    print(res)
+    return {"status" : "success", "data": res.data[0]}

@@ -89,10 +89,19 @@ def insert_users():
     print("Users inserted")
 
 
+def temp_query():
+    meals = supabase.table("services").select("name").eq("type", "MEAL").execute().data
+    luggages = supabase.table("services").select("name").eq("type", "LUGGAGE").execute().data
+
+    print(meals)
+    print(luggages)
+
 def insert_bookings():
     users = supabase.table("users").select("id").execute().data
     flights = supabase.table("flights").select("id").execute().data
-    for user in users:
+    meals = supabase.table("services").select("id", "price").eq("type", "MEAL").execute().data
+    luggages = supabase.table("services").select("id", "price").eq("type", "LUGGAGE").execute().data
+    for user in users[0:1]:
          # create booking record
         user_id = user['id']
         flight_id = random.choice(flights)['id']
@@ -158,9 +167,29 @@ def insert_bookings():
             # update seat availability
             res = supabase.table("flight_seat_availability").update({"is_available": False}).eq("flight_id", flight_id).eq("seat_id", seat_id).execute()
 
+        services_count = []
+        
+        meal = random.choice(meals)
+        luggage = random.choice(luggages)
+        services_count.append({
+            "booking_flight_id": booking_flight_id,
+            "service_id": meal['id'],
+            "quantity": 3,
+            "total_price": meal['price'] * 3
+        })
+
+        services_count.append({
+            "booking_flight_id": booking_flight_id,
+            "service_id": luggage['id'],
+            "quantity": 1,
+            "total_price": luggage['price'] * 1
+        })
+
+        service_res = supabase.table("booking_flight_service").insert(services_count).execute()
+        print(service_res.count)
 if __name__ == "__main__":
     # insert_flight_prices()
     # insert_avail_flight_seats()
     # insert_users()
-    # insert_bookings()
-    pass
+    insert_bookings()
+    # temp_query()
