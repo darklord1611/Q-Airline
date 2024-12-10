@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Form
 from supabase_client import supabase
 from datetime import datetime
 from utils.request_models import CreateFlightRequest, GetFlightRequest, UpdateFlightRequest
-
+from utils.util import convert_timestamp_to_time, time_difference
 router = APIRouter(prefix="/flights", tags=["flights"])
 
 
@@ -21,21 +21,30 @@ async def get_all_flights():
     return {"status" : "success", "data": flights}
 
 @router.get("/search", description="Get all flights that match the search criteria")
-async def get_flights(arrival_airport_id: int, departure_airport_id: int, departure_date: str):
+async def get_flights(departure_airport_id: int, arrival_airport_id: int, departure_date: str):
+    try:
+        print(departure_date)
+        # Parse the input date to get the date part only
+        date_obj = datetime.fromisoformat(departure_date.rstrip("Z") + "+00:00")
+        date_str = date_obj.strftime('%Y-%m-%d')  # Format to 'YYYY-MM-DD'
+        print(date_str)
+        route_id = supabase.table("routes").select("id").eq("arrival_airport_id", arrival_airport_id).eq("departure_airport_id", departure_airport_id).execute().data[0]["id"]
 
-    # Parse the input date to get the date part only
-    date_obj = datetime.fromisoformat(departure_date.rstrip("Z") + "+00:00")
-    date_str = date_obj.strftime('%Y-%m-%d')  # Format to 'YYYY-MM-DD'
-    route_id = supabase.table("routes").select("id").eq("arrival_airport_id", arrival_airport_id).eq("departure_airport_id", departure_airport_id).execute().data[0]["id"]
+        flights = supabase.table("flights").select("").eq("route_id", route_id).eq("is_active", True).gte("departure_time", f"{date_str}T00:00:00Z").lt("departure_time", f"{date_str}T23:59:59Z").execute().data
 
-    flights = supabase.table("flights").select("").eq("route_id", route_id).eq("is_active", True).gte("departure_time", f"{date_str}T00:00:00Z").lt("departure_time", f"{date_str}T23:59:59Z").execute().data
+        for flight in flights:
+            flight["class_pricing"] = supabase.table("flight_class_pricing").select("class_name", "base_price", "tax_percentage", "discount_percentage").eq("flight_id", flight["id"]).execute().data
+            flight["aircraft_info"] = supabase.table("aircrafts").select("model", "manufacturer").eq("id", flight["aircraft_id"]).execute().data
+            flight["flight_number"] = "AA123"
 
-    for flight in flights:
-        flight["class_pricing"] = supabase.table("flight_class_pricing").select("class_name", "base_price", "tax_percentage", "discount_percentage").eq("flight_id", flight["id"]).execute().data
-
-        flight["aircraft_info"] = supabase.table("aircrafts").select("model", "manufacturer").eq("id", flight["aircraft_id"]).execute().data
+            flight["departure_time"] = convert_timestamp_to_time(flight["departure_time"])
+            flight["arrival_time"] = convert_timestamp_to_time(flight["arrival_time"])
+            flight["duration"] = time_difference(flight["departure_time"], flight["arrival_time"])
+            
+        return {"status" : "success", "data": flights}
     
-    return {"status" : "success", "data": flights}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 @router.get("/{flight_id}/seats", description="Get available seats of a flight")

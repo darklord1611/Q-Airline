@@ -20,26 +20,33 @@
       </div>
 
       <div class="input-group">
+        <!-- From Dropdown -->
         <div class="input-field">
           <div class="input-icon">
             <img :src="fromTo" class="fromToImage" />
           </div>
           <div class="input-type">
-            <label class="large-label">
-              From
-            </label>
-            <input type="text" v-model="from" placeholder="Hanoi" class="typeIn" />
+            <label class="large-label">From</label>
+            <select v-model="airports.departureAirport" @change="updateToOptions" class="typeIn">
+              <option v-for="airport in airports.fromOptions" :key="airport.id" :value="airport">
+                {{ airport.city }} ({{ airport.iata_code }})
+              </option>
+            </select>
           </div>
         </div>
+
+        <!-- To Dropdown -->
         <div class="input-field">
           <div class="input-icon">
             <img :src="fromTo" class="fromToImage" />
           </div>
           <div class="input-type">
-            <label class="large-label">
-              To
-            </label>
-            <input type="text" v-model="to" placeholder="Ho Chi Minh" class="typeIn" />
+            <label class="large-label">To</label>
+            <select v-model="airports.arrivalAirport" class="typeIn">
+              <option v-for="airport in airports.toOptions" :key="airport.id" :value="airport">
+                {{ airport.city }} ({{ airport.iata_code }})
+              </option>
+            </select>
           </div>
         </div>
         <div class="input-field">
@@ -91,7 +98,7 @@
 
     <div class="flight-list" v-if="isSearched">
       <label class="myheader">Available Flights</label>
-      <div class="flight-card" v-for="flight in filteredFlights" :key="flight.flightNumber">
+      <div class="flight-card" v-for="flight in filteredFlights" :key="flight.id">
         <div class="ticket-icon">
           <img src="@/assets/flight.png" alt="take off icon" class="takeOff" />
         </div>
@@ -100,11 +107,11 @@
             Qairline
           </div>
           <div class="flightnumber">
-            {{ flight.flightNumber }} - {{ selectedClass }}
+            {{ flight.flight_number }} - {{ selectedClass }}
           </div>
         </div>
         <div class="time">
-          <div class="departureTime"> {{ flight.departureTime }}</div>
+          <div class="departureTime"> {{ flight.departure_time }}</div>
           <div class="dateConvert"> {{ formattedDates.checkIn }}</div>
         </div>
         <div class="ticket-tour">
@@ -121,18 +128,18 @@
             <div class="circle right"></div>
           </div>
           <div class="labels">
-            <span class="label">{{ flight.departureAirport }}</span>
+            <span class="label">{{ airports.departureAirport.iata_code }}</span>
             <span class="label B">Direct</span>
-            <span class="label">{{ flight.arrivalAirport }}</span>
+            <span class="label">{{ airports.arrivalAirport.iata_code }}</span>
           </div>
         </div>
         <div class="time">
-          <div class="arivalTime"> {{ flight.arrivalTime }}</div>
+          <div class="arivalTime"> {{ flight.arrival_time }}</div>
           <div class="dateConvert"> {{ formattedDates.checkOut }}</div>
         </div>
         <!-- Thông tin giá và nút chọn -->
         <div class="price-info">
-          <span class="price">${{ flight.price }} USD</span>
+          <span class="price">${{ flight.class_pricing[0].base_price }} USD</span>
           <button class="select-button" v-if="!isChoosed" @click="selectFlight(flight)">Booking Now!</button>
           <button class="select-button" v-if="isChoosed" @click="undo()">Undo</button>
         </div>
@@ -142,8 +149,8 @@
     <div class="meal-container" v-if="isService">
       <label class="myheader">Qmeal Service</label>
       <div class="meal-list">
-        <div class="meal-card" v-for="meal in meals" :key="meal.name">
-          <img class="meal-img" :src="meal.imgSrc" alt="meal image" />
+        <div class="meal-card" v-for="meal in externalServices.meals" :key="meal.name">
+          <img class="meal-img" :src="meal.img_src" alt="meal image" />
           <div class="meal-description">
             <h3 class="large-label">{{ meal.name }}</h3>
             <p>{{ meal.description }}</p>
@@ -198,6 +205,8 @@ import cityImage from "@/assets/city.jpg";
 import dnaImage from "@/assets/dna.jpg";
 import Footer from '@/pages/master/footer.vue';
 
+import axios from 'axios';
+
 export default {
   components: {
     Footer
@@ -210,8 +219,6 @@ export default {
       maxWeight: 20, // Số cân tối đa
       dragging: false, // Trạng thái kéo
       pricePerKg: 50,
-      from: '', // Lưu giá trị của ô "From"
-      to: '',    // Lưu giá trị của ô "To"
       activeButtonIndex: null,
       formattedDates: {
         checkIn: '',
@@ -225,40 +232,11 @@ export default {
       kidMeal,
       fromTo,
       calendar,
-      classOptions: ['Economy', 'Business Class', 'First Class'],
+      classOptions: ['Economy', 'Business Class'],
       selectedClass: 'Economy',
       isSearched: false,
       isChoosed: false,
       isService: false,
-      flights: [
-        {
-          departureAirport: "JFK",
-          departureTime: "08:00",
-          arrivalAirport: "LAX",
-          arrivalTime: "11:30",
-          flightNumber: "AA123",
-          duration: "5h30m",
-          price: 299
-        },
-        {
-          departureAirport: "SFO",
-          departureTime: "09:15",
-          arrivalAirport: "ORD",
-          arrivalTime: "03:45",
-          flightNumber: "UA456",
-          duration: "4h30m",
-          price: 259
-        },
-        {
-          departureAirport: "LHR",
-          departureTime: "02:30",
-          arrivalAirport: "DXB",
-          arrivalTime: "12:15",
-          flightNumber: "EK789",
-          duration: "7h45m",
-          price: 599
-        }
-      ],
       selectedFlight: null,
       meals: [
         {
@@ -296,7 +274,41 @@ export default {
         { image: tetImage, text: 'Tet Holiday: flight coming home - Discount 50%' },
         { image: dnaImage, text: 'Southeast Aisa Traveling - Discount 40%' }
       ],
+      airports: {
+        defaultOptions: [],
+        fromOptions: [],
+        toOptions: [],
+        departureAirport: null,
+        arrivalAirport: null      
+      },
+      flights: [],
+      externalServices: {
+        meals: [],
+        luggage: []
+      }
     };
+  },
+  async created() {
+    try {
+      // Fetch all airports initially
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports`);;
+      this.airports.defaultOptions = response.data.data;
+      this.airports.fromOptions = [...this.airports.defaultOptions];
+      this.airports.toOptions = [...this.airports.defaultOptions];
+    } catch (error) {
+      console.error("Error fetching initial airports:", error);
+    }
+
+    try {
+      // Fetching external services like meals or luggage
+      // Fetch all airports initially
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/services/search?service_type=MEAL`);;
+      this.externalServices.meals = response.data.data;
+      console.log(this.externalServices.meals);
+    } catch(error) {
+      console.error("Error fetching external services:", error);
+    }
+
   },
 
   computed: {
@@ -318,10 +330,56 @@ export default {
   },
 
   methods: {
-    searchFlights() {
+    async updateToOptions() {
+      if (!this.airports.departureAirport.id) return;
+
+      try {
+        // Fetch possible "To" options based on selected "From"
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports/${this.airports.departureAirport.id}/get_arrival_airports`);
+        this.airports.toOptions = response.data.data;
+        
+        // Clear "To" selection if it's no longer valid
+        if (this.airports.arrivalAirport && !this.airports.toOptions.find(option => option.id === this.airports.arrivalAirport.id)) {
+          this.airports.arrivalAirport = null;
+        }
+      } catch (error) {
+        console.error("Error updating 'To' options:", error);
+      }
+    },
+    // async updateFromOptions() {
+    //   if (!this.to) return;
+
+    //   try {
+    //     // Fetch possible "From" options based on selected "To"
+    //     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports/${this.to}/get_departure_airports`);
+    //     this.airports.fromOptions = response.data.data;
+        
+    //     // Clear "From" selection if it's no longer valid
+    //     if (!this.airports.fromOptions.find(option => option.id === this.from)) {
+    //       this.from = null;
+    //     }
+    //   } catch (error) {
+    //     console.error("Error updating 'From' options:", error);
+    //   }
+    // },
+    async searchFlights() {
+
+      console.log(this.airports.departureAirport.id);
+      console.log(this.airports.arrivalAirport.id);
+      console.log(this.$refs["checkInDate"].value)
+      const iso_date = new Date(this.$refs["checkInDate"].value).toISOString();
+      console.log(iso_date)
+
+      // get all valid flights based on selected options and departure_date
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/flights/search?departure_airport_id=${this.airports.departureAirport.id}&arrival_airport_id=${this.airports.arrivalAirport.id}&departure_date=${iso_date}`);
+
+      this.flights = response.data.data;
+      console.log(response.data.data)
+
+      console.log(this.flights);
+
       this.isSearched = true; // Đặt thành true khi bấm nút Search Flight
     },
-
     selectFlight(flight) {
       this.selectedFlight = flight; // Cập nhật chuyến bay được chọn
       this.isChoosed = true;

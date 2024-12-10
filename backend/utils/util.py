@@ -33,3 +33,28 @@ def generate_random_phone_number(country_code):
     except Exception as e:
         print(f"Error generating phone number: {e}")
         return None
+
+from datetime import datetime
+
+def convert_timestamp_to_time(timestamp_str):
+    # Parse the timestamp string to a datetime object (including timezone info)
+    dt_obj = datetime.fromisoformat(timestamp_str)
+    
+    # Extract the time portion and format it as "HH:MM"
+    return dt_obj.strftime('%H:%M')
+
+def time_difference(start_time_str, end_time_str):
+    # Parse the time strings into datetime objects
+    time_format = "%H:%M"
+    start_time = datetime.strptime(start_time_str, time_format)
+    end_time = datetime.strptime(end_time_str, time_format)
+    
+    # Calculate the time difference
+    delta = end_time - start_time
+    
+    # Extract hours and minutes from the time difference
+    hours = delta.seconds // 3600  # Get the number of hours
+    minutes = (delta.seconds % 3600) // 60  # Get the number of minutes
+    
+    # Format the result in the desired format
+    return f"{hours}h{minutes}m"
