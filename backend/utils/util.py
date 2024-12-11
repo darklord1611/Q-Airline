@@ -58,3 +58,11 @@ def time_difference(start_time_str, end_time_str):
     
     # Format the result in the desired format
     return f"{hours}h{minutes}m"
+
+
+def convert_timestamp_to_date(timestamp_str):
+    # Parse the timestamp string into a datetime object
+    dt_obj = datetime.fromisoformat(timestamp_str)
+    
+    # Format the datetime object to date-only string
+    return dt_obj.strftime('%Y-%m-%d')

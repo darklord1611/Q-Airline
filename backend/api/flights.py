@@ -51,7 +51,7 @@ async def get_flights(departure_airport_id: int, arrival_airport_id: int, depart
 async def get_available_seats(
     flight_id : int
 ):
-    available_seats = supabase.table("flight_seat_availability").select("seat_id, seats!flight_seat_availability_seat_id_fkey(class_name, seat_number)").eq("flight_id", flight_id).eq("is_available", True).execute().data
+    available_seats = supabase.table("flight_seat_availability").select("seat_id, seats!flight_seat_availability_seat_id_fkey(class_name, seat_number)").eq("flight_id", flight_id).execute().data
 
     return {"status": "success", "data": available_seats}
 

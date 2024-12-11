@@ -196,16 +196,13 @@ import video from "@/assets/58475-488682084_small.mp4";
 import image from "@/assets/vecteezy_plane-png-with-ai-generated_26773766.png";
 import fromTo from "@/assets/pin.png";
 import calendar from "@/assets/calendar.png";
-import standardMeal from "@/assets/h2-meal.jpg";
-import premiumMeal from "@/assets/premium.jpg";
-import vegeMeal from "@/assets/vege.jpg";
-import kidMeal from "@/assets/kid.jpg";
 import tetImage from "@/assets/tet.jpg";
 import cityImage from "@/assets/city.jpg";
 import dnaImage from "@/assets/dna.jpg";
 import Footer from '@/pages/master/footer.vue';
 
 import axios from 'axios';
+import { useUserStore } from '@/stores/user';
 
 export default {
   components: {
@@ -226,10 +223,6 @@ export default {
       },
       video,
       image,
-      standardMeal,
-      premiumMeal,
-      vegeMeal,
-      kidMeal,
       fromTo,
       calendar,
       classOptions: ['Economy', 'Business Class'],
@@ -237,37 +230,10 @@ export default {
       isSearched: false,
       isChoosed: false,
       isService: false,
-      selectedFlight: null,
-      meals: [
-        {
-          name: 'Standard Meal',
-          description: 'A common meal with options like chicken, beef, or fish with rice, mashed potatoes, or pasta.',
-          imgSrc: standardMeal,
-          quantity: 0,
-          price: 50,
-        },
-        {
-          name: 'Premium Meal',
-          description: 'A luxurious meal with options like filet mignon, grilled salmon, or lobster with special sauces.',
-          imgSrc: premiumMeal,
-          quantity: 0,
-          price: 90,
-        },
-        {
-          name: 'Vegetarian Meal',
-          description: 'A plant-based meal including options like mushroom rice, pasta with lentils, and fresh salads.',
-          imgSrc: vegeMeal,
-          quantity: 0,
-          price: 60
-        },
-        {
-          name: 'Kid Meal',
-          description: 'A kid-friendly meal with chicken nuggets, macaroni and cheese, and small sandwiches.',
-          imgSrc: kidMeal,
-          quantity: 0,
-          price: 35,
-        }
-      ],
+      selectedFlight: {
+        flightInfo: null,
+        seats: []
+      },
       currentIndex: 0,
       items: [
         { image: cityImage, text: 'NewYork Traveling - Discount 30%' },
@@ -285,10 +251,15 @@ export default {
       externalServices: {
         meals: [],
         luggage: []
+      },
+      booking: {
+
       }
     };
   },
   async created() {
+    const userStore = useUserStore();
+    console.log(userStore)
     try {
       // Fetch all airports initially
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports`);;
@@ -301,7 +272,6 @@ export default {
 
     try {
       // Fetching external services like meals or luggage
-      // Fetch all airports initially
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/services/search?service_type=MEAL`);;
       this.externalServices.meals = response.data.data;
       console.log(this.externalServices.meals);
@@ -313,7 +283,7 @@ export default {
 
   computed: {
     filteredFlights() {
-      if (!this.selectedFlight) return this.flights;
+      if (!this.selectedFlight.flightInfo) return this.flights;
       return this.flights.filter(
         (flight) => flight.flightNumber === this.selectedFlight.flightNumber
       );
@@ -380,14 +350,19 @@ export default {
 
       this.isSearched = true; // Đặt thành true khi bấm nút Search Flight
     },
-    selectFlight(flight) {
-      this.selectedFlight = flight; // Cập nhật chuyến bay được chọn
+    async selectFlight(flight) {
+      this.selectedFlight.flightInfo = flight; // Cập nhật chuyến bay được chọn
+      // get available seats for selected flight
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/flights/${flight.id}/seats`);
+      this.selectedFlight.seats = response.data.data;
+      console.log(this.selectedFlight.seats);
       this.isChoosed = true;
       this.isService = true;
     },
 
     undo(flight) {
-      this.selectedFlight = null;
+      this.selectedFlight.flightInfo = null;
+      this.selectedFlight.seats = [];
       this.isChoosed = false;
       this.isService = false;
     },

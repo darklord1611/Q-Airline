@@ -55,8 +55,8 @@
           </div>
           <div v-else class="flex items-center justify-start space-x-4">
             <!-- Login and Register Buttons -->
-            <router-link to="/login" class="text-gray-700 px-4 py-2 text-sm border rounded hover:bg-gray-100">Login</router-link>
-            <router-link to="/register" class="text-gray-700 px-4 py-2 text-sm border rounded hover:bg-gray-100">Register</router-link>
+            <router-link to="/login" class="flex items-center py-2 px-3 text-sm hover:bg-gray-700 transition rounded-md">Login</router-link>
+            <router-link to="/register" class="flex items-center py-2 px-3 text-sm hover:bg-gray-700 transition rounded-md">Register</router-link>
           </div>
       </div>
     </div>

@@ -1,31 +1,46 @@
-// store/user.js
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
-export const useUserStore = defineStore('user', () => {
-    const isLoggedIn = ref(false); // State to track if the user is logged in
-    const user = ref(null); // Store user details after login
-    const accessToken = ref(""); // Store the access token after login
-    const refreshToken = ref(""); // Store the refresh token after login
+export const useUserStore = defineStore(
+    'user',
+    () => {
+        // State
+        const isLoggedIn = ref(false);
+        const user = ref(null);
+        const accessToken = ref("");
+        const refreshToken = ref("");
 
-    const setUser = (userData, userAccessToken, userRefreshToken) => {
-        isLoggedIn.value = true;
-        user.value = userData; // Set the user data after successful login
-        accessToken.value = userAccessToken; // Set the access token after successful login
-        refreshToken.value = userRefreshToken; // Set the refresh token after successful login
-    };
+        // Set user after login
+        const setUser = (userData, userAccessToken, userRefreshToken) => {
+            isLoggedIn.value = true;
+            user.value = userData;
+            accessToken.value = userAccessToken;
+            refreshToken.value = userRefreshToken;
+        };
 
-    const logout = () => {
-        isLoggedIn.value = false;
-        user.value = null; // Clear the user data when logged out
-    };
+        // Logout functionality
+        const logout = () => {
+            isLoggedIn.value = false;
+            user.value = null;
+            accessToken.value = "";
+            refreshToken.value = "";
+        };
 
-    return {
-        isLoggedIn,
-        user,
-        setUser,
-        logout,
-    };
-}, {
-    persist: true // This will persist the store state in localStorage or sessionStorage
-});
+        // Return all states and methods
+        return {
+            isLoggedIn,
+            user,
+            accessToken,
+            refreshToken,
+            setUser,
+            logout,
+        };
+    },
+    {
+        persist: {
+            key: 'user-store', // Custom key in localStorage
+            storage: window.localStorage, // Use localStorage (default)
+            paths: ['isLoggedIn', 'user', 'accessToken', 'refreshToken'], // Specify the fields to persist
+        },
+    }
+);

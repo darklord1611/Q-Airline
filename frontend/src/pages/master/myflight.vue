@@ -1,18 +1,18 @@
 <template>
     <div class="flight-list">
-        <div class="flight-card" v-for="flight in flights" :key="flight.flightNumber">
+        <div class="flight-card" v-for="booking in bookings" :key="booking.id">
             <div class="flight-info-horizontal">
                 <!-- Cột trái: Thời gian -->
                 <div class="time-column">
                     <div class="time-block departure-time">
-                        <span class="time">{{ flight.departureTime }}</span>
-                        <div class="date">{{ flight.formattedCheckIn }}</div>
+                        <span class="time">{{ booking.flights[0].departure_time }}</span>
+                        <div class="date">{{ booking.formattedCheckIn }}</div>
                     </div>
                     <div class="spacer"></div>
-                    <div class="duration"><span>{{ flight.duration }}</span></div>
+                    <div class="duration"><span>{{ booking.flights[0].duration }}</span></div>
                     <div class="time-block arrival-time">
-                        <span class="time">{{ flight.arrivalTime }}</span>
-                        <div class="date">{{ flight.formattedCheckOut }}</div>
+                        <span class="time">{{ booking.flights[0].arrival_time }}</span>
+                        <div class="date">{{ booking.formattedCheckOut }}</div>
                     </div>
                 </div>
 
@@ -32,30 +32,30 @@
                 <!-- Cột phải: Sân bay -->
                 <div class="airport-column">
                     <div class="airport-block departure-airport">
-                        <span>{{ flight.departureAirport }}</span>
-                        <div class="from"> {{ flight.from }}</div>
+                        <span>{{ booking.flights[0].departure_iata_code }}</span>
+                        <div class="from"> {{ booking.flights[0].departure_city }}</div>
                     </div>
                     <div class="service">
                         <!-- Phần Hành lý -->
                         <div class="luggage">
                             <img src="@/assets/luggage.png" alt="Luggage Icon" class="service-icon" />
-                            <span class="service-text">{{ flight.luggage }}</span>
+                            <span class="service-text">{{ booking.totalLuggage }} kg</span>
                         </div>
 
                         <!-- Phần Bữa ăn -->
                         <div class="meal">
                             <img src="@/assets/breakfast.png" alt="Meal Icon" class="service-icon" />
-                            <span class="service-text">{{ flight.meal }}</span>
+                            <span class="service-text">{{ booking.totalMeal }} meals</span>
                         </div>
                         <div class="travelers">
                             <img src="@/assets/passenger.png" alt="passerger Icon" class="service-icon" />
-                            <span class="service-text">{{ flight.travelers }}</span>
+                            <span class="service-text">{{ booking.number_of_passengers }} passengers</span>
                         </div>
                     </div>
 
                     <div class="airport-block arrival-airport">
-                        <span>{{ flight.arrivalAirport }}</span>
-                        <div class="to"> {{ flight.to }}</div>
+                        <span>{{ booking.flights[0].arrival_iata_code }}</span>
+                        <div class="from"> {{ booking.flights[0].arrival_city }}</div>
                     </div>
                 </div>
 
@@ -64,8 +64,8 @@
 
             <!-- Thông tin giá và nút chọn -->
             <div class="price-info-horizontal">
-                <span class="price">USD: {{ flight.price }}</span>
-                <span class="ticket"> {{ flight.ticketType }}</span>
+                <span class="price">USD: {{ booking.total_price }}$</span>
+                <span class="ticket"> {{ booking.class_name }}</span>
                 <button class="cancel-button" @click="removeFlight(flight.flightNumber)">Cancel</button>
             </div>
         </div>
@@ -75,6 +75,9 @@
 
 <script>
 import Footer from '@/pages/master/footer.vue';
+import { useUserStore } from '@/stores/user';
+import axios from 'axios';
+
 export default {
     components: {
         Footer
@@ -134,14 +137,34 @@ export default {
                     travelers: "3 travelers"
                 }
             ],
-
-
-
+            bookings: []
         };
     },
 
-    created() {
+    async created() {
+        const userStore = useUserStore();
+        console.log(userStore.user)
+
+        // get all bookings of an user (information includes flight details, price, meal, luggage, etc.)
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/bookings?user_id=${userStore.user.id}`);
+
+
         // Định dạng ngày tháng ngay khi component được khởi tạo
+
+        this.bookings = response.data.data;
+
+        console.log(this.bookings);
+
+        this.bookings = this.bookings.map((booking) => ({
+            ...booking,
+            totalMeal: this.calcTotalMeal(booking.flights[0].services),
+            totalLuggage: this.calcTotalLuggage(booking.flights[0].services),
+            formattedCheckIn: this.formatDate(booking.flights[0].checkin),
+            formattedCheckOut: this.formatDate(booking.flights[0].checkout),
+        }));
+
+        console.log(this.bookings);
+
         this.flights = this.flights.map((flight) => ({
             ...flight,
             formattedCheckIn: this.formatDate(flight.checkin),
@@ -159,6 +182,24 @@ export default {
         removeFlight(flightNumber) {
             // Lọc bỏ chuyến bay có flightNumber tương ứng
             this.flights = this.flights.filter(flight => flight.flightNumber !== flightNumber);
+        },
+        calcTotalMeal(services) {
+            console.log(services);
+            return services.reduce((total, service) => {
+                if (service.services.type === 'MEAL') {
+                    total += service.quantity;
+                }
+                return total;
+            }, 0);
+        },
+        calcTotalLuggage(services) {
+            console.log(services);
+            return services.reduce((total, service) => {
+                if (service.services.type === 'LUGGAGE') {
+                    total += service.quantity;
+                }
+                return total;
+            }, 0);
         }
     }
 };
