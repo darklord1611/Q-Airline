@@ -84,59 +84,6 @@ export default {
     },
     data() {
         return {
-            flights: [
-                {
-                    departureAirport: "JFK",
-                    departureTime: "08:00 AM",
-                    arrivalAirport: "LAX",
-                    arrivalTime: "11:30 AM",
-                    flightNumber: "AA123",
-                    duration: "5h30m",
-                    price: "$299",
-                    ticketType: "Economy",
-                    from: "New York",
-                    to: "Los Angeles",
-                    checkin: "2024-11-25",
-                    checkout: "2024-11-25",
-                    luggage: "8 kg",
-                    meal: "3 meals",
-                    travelers: "3 travelers"
-                },
-                {
-                    departureAirport: "SFO",
-                    departureTime: "09:15 AM",
-                    arrivalAirport: "ORD",
-                    arrivalTime: "03:45 PM",
-                    flightNumber: "UA456",
-                    duration: "4h30m",
-                    price: "$259",
-                    ticketType: "Business",
-                    from: "San Francisco",
-                    to: "Chicago",
-                    checkin: "2024-11-26",
-                    checkout: "2024-11-26",
-                    luggage: "8 kg",
-                    meal: "3 meals",
-                    travelers: "3 travelers"
-                },
-                {
-                    departureAirport: "LHR",
-                    departureTime: "02:30 PM",
-                    arrivalAirport: "DXB",
-                    arrivalTime: "12:15 AM",
-                    flightNumber: "EK789",
-                    duration: "7h45m",
-                    price: "$599",
-                    ticketType: "First Class",
-                    from: "London",
-                    to: "Dubai",
-                    checkin: "2024-11-27",
-                    checkout: "2024-11-28",
-                    luggage: "8 kg",
-                    meal: "3 meals",
-                    travelers: "3 travelers"
-                }
-            ],
             bookings: []
         };
     },
@@ -164,12 +111,6 @@ export default {
         }));
 
         console.log(this.bookings);
-
-        this.flights = this.flights.map((flight) => ({
-            ...flight,
-            formattedCheckIn: this.formatDate(flight.checkin),
-            formattedCheckOut: this.formatDate(flight.checkout),
-        }));
     },
 
     methods: {
@@ -181,7 +122,7 @@ export default {
         },
         removeFlight(flightNumber) {
             // Lọc bỏ chuyến bay có flightNumber tương ứng
-            this.flights = this.flights.filter(flight => flight.flightNumber !== flightNumber);
+            this.bookings = this.bookings.filter(booking => booking.id !== id);
         },
         calcTotalMeal(services) {
             console.log(services);
