@@ -1,80 +1,39 @@
 <template>
-  <div class="w-screen h-screen flex">
-    <!-- Side bar -->
-    <div class="w-[250px] h-full bg-gray-200 text-white fixed" v-show="showSide">
-      <div class="h-[50px] bg-gray-900 flex justify-start  items-center ">
-        <div class="px-[20px]">
-          <h3 class="font-bold text-xl">Dashboard</h3>
-        </div>
+  <div class="w-full h-screen flex flex-col">
+    <!-- Navbar (Hàng đầu) -->
+    <div class="w-full max-h-[200px]  text-white flex items-center justify-between px-40 max-w-full mx-auto"
+      style="background-color: #003D5B;">
+      <!-- Menu Items -->
+      <div class="flex items-center space-x-2">
+        <h3 class="font-bold text-2xl">Qairline</h3>
+        <img src="@/assets/logo.png" class="w-[90px] h-[80px]" alt="Logo" />
       </div>
-      <div class="h-[calc(100vh-50px)] bg-gray-800 py-[20px]">
-        <div class="flex flex-col justify-between h-full px-[20px] space-y-[10px]">
-          <div class=" flex flex-col justify-between space-y-[10px]">
-            <router-link to="/booking"
-              class="inline-flex relative items-center py-[10px] px-[10px] w-full text-sm font-medium rounded-md border-gray-200 hover:bg-gray-200 hover:text-gray-800  transition duration-400 ease-in-out">
-              <svg aria-hidden="true" class="mr-2 w-[25px] h-[25px] fill-current" fill="currentColor"
-                viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" d="M2.5 19l9.5-8-9.5-8h8.5l7.5 8-7.5 8h-8.5z" clip-rule="evenodd"></path>
-              </svg>
-              Booking
-            </router-link>
-            <router-link to="/myflight"
-              class="inline-flex relative items-center py-[10px] px-[10px] w-full text-sm font-medium rounded-md border-gray-200 hover:bg-gray-300  hover:text-gray-800 transition duration-400 ease-in-out">
-              <svg aria-hidden="true" class="mr-2 w-[25px] h-[25px] fill-current" fill="currentColor"
-                viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z">
-                </path>
-              </svg>
-              My Flight
-            </router-link>
-            <router-link to="/flightSchedule"
-              class="inline-flex relative items-center py-[10px] px-[10px] w-full text-sm font-medium rounded-md border-gray-200 hover:bg-gray-300  hover:text-gray-800 transition duration-400 ease-in-out">
-              <svg aria-hidden="true" class="mr-2 w-[25px] h-[25px] fill-current" fill="currentColor"
-                viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd"
-                  d="M2 16.5v-1.5l8-4.5v-7.5c0-.8 1.2-.8 1.2 0v7.5l8 4.5v1.5l-8-1.5v7.5h-1.2v-7.5l-8 1.5z"
-                  clip-rule="evenodd"></path>
-              </svg>
-              Flight Schedule
-            </router-link>
-          </div>
-          <div class="h-[50px]">
-            <div>
-              <router-link to="/setting"
-                class="inline-flex relative items-center py-[10px] px-[10px] w-full text-sm font-medium rounded-md border-gray-200 hover:bg-gray-300 hover:text-gray-800  transition duration-400 ease-in-out">
-                <svg aria-hidden="true" class="mr-2 w-[25px] h-[25px] fill-current" fill="currentColor"
-                  viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path fill-rule="evenodd"
-                    d="M21 15.46l-4.54-4.54a1.5 1.5 0 00-2.12 0l-1.83 1.83a15.55 15.55 0 01-5.7-5.7l1.83-1.83a1.5 1.5 0 000-2.12L8.54 3a1.5 1.5 0 00-2.12 0l-2 2a1.5 1.5 0 000 2.12l1.83 1.83a18.11 18.11 0 007.04 7.04l1.83 1.83a1.5 1.5 0 002.12 0l2-2a1.5 1.5 0 000-2.12z"
-                    clip-rule="evenodd"></path>
-                </svg>
-                Help
-              </router-link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div :class="[showSide ? 'w-[calc(100%-250px)] ml-[250px]' : 'w-full']" class="h-full bg-gray-400">
-      <div class="h-[50px] bg-gray-100 flex items-center shadow-sm px-[20px] w-full py-[10px] z-10 border-b ">
-        <!-- Hambuger menu -->
-        <div class="cursor-pointer w-[30px]" @click="toggleSideBar">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class=" w-[25px] h-[25px]">
-            <!--! Font Awesome Pro 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. -->
-            <path
-              d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z" />
+      <!-- Setting, Support, Login/Logout -->
+      <div class="flex space-x-4">
+        <!-- Setting -->
+        <router-link to="/setting" class="flex items-center py-2 px-3 text-sm hover:bg-gray-700 transition rounded-md">
+          <svg class="w-[20px] h-[20px] mr-2" fill="currentColor" viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 8.5a3.5 3.5 0 110 7 3.5 3.5 0 010-7z"></path>
+            <path fill-rule="evenodd"
+              d="M12 2a1 1 0 01.995.9l.257 2.047a8.034 8.034 0 013.02 1.258l1.803-.777a1 1 0 011.29.297l1.5 2.598a1 1 0 01-.234 1.29l-1.686 1.277a8.06 8.06 0 01-.002 2.515l1.688 1.278a1 1 0 01.233 1.29l-1.5 2.598a1 1 0 01-1.29.297l-1.803-.777a8.034 8.034 0 01-3.02 1.258l-.257 2.047a1 1 0 01-1.99 0l-.257-2.047a8.034 8.034 0 01-3.02-1.258l-1.803.777a1 1 0 01-1.29-.297l-1.5-2.598a1 1 0 01.233-1.29l1.688-1.278a8.06 8.06 0 01-.002-2.515L2.593 9.613a1 1 0 01-.233-1.29l1.5-2.598a1 1 0 011.29-.297l1.803.777A8.034 8.034 0 0111 4.947l.257-2.047A1 1 0 0112 2zm-4.5 10a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"
+              clip-rule="evenodd"></path>
           </svg>
-        </div>
-        <div class="w-[calc(100%-30px)] flex">
-          <div class="w-full h-full flex items-center justify-center">
-            <h1 class="text-4xl font-bold text-black-600 shadow-lg">Qairline</h1>
-          </div>
-        </div>
-        <!--login-->
-        <div class="relative">
-          <!-- Conditionally render based on login status -->
-          <div v-if="isLoggedIn">
+          Setting
+        </router-link>
+
+        <!-- Support -->
+        <router-link to="/support" class="flex items-center py-2 px-3 text-sm hover:bg-gray-700 transition rounded-md">
+          <svg class="w-[20px] h-[20px] mr-2" fill="currentColor" viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M2.3 2.3a2.76 2.76 0 013.9 0l1.12 1.12a2.76 2.76 0 010 3.9L6.7 8.94a.55.55 0 000 .77 11.24 11.24 0 005.6 5.6.55.55 0 00.77 0l1.62-1.62a2.76 2.76 0 013.9 0l1.12 1.12a2.76 2.76 0 010 3.9l-.9.9A3.76 3.76 0 0113.9 20a13.76 13.76 0 01-13-13A3.76 3.76 0 012.3 2.3z">
+            </path>
+          </svg>
+          Support
+        </router-link>
+        
+        <div v-if="isLoggedIn">
             <!-- User Avatar -->
             <div class="flex items-center justify-start space-x-4" @click="toggleDrop">
               <svg aria-hidden="true" class="mr-2 w-[25px] h-[25px] fill-current" fill="currentColor" viewBox="0 0 20 20"
@@ -96,24 +55,46 @@
           </div>
           <div v-else class="flex items-center justify-start space-x-4">
             <!-- Login and Register Buttons -->
-            <router-link to="/login" class="text-gray-700 px-4 py-2 text-sm border rounded hover:bg-gray-100">Login</router-link>
-            <router-link to="/register" class="text-gray-700 px-4 py-2 text-sm border rounded hover:bg-gray-100">Register</router-link>
+            <router-link to="/login" class="flex items-center py-2 px-3 text-sm hover:bg-gray-700 transition rounded-md">Login</router-link>
+            <router-link to="/register" class="flex items-center py-2 px-3 text-sm hover:bg-gray-700 transition rounded-md">Register</router-link>
           </div>
-        </div>
-      </div>
-      <div class="h-[calc(100vh-50px)] bg-gray-50 p-[20px]">
-        <!--<div class="border border-gray-300 rounded-md p-[20px] h-full">-->
-        <router-view v-slot="{ Component }">
-          <keep-alive :include="['booking']">
-            <component :is="Component" />
-          </keep-alive>
-        </router-view>
-        <!--</div>-->
       </div>
     </div>
-    <!-- Main  -->
+
+    <!-- Navbar (Hàng thứ hai) -->
+    <div class="w-full bg-white border-t border-gray-300 flex justify-between items-center px-40 max-w-full mx-auto">
+      <div class="flex w-full">
+        <!-- Booking -->
+        <router-link to="/booking"
+          class="flex-1 py-3 px-4 text-sm text-center border-r border-gray-300 hover:bg-gray-100 transition rounded-md font">
+          Booking
+        </router-link>
+
+        <!-- My Flight -->
+        <router-link to="/myflight"
+          class="flex-1 py-3 px-4 text-sm text-center border-r border-gray-300 hover:bg-gray-100 transition rounded-md font">
+          My Flight
+        </router-link>
+
+        <!-- Flight Schedule -->
+        <router-link to="/flightSchedule"
+          class="flex-1 py-3 px-4 text-sm text-center hover:bg-gray-100 transition rounded-md font">
+          Flight Schedule
+        </router-link>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="main-content w-full h-full bg-gray-50 max-w-full">
+      <router-view v-slot="{ Component }">
+        <keep-alive>
+          <component :is="Component" />
+        </keep-alive>
+      </router-view>
+    </div>
   </div>
 </template>
+
 <script>
 import { useUserStore } from '@/stores/user';
 import login from "@/pages/auth/login.vue";
@@ -126,16 +107,9 @@ export default {
   data() {
     return {
       showDropDown: false,
-      showSide: false
-    }
+    };
   },
   methods: {
-    // hide show side bar
-    toggleSideBar() {
-      this.showSide = !this.showSide
-
-    },
-    // toggle user 
     toggleDrop() {
       this.showDropDown = !this.showDropDown
 
@@ -162,12 +136,39 @@ export default {
 
 
 }
+
 </script>
 
 
 
 <style scoped>
-h1 {
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+/* Đảm bảo không có tràn màn hình */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.w-full.h-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  /* Đảm bảo chiều cao tối thiểu là bằng chiều cao của màn hình */
+}
+
+.main-content {
+  flex: 1;
+  /* Chiếm toàn bộ không gian còn lại */
+  overflow-y: auto;
+  /* Thêm thanh cuộn nếu nội dung dài */
+}
+
+.font {
+  font-family: 'Merriweather', serif;
+  font-weight: bold;
 }
 </style>

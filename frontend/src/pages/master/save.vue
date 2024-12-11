@@ -1,107 +1,119 @@
 <template>
-  <div class="bookingflexcontainer">
-    <div class="slogan">
-      <h1>Wings To Your Dreams</h1>
+  <div class="flight-search">
+
+    <!-- Bảng kết quả -->
+    <table class="flight-table">
+      <thead>
+        <tr>
+          <th>Flight Number</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Check-in</th>
+          <th>Check-out</th>
+          <th>Departure Airport</th>
+          <th>Departure Time</th>
+          <th>Arrival Airport</th>
+          <th>Arrival Time</th>
+          <th>Duration</th>
+          <th>Price</th>
+          <th>Ticket Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(flight, index) in paginatedFlights" :key="index">
+          <td>{{ flight.flightNumber }}</td>
+          <td>{{ filters.from || flight.departureAirport }}</td>
+          <td>{{ filters.to || flight.arrivalAirport }}</td>
+          <td>{{ filters.checkin || 'N/A' }}</td>
+          <td>{{ filters.checkout || 'N/A' }}</td>
+          <td>{{ flight.departureAirport }}</td>
+          <td>{{ flight.departureTime }}</td>
+          <td>{{ flight.arrivalAirport }}</td>
+          <td>{{ flight.arrivalTime }}</td>
+          <td>{{ flight.duration }}</td>
+          <td>{{ flight.price }}</td>
+          <td>{{ flight.ticketType }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Phân trang -->
+    <div class="pagination">
+      <button @click="prevPage" :disabled="currentPage === 1">Previous</button>
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      <button @click="nextPage" :disabled="currentPage === totalPages">Next</button>
     </div>
 
-    <div class="bookingfaceflex">
-      <div class="videoD"> 
-        <video :src="video" autoplay muted loop class="video"></video>
+    <!-- Bộ lọc -->
+    <div class="filters">
+      <div class="filter-row">
+        <label for="from">From:</label>
+        <select v-model="filters.from">
+          <option value="">All</option>
+          <option value="Hanoi">Hanoi</option>
+          <option value="Ho Chi Minh City">Ho Chi Minh City</option>
+        </select>
+
+        <label for="to">To:</label>
+        <select v-model="filters.to">
+          <option value="">All</option>
+          <option value="JFK">JFK</option>
+          <option value="LAX">LAX</option>
+        </select>
+
+        <label for="checkinDate">Check-in:</label>
+        <input type="date" v-model="filters.checkin" />
       </div>
-      <img :src="image" class="planeimage" />
-    </div>
 
-    <div class="flight-search-container">
-      <div class="class-selection">
-        <button 
-          class="class-option" 
-          v-for="(option, index) in classOptions" 
-          :key="index" 
-          :class="{ active: selectedClass === option }" 
-          @click="selectedClass = option"
-        >
-          {{ option }}
-        </button>
-      </div>
+      <div class="filter-row">
+        <label for="checkoutDate">Check-out:</label>
+        <input type="date" v-model="filters.checkout" />
 
-      <div class="input-group">
-        <div class="input-field">
-          <label>From</label>
-          <input type="text" placeholder="Type your location">
+        <label for="price">Price range:</label>
+        <div class="price-range">
+          <input type="range" v-model="filters.minPrice" :max="filters.maxPrice" min="0" step="10"
+            @input="checkPriceOrder" />
+          <input type="range" v-model="filters.maxPrice" :min="filters.minPrice" max="1000" step="10"
+            @input="checkPriceOrder" />
         </div>
-        <div class="input-field">
-          <label>To</label>
-          <input type="text" placeholder="Type where do you want to go">
-        </div>
-        <div class="input-field">
-          <label>Check In</label>
-          <input type="date">
-        </div>
-        <div class="input-field">
-          <label>Check Out</label>
-          <input type="date">
+        <div class="price-values">
+          <span>Min: {{ filters.minPrice }} USD</span>
+          <span>Max: {{ filters.maxPrice }} USD</span>
         </div>
       </div>
-      
-      <button class="search-button" @click="searchFlights">Search Flight</button>
-    </div>
 
-    <div class="flight-list" v-if="isSearched">
-      <h2>Available Flights</h2>
-      <div 
-        class="flight-card" 
-        v-for="flight in flights" 
-        :key="flight.flightNumber"
-      >
-        <div class="flight-info">
-          <div class="flight-time">
-            <div class="time">
-              <span class="label">Departure Time:</span>
-              <span class="value">{{ flight.departureTime }}</span>
-            </div>
-            <div class="time">
-              <span class="label">Arrival Time:</span>
-              <span class="value">{{ flight.arrivalTime }}</span>
-            </div>
-          </div>
-
-          <div class="flight-route">
-            <div class="icon icon-departure">●</div>
-            <div class="line"></div>
-            <div class="icon icon-plane">✈️</div>
-            <div class="line"></div>
-            <div class="icon icon-arrival">●</div>
-          </div>
-
-          <div class="flight-airport">
-            <div class="airport">
-              <span class="label">Departure Airport:</span>
-              <span class="value">{{ flight.departureAirport }}</span>
-            </div>
-            <div class="airport">
-              <span class="label">Arrival Airport:</span>
-              <span class="value">{{ flight.arrivalAirport }}</span>
-            </div>
-          </div>
-        </div>
+      <div class="filter-row">
+        <label for="ticketType">Ticket Type:</label>
+        <select v-model="filters.ticketType">
+          <option value="">All</option>
+          <option value="Economy">Economy</option>
+          <option value="Business">Business</option>
+          <option value="First Class">First Class</option>
+        </select>
       </div>
     </div>
   </div>
+  <Footer />
 </template>
 
 <script>
-import video from "@/assets/58475-488682084_small.mp4";
-import image from "@/assets/vecteezy_plane-png-with-ai-generated_26773766.png";
-
+import Footer from '@/pages/master/footer.vue';
 export default {
-  name: "booking",
+  components: {
+    Footer
+  },
   data() {
     return {
-      video,
-      image,
-      classOptions: ['Economy', 'Business Class', 'First Class'],
-      selectedClass: 'Economy',
-      isSearched: false,
+      isAdmin: true,
+      filters: {
+        from: "",
+        to: "",
+        checkin: "",
+        checkout: "",
+        minPrice: 0,
+        maxPrice: 1000,
+        ticketType: ""
+      },
       flights: [
         {
           departureAirport: "JFK",
@@ -110,213 +122,281 @@ export default {
           arrivalTime: "11:30 AM",
           flightNumber: "AA123",
           duration: "5h 30m",
-          price: "$299"
+          price: "$299",
+          ticketType: "Economy"
         },
         {
-          departureAirport: "SFO",
-          departureTime: "09:15 AM",
-          arrivalAirport: "ORD",
-          arrivalTime: "03:45 PM",
-          flightNumber: "UA456",
-          duration: "4h 30m",
-          price: "$259"
+          departureAirport: "Hanoi",
+          departureTime: "06:00 AM",
+          arrivalAirport: "Ho Chi Minh City",
+          arrivalTime: "08:30 AM",
+          flightNumber: "VN456",
+          duration: "2h 30m",
+          price: "$120",
+          ticketType: "Business"
         },
         {
-          departureAirport: "LHR",
-          departureTime: "02:30 PM",
-          arrivalAirport: "DXB",
-          arrivalTime: "12:15 AM",
-          flightNumber: "EK789",
-          duration: "7h 45m",
-          price: "$599"
+          departureAirport: "LAX",
+          departureTime: "09:00 AM",
+          arrivalAirport: "JFK",
+          arrivalTime: "12:30 PM",
+          flightNumber: "AA789",
+          duration: "5h 30m",
+          price: "$450",
+          ticketType: "First Class"
         }
-      ]
+      ],
+      currentPage: 1,
+      pageSize: 4
     };
   },
+  computed: {
+    filteredFlights() {
+      return this.flights.filter(flight => {
+        const matchFrom = !this.filters.from || flight.departureAirport === this.filters.from;
+        const matchTo = !this.filters.to || flight.arrivalAirport === this.filters.to;
+        const matchCheckin = !this.filters.checkin || true;
+        const matchCheckout = !this.filters.checkout || true;
+        const matchPrice =
+          parseFloat(flight.price.replace('$', '')) >= this.filters.minPrice &&
+          parseFloat(flight.price.replace('$', '')) <= this.filters.maxPrice;
+        const matchTicketType = !this.filters.ticketType || flight.ticketType === this.filters.ticketType;
+
+        return matchFrom && matchTo && matchCheckin && matchCheckout && matchPrice && matchTicketType;
+      });
+    },
+    totalPages() {
+      return Math.ceil(this.filteredFlights.length / this.pageSize);
+    },
+    paginatedFlights() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      return this.filteredFlights.slice(start, end);
+    }
+  },
   methods: {
-    searchFlights() {
-      this.isSearched = true; // Đặt thành true khi bấm nút Search Flight
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    },
+    checkPriceOrder() {
+      if (this.filters.minPrice > this.filters.maxPrice) {
+        this.filters.maxPrice = this.filters.minPrice;
+      }
     }
   }
 };
 </script>
 
 <style scoped>
-  .bookingflexcontainer {
-      align-items: center;
-      text-align: center;
-      gap: 2rem;
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
-  }
-
-  .slogan {
-  font-family: 'Pacifico', cursive; /* Sử dụng Pacifico */
-  font-weight: normal; /* Không cần in đậm vì font đã có kiểu chữ đẹp */
-  font-size: 40px; /* Kích thước chữ */
-  line-height: 2rem; /* Khoảng cách dòng */
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Đổ bóng chữ */
-  font-style: italic; /* Để chữ in nghiêng */
-  }
-
-
-
-  .bookingfaceflex {
-      width: 90%;
-      margin: 1rem auto 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      border-radius: 5rem;
-  }
-
-  .videoD {
-  width: 90%; /* Giữ 100% để video chiếm toàn bộ chiều rộng */
-  display: flex; /* Thêm flexbox cho videoD để căn giữa video */
-  justify-content: center; /* Căn giữa video theo chiều ngang */
-  align-items: center; /* Căn giữa video theo chiều dọc nếu có chiều cao */
-  height: 300px;
+.flight-search {
+  width: 90%;
+  /* Tăng độ rộng để phù hợp với màn hình lớn hơn */
+  margin: auto;
+  text-align: center;
+  font-family: 'Arial', sans-serif;
+  /* Thay đổi font mặc định */
 }
 
-  .video {
-      border-radius: 15rem;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-  }
-
-  .planeimage {
-      position: absolute;
-      width: 85%;
-      top: -12%;
-  }
-
-  .flight-search-container {
-display: flex;
-flex-direction: column;
-gap: 20px;
-padding: 20px;
-border-radius: 10px;
-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-background-color: #fff;
+/* Bảng chính */
+.flight-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  /* Thêm bóng đổ */
+  border-radius: 8px;
+  /* Bo góc mềm mại */
+  overflow: hidden;
+  background-color: #f9f9f9;
+  /* Màu nền chung */
 }
 
-.class-selection {
-display: flex;
-justify-content: space-around;
+/* Header */
+.flight-table thead {
+  background-color: #003D5B;
+  /* Màu header */
+  color: #ffffff;
+  /* Màu chữ trắng */
+  font-weight: bold;
 }
 
-.class-option {
-padding: 10px 20px;
-border: none;
-background-color: #f0f0f0;
-border-radius: 5px;
-cursor: pointer;
-transition: background-color 0.3s;
+.flight-table thead th {
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+  letter-spacing: 1px;
+  /* Tạo khoảng cách giữa các chữ */
+  text-transform: uppercase;
+  /* Chuyển chữ thành in hoa */
 }
 
-.class-option.active {
-background-color: #007bff;
-color: #fff;
+/* Body */
+.flight-table tbody tr {
+  transition: all 0.3s ease;
+  /* Thêm hiệu ứng hover mượt */
 }
 
-.class-option:hover {
-background-color: #e0e0e0;
+.flight-table tbody tr:nth-child(even) {
+  background-color: #e6f2f8;
+  /* Màu nền dòng chẵn */
 }
 
-.input-group {
-display: flex;
-justify-content: space-between;
-gap: 10px;
+.flight-table tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+  /* Màu nền dòng lẻ */
 }
 
-.input-field {
-display: flex;
-flex-direction: column;
-flex: 1;
+.flight-table tbody tr:hover {
+  background-color: #cce6f0;
+  /* Màu nền khi hover */
+  transform: scale(1.01);
+  /* Hiệu ứng phóng to nhẹ */
+  cursor: pointer;
 }
 
-.input-field label {
-margin-bottom: 5px;
-font-weight: 500;
+.flight-table tbody td {
+  padding: 10px;
+  text-align: center;
+  font-size: 13px;
+  color: #333333;
+  /* Màu chữ */
+  border-bottom: 1px solid #cccccc;
+  /* Đường gạch dưới giữa các dòng */
 }
 
-.input-field input {
-padding: 8px;
-border: 1px solid #ccc;
-border-radius: 5px;
+/* Phân trang */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  font-size: 14px;
+  gap: 10px;
 }
 
-.search-button {
-padding: 10px;
-background-color: #007bff;
-color: #fff;
-border: none;
-border-radius: 5px;
-cursor: pointer;
-font-size: 16px;
-transition: background-color 0.3s;
+.pagination button {
+  background-color: #003D5B;
+  /* Màu nền chính */
+  color: #ffffff;
+  /* Màu chữ */
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  /* Bo góc nhẹ */
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.search-button:hover {
-background-color: #0056b3;
+.pagination button:hover {
+  background-color: #005377;
+  /* Màu khi hover */
 }
 
-.flight-list {
-max-width: 800px;
-margin: auto;
-padding: 20px;
-font-family: Arial, sans-serif;
+.pagination button:disabled {
+  background-color: #999999;
+  /* Màu khi bị vô hiệu */
+  cursor: not-allowed;
 }
 
-h2 {
-text-align: center;
-color: #333;
-font-size: 1.8rem;
-margin-bottom: 20px;
+.pagination span {
+  font-weight: bold;
+  color: #003D5B;
+  /* Màu chữ nổi bật */
 }
 
-.flight-card {
-background-color: #fff;
-border: 1px solid #ddd;
-border-radius: 8px;
-padding: 20px;
-margin-bottom: 15px;
-box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-transition: transform 0.2s;
+/* Bộ lọc */
+.filters {
+  margin-top: 20px;
 }
 
-.flight-card:hover {
-transform: scale(1.02);
+.filter-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 10px;
+  align-items: center;
 }
 
-.flight-info {
-display: flex;
-flex-wrap: wrap;
-gap: 10px 20px;
+input[type="date"],
+select {
+  padding: 8px;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 150px;
+  /* Đặt chiều rộng cố định để đồng đều */
+  text-align: center;
+  /* Canh giữa văn bản bên trong */
 }
 
-.flight-row {
-width: calc(50% - 10px);
-display: flex;
-justify-content: space-between;
-padding: 5px 0;
+input[type="date"]:focus,
+select:focus {
+  outline: none;
+  border-color: #003D5B;
+  /* Màu viền khi focus */
+  box-shadow: 0 0 5px rgba(0, 61, 91, 0.5);
+  /* Hiệu ứng focus */
 }
 
-.label {
-color: #555;
-font-weight: bold;
+/* Thanh kéo giá (Price Range) */
+.price-range {
+  display: flex;
+  flex-direction: column;
+  /* Chuyển thành cột để dễ quản lý */
+  align-items: center;
+  gap: 8px;
+  /* Tạo khoảng cách giữa hai thanh kéo */
 }
 
-.value {
-color: #333;
+.price-range input[type="range"] {
+  -webkit-appearance: none;
+  /* Bỏ kiểu mặc định */
+  width: 200px;
+  /* Chiều rộng của thanh kéo */
+  height: 6px;
+  background: #d9d9d9;
+  /* Màu nền của thanh kéo */
+  border-radius: 4px;
+  outline: none;
 }
 
-.price {
-color: #e63946;
-font-size: 1.2rem;
-font-weight: bold;
+.price-range input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #003D5B;
+  /* Màu của đầu kéo */
+  border-radius: 50%;
+  /* Hình tròn */
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.price-range input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: #003D5B;
+  /* Màu của đầu kéo */
+  border-radius: 50%;
+  /* Hình tròn */
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.price-values {
+  font-size: 13px;
+  color: #555555;
+  display: flex;
+  justify-content: space-between;
+  width: 200px;
+  /* Đồng bộ với chiều rộng của thanh kéo */
 }
 </style>

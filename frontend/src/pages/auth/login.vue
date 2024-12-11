@@ -40,6 +40,11 @@
             Login
           </button>
         </div>
+
+        <!-- Register Link -->
+        <p class="mt-4 text-center">
+          Don't have an account? <router-link to="/register" class="text-blue-500">Register</router-link>
+        </p>
       </form>
     </div>
   </div>

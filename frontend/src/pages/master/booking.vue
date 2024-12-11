@@ -20,26 +20,33 @@
       </div>
 
       <div class="input-group">
+        <!-- From Dropdown -->
         <div class="input-field">
           <div class="input-icon">
             <img :src="fromTo" class="fromToImage" />
           </div>
           <div class="input-type">
-            <label class="large-label">
-              From
-            </label>
-            <input type="text" v-model="from" placeholder="Hanoi" class="typeIn" />
+            <label class="large-label">From</label>
+            <select v-model="airports.departureAirport" @change="updateToOptions" class="typeIn">
+              <option v-for="airport in airports.fromOptions" :key="airport.id" :value="airport">
+                {{ airport.city }} ({{ airport.iata_code }})
+              </option>
+            </select>
           </div>
         </div>
+
+        <!-- To Dropdown -->
         <div class="input-field">
           <div class="input-icon">
             <img :src="fromTo" class="fromToImage" />
           </div>
           <div class="input-type">
-            <label class="large-label">
-              To
-            </label>
-            <input type="text" v-model="to" placeholder="Ho Chi Minh" class="typeIn" />
+            <label class="large-label">To</label>
+            <select v-model="airports.arrivalAirport" class="typeIn">
+              <option v-for="airport in airports.toOptions" :key="airport.id" :value="airport">
+                {{ airport.city }} ({{ airport.iata_code }})
+              </option>
+            </select>
           </div>
         </div>
         <div class="input-field">
@@ -68,9 +75,30 @@
       </div>
     </div>
 
+    <div class="image-slider-container">
+      <button @click="prevSlide" class="prev-btn">&#10094;</button>
+      <div class="image-slider">
+        <div class="slider-item" v-for="(item, index) in items" :key="index" v-show="currentIndex === index">
+          <img :src="item.image" :alt="'Image ' + (index + 1)">
+          <div class="text-overlay">{{ item.text }}</div>
+          <div class="discount-buttons">
+            <button class="discount-button" :class="{ active: activeButtonIndex === 0 }"
+              @click="handleDiscountButtonClick(0)">NewYork Traveling</button>
+            <button class="discount-button" :class="{ active: activeButtonIndex === 1 }"
+              @click="handleDiscountButtonClick(1)">Tet Homecoming Flight</button>
+            <button class="discount-button" :class="{ active: activeButtonIndex === 2 }"
+              @click="handleDiscountButtonClick(2)">Southeast Asia Traveling</button>
+          </div>
+        </div>
+      </div>
+      <button @click="nextSlide" class="next-btn">&#10095;</button>
+    </div>
+
+
+
     <div class="flight-list" v-if="isSearched">
-      <h2>Available Flights</h2>
-      <div class="flight-card" v-for="flight in filteredFlights" :key="flight.flightNumber">
+      <label class="myheader">Available Flights</label>
+      <div class="flight-card" v-for="flight in filteredFlights" :key="flight.id">
         <div class="ticket-icon">
           <img src="@/assets/flight.png" alt="take off icon" class="takeOff" />
         </div>
@@ -79,11 +107,11 @@
             Qairline
           </div>
           <div class="flightnumber">
-            {{ flight.flightNumber }} - {{ selectedClass }}
+            {{ flight.flight_number }} - {{ selectedClass }}
           </div>
         </div>
         <div class="time">
-          <div class="departureTime"> {{ flight.departureTime }}</div>
+          <div class="departureTime"> {{ flight.departure_time }}</div>
           <div class="dateConvert"> {{ formattedDates.checkIn }}</div>
         </div>
         <div class="ticket-tour">
@@ -100,18 +128,18 @@
             <div class="circle right"></div>
           </div>
           <div class="labels">
-            <span class="label">{{ flight.departureAirport }}</span>
-            <span class="label">Direct</span>
-            <span class="label">{{ flight.arrivalAirport }}</span>
+            <span class="label">{{ airports.departureAirport.iata_code }}</span>
+            <span class="label B">Direct</span>
+            <span class="label">{{ airports.arrivalAirport.iata_code }}</span>
           </div>
         </div>
         <div class="time">
-          <div class="arivalTime"> {{ flight.arrivalTime }}</div>
+          <div class="arivalTime"> {{ flight.arrival_time }}</div>
           <div class="dateConvert"> {{ formattedDates.checkOut }}</div>
         </div>
         <!-- Thông tin giá và nút chọn -->
         <div class="price-info">
-          <span class="price">USD {{ flight.price }}</span>
+          <span class="price">${{ flight.class_pricing[0].base_price }} USD</span>
           <button class="select-button" v-if="!isChoosed" @click="selectFlight(flight)">Booking Now!</button>
           <button class="select-button" v-if="isChoosed" @click="undo()">Undo</button>
         </div>
@@ -119,10 +147,10 @@
     </div>
     <!-- lựa chọn meal -->
     <div class="meal-container" v-if="isService">
-      <h2>Qmeal Service</h2>
+      <label class="myheader">Qmeal Service</label>
       <div class="meal-list">
-        <div class="meal-card" v-for="meal in meals" :key="meal.name">
-          <img class="meal-img" :src="meal.imgSrc" alt="meal image" />
+        <div class="meal-card" v-for="meal in externalServices.meals" :key="meal.name">
+          <img class="meal-img" :src="meal.img_src" alt="meal image" />
           <div class="meal-description">
             <h3 class="large-label">{{ meal.name }}</h3>
             <p>{{ meal.description }}</p>
@@ -134,25 +162,32 @@
         </div>
       </div>
     </div>
-    <div class="baggage-slider" v-if="isService">
-      <h2>Qluggage Service</h2>
-      <!-- Thanh kéo -->
-      <div class="slider-container">
-        <div class="track">
-          <!-- Phần màu sắc hiển thị khi kéo -->
-          <div class="filled" :style="{ width: `${(selectedWeight / maxWeight) * 100}%` }"></div>
+    <div class="luggage-finish" v-if="isService">
+      <div class="baggage-slider">
+        <label class="myheader">Qluggage Service</label>
+        <!-- Thanh kéo -->
+        <div class="slider-container">
+          <div class="track">
+            <!-- Phần màu sắc hiển thị khi kéo -->
+            <div class="filled" :style="{ width: `${(selectedWeight / maxWeight) * 100}%` }"></div>
+          </div>
+          <div class="thumb" :style="{ left: `${(selectedWeight / maxWeight) * 100}%` }" @mousedown="startDragging">
+            <img src="@/assets/suitcase.png" alt="Luggage Icon" class="luggage-icon" draggable="false" />
+          </div>
         </div>
-        <div class="thumb" :style="{ left: `${(selectedWeight / maxWeight) * 100}%` }" @mousedown="startDragging">
-          <img src="@/assets/suitcase.png" alt="Luggage Icon" class="luggage-icon" draggable="false" />
+        <!-- Hiển thị cân nặng -->
+        <div class="weight-display">
+          <span>{{ selectedWeight }} kg</span>
+          <span> - </span>
+          <span>{{ calculatePrice(selectedWeight) }} $USD</span>
         </div>
       </div>
-      <!-- Hiển thị cân nặng -->
-      <div class="weight-display">
-        <span>{{ selectedWeight }} kg</span>
-        <span> - </span>
-        <span>{{ calculatePrice(selectedWeight) }} $USD</span>
+      <div class="price-info">
+        <span class="price">Total: ${{ totalPrice }} USD</span>
+        <button class="select-button">Finish!</button>
       </div>
     </div>
+    <Footer />
   </div>
 </template>
 
@@ -161,119 +196,173 @@ import video from "@/assets/58475-488682084_small.mp4";
 import image from "@/assets/vecteezy_plane-png-with-ai-generated_26773766.png";
 import fromTo from "@/assets/pin.png";
 import calendar from "@/assets/calendar.png";
-import standardMeal from "@/assets/h2-meal.jpg";
-import premiumMeal from "@/assets/premium.jpg";
-import vegeMeal from "@/assets/vege.jpg";
-import kidMeal from "@/assets/kid.jpg";
+import tetImage from "@/assets/tet.jpg";
+import cityImage from "@/assets/city.jpg";
+import dnaImage from "@/assets/dna.jpg";
+import Footer from '@/pages/master/footer.vue';
+
+import axios from 'axios';
+import { useUserStore } from '@/stores/user';
 
 export default {
+  components: {
+    Footer
+  },
   name: "booking",
   data() {
     return {
+      totalPrice: 0,
       selectedWeight: 0, // Giá trị ban đầu của số cân nặng
       maxWeight: 20, // Số cân tối đa
       dragging: false, // Trạng thái kéo
       pricePerKg: 50,
-      from: '', // Lưu giá trị của ô "From"
-      to: '',    // Lưu giá trị của ô "To"
+      activeButtonIndex: null,
       formattedDates: {
         checkIn: '',
         checkOut: ''
       },
       video,
       image,
-      standardMeal,
-      premiumMeal,
-      vegeMeal,
-      kidMeal,
       fromTo,
       calendar,
-      classOptions: ['Economy', 'Business Class', 'First Class'],
+      classOptions: ['Economy', 'Business Class'],
       selectedClass: 'Economy',
       isSearched: false,
       isChoosed: false,
       isService: false,
-      flights: [
-        {
-          departureAirport: "JFK",
-          departureTime: "08:00",
-          arrivalAirport: "LAX",
-          arrivalTime: "11:30",
-          flightNumber: "AA123",
-          duration: "5h30m",
-          price: "$299"
-        },
-        {
-          departureAirport: "SFO",
-          departureTime: "09:15",
-          arrivalAirport: "ORD",
-          arrivalTime: "03:45",
-          flightNumber: "UA456",
-          duration: "4h30m",
-          price: "$259"
-        },
-        {
-          departureAirport: "LHR",
-          departureTime: "02:30",
-          arrivalAirport: "DXB",
-          arrivalTime: "12:15",
-          flightNumber: "EK789",
-          duration: "7h45m",
-          price: "$599"
-        }
+      selectedFlight: {
+        flightInfo: null,
+        seats: []
+      },
+      currentIndex: 0,
+      items: [
+        { image: cityImage, text: 'NewYork Traveling - Discount 30%' },
+        { image: tetImage, text: 'Tet Holiday: flight coming home - Discount 50%' },
+        { image: dnaImage, text: 'Southeast Aisa Traveling - Discount 40%' }
       ],
-      selectedFlight: null,
-      meals: [
-        {
-          name: 'Standard Meal',
-          description: 'A common meal with options like chicken, beef, or fish with rice, mashed potatoes, or pasta.',
-          imgSrc: standardMeal,
-          quantity: 0
-        },
-        {
-          name: 'Premium Meal',
-          description: 'A luxurious meal with options like filet mignon, grilled salmon, or lobster with special sauces.',
-          imgSrc: premiumMeal,
-          quantity: 0
-        },
-        {
-          name: 'Vegetarian Meal',
-          description: 'A plant-based meal including options like mushroom rice, pasta with lentils, and fresh salads.',
-          imgSrc: vegeMeal,
-          quantity: 0
-        },
-        {
-          name: 'Kid Meal',
-          description: 'A kid-friendly meal with chicken nuggets, macaroni and cheese, and small sandwiches.',
-          imgSrc: kidMeal,
-          quantity: 0
-        }
-      ],
+      airports: {
+        defaultOptions: [],
+        fromOptions: [],
+        toOptions: [],
+        departureAirport: null,
+        arrivalAirport: null      
+      },
+      flights: [],
+      externalServices: {
+        meals: [],
+        luggage: []
+      },
+      booking: {
+
+      }
     };
+  },
+  async created() {
+    const userStore = useUserStore();
+    console.log(userStore)
+    try {
+      // Fetch all airports initially
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports`);;
+      this.airports.defaultOptions = response.data.data;
+      this.airports.fromOptions = [...this.airports.defaultOptions];
+      this.airports.toOptions = [...this.airports.defaultOptions];
+    } catch (error) {
+      console.error("Error fetching initial airports:", error);
+    }
+
+    try {
+      // Fetching external services like meals or luggage
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/services/search?service_type=MEAL`);;
+      this.externalServices.meals = response.data.data;
+      console.log(this.externalServices.meals);
+    } catch(error) {
+      console.error("Error fetching external services:", error);
+    }
+
   },
 
   computed: {
     filteredFlights() {
-      if (!this.selectedFlight) return this.flights;
+      if (!this.selectedFlight.flightInfo) return this.flights;
       return this.flights.filter(
         (flight) => flight.flightNumber === this.selectedFlight.flightNumber
       );
     },
+
+    totalPrice() {
+      const flightPrice = this.isChoosed && this.selectedFlight ? this.selectedFlight.price : 0;
+      const mealsPrice = this.meals.reduce((sum, meal) => sum + meal.quantity * meal.price, 0);
+      const luggagePrice = this.calculatePrice(this.selectedWeight);
+
+      return flightPrice + mealsPrice + luggagePrice;
+    }
+
   },
 
   methods: {
-    searchFlights() {
+    async updateToOptions() {
+      if (!this.airports.departureAirport.id) return;
+
+      try {
+        // Fetch possible "To" options based on selected "From"
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports/${this.airports.departureAirport.id}/get_arrival_airports`);
+        this.airports.toOptions = response.data.data;
+        
+        // Clear "To" selection if it's no longer valid
+        if (this.airports.arrivalAirport && !this.airports.toOptions.find(option => option.id === this.airports.arrivalAirport.id)) {
+          this.airports.arrivalAirport = null;
+        }
+      } catch (error) {
+        console.error("Error updating 'To' options:", error);
+      }
+    },
+    // async updateFromOptions() {
+    //   if (!this.to) return;
+
+    //   try {
+    //     // Fetch possible "From" options based on selected "To"
+    //     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports/${this.to}/get_departure_airports`);
+    //     this.airports.fromOptions = response.data.data;
+        
+    //     // Clear "From" selection if it's no longer valid
+    //     if (!this.airports.fromOptions.find(option => option.id === this.from)) {
+    //       this.from = null;
+    //     }
+    //   } catch (error) {
+    //     console.error("Error updating 'From' options:", error);
+    //   }
+    // },
+    async searchFlights() {
+
+      console.log(this.airports.departureAirport.id);
+      console.log(this.airports.arrivalAirport.id);
+      console.log(this.$refs["checkInDate"].value)
+      const iso_date = new Date(this.$refs["checkInDate"].value).toISOString();
+      console.log(iso_date)
+
+      // get all valid flights based on selected options and departure_date
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/flights/search?departure_airport_id=${this.airports.departureAirport.id}&arrival_airport_id=${this.airports.arrivalAirport.id}&departure_date=${iso_date}`);
+
+      this.flights = response.data.data;
+      console.log(response.data.data)
+
+      console.log(this.flights);
+
       this.isSearched = true; // Đặt thành true khi bấm nút Search Flight
     },
-
-    selectFlight(flight) {
-      this.selectedFlight = flight; // Cập nhật chuyến bay được chọn
+    async selectFlight(flight) {
+      this.selectedFlight.flightInfo = flight; // Cập nhật chuyến bay được chọn
+      // get available seats for selected flight
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/flights/${flight.id}/seats`);
+      this.selectedFlight.seats = response.data.data;
+      console.log(this.selectedFlight.seats);
       this.isChoosed = true;
       this.isService = true;
     },
 
-    undo() {
-      this.selectedFlight = null;
+    undo(flight) {
+      this.selectedFlight.flightInfo = null;
+      this.selectedFlight.seats = [];
       this.isChoosed = false;
       this.isService = false;
     },
@@ -313,6 +402,40 @@ export default {
     calculatePrice(weight) {
       return weight * this.pricePerKg; // Tính giá tiền dựa trên số kg
     },
+
+    showSlide(index) {
+      if (index >= this.items.length) {
+        this.currentIndex = 0;
+      } else if (index < 0) {
+        this.currentIndex = this.items.length - 1;
+      } else {
+        this.currentIndex = index;
+      }
+    },
+
+    prevSlide() {
+      this.showSlide(this.currentIndex - 1);
+    },
+
+    nextSlide() {
+      this.showSlide(this.currentIndex + 1);
+    },
+
+    handleDiscountButtonClick(index) {
+      if (this.activeButtonIndex === index) {
+        // Nếu bấm lại vào nút đã chọn, bỏ chọn nút
+        this.activeButtonIndex = null;
+      } else {
+        // Nếu bấm vào nút khác, đổi trạng thái nút
+        this.activeButtonIndex = index;
+      }
+    }
+  },
+  mounted() {
+    // Tự động chuyển slide mỗi 5 giây
+    setInterval(() => {
+      this.nextSlide();
+    }, 5000);
   }
 };
 </script>
@@ -325,6 +448,8 @@ export default {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .slogan {
@@ -341,6 +466,7 @@ export default {
   font-style: italic;
   /* Để chữ in nghiêng */
   margin-bottom: 20px;
+  margin-top: 20px;
 }
 
 
@@ -352,7 +478,7 @@ export default {
   align-items: center;
   position: relative;
   border-radius: 5rem;
-  margin-bottom: 40px;
+  margin-bottom: 10px;
 }
 
 .videoD {
@@ -378,6 +504,7 @@ export default {
   position: absolute;
   width: 85%;
   top: -12%;
+  height: 300px;
 }
 
 .flight-search-container {
@@ -405,7 +532,7 @@ export default {
   /* Khoảng cách bên trong nút */
   border: none;
   /* Loại bỏ viền */
-  background-color: #f0f0f0;
+  background-color: #4CB5D2;
   /* Màu nền cho nút */
   border-radius: 4px;
   /* Bo tròn nút */
@@ -415,6 +542,7 @@ export default {
   /* Hiệu ứng hover */
   margin-right: 0;
   /* Loại bỏ khoảng cách phải giữa các nút */
+  color: white;
 }
 
 .class-option:last-child {
@@ -423,14 +551,14 @@ export default {
 }
 
 .class-option.active {
-  background-color: #377fcd;
+  background-color: #003D5B;
   /* Màu cho nút đang chọn */
   font-weight: bold;
   /* Chữ đậm */
 }
 
 .class-option:hover {
-  background-color: #e0e0e0;
+  background-color: #4CB5D2;
   /* Hiệu ứng hover */
   transform: scale(1.05);
   /* Hiệu ứng phóng to nhẹ */
@@ -469,7 +597,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100px;
+  min-width: 80px;
   height: 90px;
   border-radius: 30%;
   margin: 0;
@@ -543,8 +671,8 @@ export default {
 }
 
 .search-btn {
-  background-color: #377fcd;
-  color: black;
+  background-color: #003D5B;
+  color: white;
   font-weight: bold;
   border: none;
   border-radius: 20px;
@@ -554,7 +682,7 @@ export default {
 }
 
 .search-btn:hover {
-  background-color: #0056b3;
+  background-color: #1F7D8C;
 }
 
 .large-label {
@@ -579,25 +707,31 @@ export default {
   margin: 10px !important;
 }
 
-h2 {
+.myheader {
   text-align: center;
   color: #333;
   font-size: 1.8rem;
   margin-bottom: 10px !important;
+  font-family: 'Merriweather', serif;
 }
 
 .flight-card {
   width: 100%;
-  border: 1px solid #ddd;
+  border: 4px solid transparent;
   padding: 20px;
   border-radius: 10px;
   margin-bottom: 30px;
   display: flex;
   flex-direction: row;
   gap: 5px;
-  max-width: 800px;
-  justify-content: space-between;
+  min-width: 800px;
+  max-width: fit-content;
+  background: linear-gradient(white, white) padding-box,
+    linear-gradient(90deg, #003D5B, #1F7D8B) border-box;
 }
+
+
+
 
 .price-info {
   display: flex;
@@ -605,6 +739,7 @@ h2 {
   width: 100%;
   align-items: center;
   flex-direction: column;
+  margin-left: 40px;
 }
 
 .price {
@@ -615,15 +750,15 @@ h2 {
 
 .select-button {
   padding: 10px 20px;
-  background-color: #c7eded;
-  color: black;
+  background-color: #003D5B;
+  color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
 }
 
 .select-button:hover {
-  background-color: #0056b3;
+  background-color: #1F7D8C;
 }
 
 .date {
@@ -734,14 +869,14 @@ h2 {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  width: 160px;
+  min-width: 60px;
 }
 
 .headerInfo {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  margin-right: 20px;
+  margin-right: 40px;
 }
 
 .arivalTime,
@@ -795,38 +930,61 @@ h2 {
 .progress-bar {
   position: relative;
   width: 100%;
-  max-width: 300px;
-  height: 4px;
-  background-color: #d3d3d3;
-  margin-bottom: 8px;
+  min-width: 500px;
+  height: 8px;
+  /* Tăng chiều cao để rõ nét hơn */
+  background-color: #e8e8e8;
+  /* Màu nền xám nhạt cho line */
+  border-radius: 4px;
+  /* Bo tròn line */
+  margin-bottom: 16px;
+  /* Tăng khoảng cách bên dưới */
 }
 
 .line {
   position: absolute;
-  top: 0;
+  top: 50%;
+  /* Căn giữa theo chiều dọc */
   left: 0;
   width: 100%;
-  height: 100%;
-  background-color: #d3d3d3;
+  height: 4px;
+  /* Line nhỏ hơn nền */
+  background-color: #003D5B;
+  /* Màu line đồng bộ với màu nút */
+  transform: translateY(-50%);
+  /* Căn giữa */
+  border-radius: 4px;
+  /* Bo tròn line */
   z-index: 1;
 }
 
 .circle {
   position: absolute;
-  top: -4px;
-  width: 8px;
-  height: 8px;
+  top: 50%;
+  /* Căn giữa theo chiều dọc */
+  width: 16px;
+  /* Kích thước hình tròn */
+  height: 16px;
+  /* Hình tròn hoàn hảo */
   border-radius: 50%;
-  background-color: #007bff;
-  /* Màu xanh của vòng tròn */
+  background-color: white;
+  /* Màu nền trắng để phù hợp với trang */
+  border: 4px solid #003D5B;
+  /* Viền xanh đậm đồng bộ với nút */
+  box-shadow: 0 0 10px rgba(0, 61, 91, 0.5);
+  /* Ánh sáng nhẹ màu xanh đậm */
+  transform: translateY(-50%);
+  /* Căn giữa */
   z-index: 2;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  /* Hiệu ứng hover */
 }
 
-.left {
+.circle.left {
   left: 0;
 }
 
-.right {
+.circle.right {
   right: 0;
 }
 
@@ -843,11 +1001,17 @@ h2 {
   text-align: center;
 }
 
+.B {
+  font-weight: bold;
+}
+
 .baggage-slider {
   width: 500px;
   margin: 20px auto;
   font-family: Arial, sans-serif;
   text-align: center;
+  display: flex;
+  flex-direction: column;
 }
 
 .slider-container {
@@ -903,5 +1067,155 @@ h2 {
   font-size: 16px;
   font-weight: bold;
   color: red;
+}
+
+.image-slider-container {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 60px;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.image-slider {
+  display: flex;
+  transition: transform 0.5s ease;
+}
+
+.slider-item {
+  position: relative;
+  min-width: 100%;
+}
+
+.slider-item img {
+  width: 100%;
+  height: 300px;
+  border-radius: 10px;
+  object-fit: cover
+}
+
+.text-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.prev-btn {
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  padding: 15px;
+  font-size: 24px;
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.next-btn {
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  padding: 15px;
+  font-size: 24px;
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.image-slider-container {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 50px;
+  overflow: visible;
+  /* Đảm bảo các nút không bị cắt */
+  border-radius: 10px;
+}
+
+.discount-buttons {
+  position: absolute;
+  bottom: -20px;
+  /* Đẩy nửa dưới nút ra ngoài ảnh */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  z-index: 2;
+  /* Đảm bảo các nút không bị che */
+}
+
+.discount-button {
+  position: relative;
+  width: 200px;
+  /* Đặt chiều rộng cố định để các nút đều nhau */
+  padding: 10px 0;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  color: #003D5B;
+  background-color: white;
+  border: 2px solid #003D5B;
+  border-radius: 5px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: color 0.4s ease, background-color 0.4s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  /* Hiệu ứng đổ bóng */
+}
+
+.discount-button:hover,
+.discount-button:active {
+  background-color: #003D5B;
+  color: white;
+}
+
+.discount-button.active {
+  background-color: #003D5B;
+  /* Giữ màu sau khi bấm */
+  color: white;
+}
+
+.discount-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(120deg,
+      rgba(255, 255, 255, 0.5),
+      rgba(255, 255, 255, 0.1),
+      transparent);
+  transform: skewX(-45deg);
+  z-index: 1;
+  transition: all 0.4s ease;
+}
+
+.discount-button:hover::before {
+  left: 100%;
+  /* Ánh sáng lướt từ trái sang phải */
+  transition: left 0.6s ease-out;
+}
+
+.luggage-finish {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
 }
 </style>
