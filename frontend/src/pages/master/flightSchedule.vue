@@ -242,6 +242,10 @@
 <script>
 import Footer from '@/pages/master/footer.vue';
 import TicketManage from '@/pages/master/ticketManage.vue';
+import { useUserStore } from '@/stores/user';
+
+import apiClient from '@/api/axios';
+
 export default {
   components: {
     Footer,
@@ -315,6 +319,12 @@ export default {
       pageSize: 4
     };
   },
+
+  async created() {
+    const userStore = useUserStore();
+    this.isAdmin = user.role === 'admin';
+  },
+
   computed: {
     filteredFlights() {
       return this.flights.filter(flight => {

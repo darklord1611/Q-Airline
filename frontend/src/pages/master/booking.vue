@@ -201,8 +201,9 @@ import cityImage from "@/assets/city.jpg";
 import dnaImage from "@/assets/dna.jpg";
 import Footer from '@/pages/master/footer.vue';
 
-import axios from 'axios';
+import apiClient from "@/api/axios";
 import { useUserStore } from '@/stores/user';
+
 
 export default {
   components: {
@@ -262,7 +263,7 @@ export default {
     console.log(userStore)
     try {
       // Fetch all airports initially
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports`);;
+      const response = await apiClient.get(`/airports`);
       this.airports.defaultOptions = response.data.data;
       this.airports.fromOptions = [...this.airports.defaultOptions];
       this.airports.toOptions = [...this.airports.defaultOptions];
@@ -272,7 +273,7 @@ export default {
 
     try {
       // Fetching external services like meals or luggage
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/services/search?service_type=MEAL`);;
+      const response = await apiClient.get(`/services/search?service_type=MEAL`);;
       this.externalServices.meals = response.data.data;
       console.log(this.externalServices.meals);
     } catch(error) {
@@ -305,7 +306,7 @@ export default {
 
       try {
         // Fetch possible "To" options based on selected "From"
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports/${this.airports.departureAirport.id}/get_arrival_airports`);
+        const response = await apiClient.get(`/airports/${this.airports.departureAirport.id}/get_arrival_airports`);
         this.airports.toOptions = response.data.data;
         
         // Clear "To" selection if it's no longer valid
@@ -316,22 +317,6 @@ export default {
         console.error("Error updating 'To' options:", error);
       }
     },
-    // async updateFromOptions() {
-    //   if (!this.to) return;
-
-    //   try {
-    //     // Fetch possible "From" options based on selected "To"
-    //     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports/${this.to}/get_departure_airports`);
-    //     this.airports.fromOptions = response.data.data;
-        
-    //     // Clear "From" selection if it's no longer valid
-    //     if (!this.airports.fromOptions.find(option => option.id === this.from)) {
-    //       this.from = null;
-    //     }
-    //   } catch (error) {
-    //     console.error("Error updating 'From' options:", error);
-    //   }
-    // },
     async searchFlights() {
 
       console.log(this.airports.departureAirport.id);
@@ -341,7 +326,7 @@ export default {
       console.log(iso_date)
 
       // get all valid flights based on selected options and departure_date
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/flights/search?departure_airport_id=${this.airports.departureAirport.id}&arrival_airport_id=${this.airports.arrivalAirport.id}&departure_date=${iso_date}`);
+      const response = await apiClient.get(`/flights/search?departure_airport_id=${this.airports.departureAirport.id}&arrival_airport_id=${this.airports.arrivalAirport.id}&departure_date=${iso_date}`);
 
       this.flights = response.data.data;
       console.log(response.data.data)
@@ -353,7 +338,7 @@ export default {
     async selectFlight(flight) {
       this.selectedFlight.flightInfo = flight; // Cập nhật chuyến bay được chọn
       // get available seats for selected flight
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/flights/${flight.id}/seats`);
+      const response = await apiClient.get(`/flights/${flight.id}/seats`);
       this.selectedFlight.seats = response.data.data;
       console.log(this.selectedFlight.seats);
       this.isChoosed = true;

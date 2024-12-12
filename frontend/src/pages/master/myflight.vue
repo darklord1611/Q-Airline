@@ -76,7 +76,7 @@
 <script>
 import Footer from '@/pages/master/footer.vue';
 import { useUserStore } from '@/stores/user';
-import axios from 'axios';
+import apiClient from '@/api/axios';
 
 export default {
     components: {
@@ -93,7 +93,7 @@ export default {
         console.log(userStore.user)
 
         // get all bookings of an user (information includes flight details, price, meal, luggage, etc.)
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/bookings?user_id=${userStore.user.id}`);
+        const response = await apiClient.get(`/bookings?user_id=${userStore.user.id}`);
 
 
         // Định dạng ngày tháng ngay khi component được khởi tạo

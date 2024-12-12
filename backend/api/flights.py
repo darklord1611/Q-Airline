@@ -30,12 +30,11 @@ async def get_flights(departure_airport_id: int, arrival_airport_id: int, depart
         print(date_str)
         route_id = supabase.table("routes").select("id").eq("arrival_airport_id", arrival_airport_id).eq("departure_airport_id", departure_airport_id).execute().data[0]["id"]
 
-        flights = supabase.table("flights").select("").eq("route_id", route_id).eq("is_active", True).gte("departure_time", f"{date_str}T00:00:00Z").lt("departure_time", f"{date_str}T23:59:59Z").execute().data
+        flights = supabase.table("flights").select().eq("route_id", route_id).eq("is_active", True).gte("departure_time", f"{date_str}T00:00:00Z").lt("departure_time", f"{date_str}T23:59:59Z").execute().data
 
         for flight in flights:
             flight["class_pricing"] = supabase.table("flight_class_pricing").select("class_name", "base_price", "tax_percentage", "discount_percentage").eq("flight_id", flight["id"]).execute().data
-            flight["aircraft_info"] = supabase.table("aircrafts").select("model", "manufacturer").eq("id", flight["aircraft_id"]).execute().data
-            flight["flight_number"] = "AA123"
+            flight["aircraft_info"] = supabase.table("aircrafts").select("model", "manufacturer").eq("id", flight["aircraft_id"]).execute().data        
 
             flight["departure_time"] = convert_timestamp_to_time(flight["departure_time"])
             flight["arrival_time"] = convert_timestamp_to_time(flight["arrival_time"])
@@ -122,9 +121,13 @@ async def get_flight_statistics(flight_id: int):
     # seat + class utilization
     # revenue generated
     # customer demographics
-    pass
+    flight_info = supabase.from_("flight_details").select().eq("flight_id", flight_id).execute().data[0]
+    
+    flight_info["service_statistics"] = supabase.table("flight_revenues").select().eq("flight_id", flight_id).execute().data
+    return {"status": "success", "data": flight_info}
 
 
 @router.get("/analytics", description="Get analytics of all flights")
 async def get_all_flights_statistics(flight_id: int):
+    
     pass

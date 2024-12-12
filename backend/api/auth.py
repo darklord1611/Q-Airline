@@ -22,6 +22,6 @@ async def login(req: LoginRequest = Body(...)):
     response = supabase.auth.sign_in_with_password(
     {"email": req.email, "password": req.password}
 )
-    user = supabase.table('users').select("id", "first_name", "last_name").eq('id', response.user.id).execute().data[0]
+    user = supabase.table('users').select("id", "first_name", "last_name", "role").eq('id', response.user.id).execute().data[0]
     return {"status": "success", "user": user, "access_token": response.session.access_token, "refresh_token": response.session.refresh_token}
 
