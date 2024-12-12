@@ -32,16 +32,32 @@
           </svg>
           Support
         </router-link>
-
-        <!-- Login/Logout -->
-        <router-link to="/login" class="flex items-center py-2 px-3 text-sm hover:bg-gray-700 transition rounded-md">
-          <svg aria-hidden="true" class="w-[20px] h-[20px] mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z">
-            </path>
-          </svg>
-          Login / Logout
-        </router-link>
+        
+        <div v-if="isLoggedIn">
+            <!-- User Avatar -->
+            <div class="flex items-center justify-start space-x-4" @click="toggleDrop">
+              <svg aria-hidden="true" class="mr-2 w-[25px] h-[25px] fill-current" fill="currentColor" viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"
+                  clip-rule="evenodd"></path>
+              </svg>
+            </div>
+            <!-- Drop-down -->
+            <div v-show="showDropDown"
+              class="absolute right-[10px] z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+              role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
+              <div class="py-1 text-left" role="none">
+                <router-link to="/profile" class="text-gray-700 block px-4 py-2 text-sm">Profile</router-link>
+                <button @click="handleLogout" class="text-gray-700 block px-4 py-2 text-sm">Logout</button>
+              </div>
+            </div>
+          </div>
+          <div v-else class="flex items-center justify-start space-x-4">
+            <!-- Login and Register Buttons -->
+            <router-link to="/login" class="flex items-center py-2 px-3 text-sm hover:bg-gray-700 transition rounded-md">Login</router-link>
+            <router-link to="/register" class="flex items-center py-2 px-3 text-sm hover:bg-gray-700 transition rounded-md">Register</router-link>
+          </div>
       </div>
     </div>
 

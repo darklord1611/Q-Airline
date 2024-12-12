@@ -81,77 +81,84 @@
     </div>
   </template>
   
-  <script>
-  import { ref, computed } from 'vue';
-  import { useRouter } from 'vue-router';
-  import axios from 'axios';
-  
-  export default {
-    setup() {
-      // Reactive variables using ref
-      const firstName = ref('');
-      const lastName = ref('');
-      const email = ref('');
-      const password = ref('');
-      const errorMessage = ref('');
-  
-      // Computed properties for password validation
-      const passwordLength = computed(() => password.value.length >= 8);
-      const passwordUppercase = computed(() => /[A-Z]/.test(password.value));
-      const passwordNumber = computed(() => /\d/.test(password.value));
-      const passwordSpecialChar = computed(() => /[@$!%*?&]/.test(password.value));
-  
-      const isPasswordStrong = computed(() => {
-        return passwordLength.value && passwordUppercase.value && passwordNumber.value && passwordSpecialChar.value;
-      });
-  
-      // Initialize the router for navigation
-      const router = useRouter();
-  
-      // Registration handler function
-      const handleRegister = async () => {
-        if (!isPasswordStrong.value) {
-          errorMessage.value = 'Password does not meet the required conditions. Please try again.';
-          return;
-        }
-  
-        try {
-  
-          // Send POST request to backend for registration
-          const response = await axios.post(
-            `${import.meta.env.VITE_BACKEND_URL}/auth/register`,
-            {
-              first_name: firstName.value,
-              last_name: lastName.value,
-              email: email.value,
-              password: password.value,
-            }
-          );
-  
-          // Handle successful response
-          console.log(response.data);
-          router.push('/login'); // Redirect to login page
-        } catch (error) {
-          // Handle error response
-          errorMessage.value = error.response?.data?.message || 'An error occurred during registration.';
-        }
-      };
-  
-      // Return everything that needs to be used in the template
-      return {
-        firstName,
-        lastName,
-        email,
-        password,
-        errorMessage,
-        isPasswordStrong,
-        handleRegister,
-      };
+<script>
+import axios from 'axios';
+import { useRouter } from 'vue-router';
+
+export default {
+  data() {
+    return {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      errorMessage: '',
+    };
+  },
+  computed: {
+    // Computed properties for password validation
+    passwordLength() {
+      return this.password.length >= 8;
     },
-  };
-  </script>
+    passwordUppercase() {
+      return /[A-Z]/.test(this.password);
+    },
+    passwordNumber() {
+      return /\d/.test(this.password);
+    },
+    passwordSpecialChar() {
+      return /[@$!%*?&]/.test(this.password);
+    },
+    isPasswordStrong() {
+      return (
+        this.passwordLength &&
+        this.passwordUppercase &&
+        this.passwordNumber &&
+        this.passwordSpecialChar
+      );
+    },
+  },
+  methods: {
+    // Registration handler function
+    async handleRegister() {
+      if (!this.isPasswordStrong) {
+        this.errorMessage =
+          'Password does not meet the required conditions. Please try again.';
+        return;
+      }
+
+      try {
+        // Send POST request to backend for registration
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/auth/register`,
+          {
+            first_name: this.firstName,
+            last_name: this.lastName,
+            email: this.email,
+            password: this.password,
+          }
+        );
+
+        // Handle successful response
+        console.log(response.data);
+        const router = useRouter();
+        router.push('/login'); // Redirect to login page
+      } catch (error) {
+        // Handle error response
+        this.errorMessage =
+          error.response?.data?.message || 'An error occurred during registration.';
+      }
+    },
+  },
+  created() {
+    // Example: Perform any setup tasks, like fetching initial data
+    console.log('Component created, ready for user input.');
+  },
+};
+</script>
   
-  <style scoped>
-  /* Add any additional styling here */
-  </style>
+
+<style scoped>
+/* Add any additional styling here */
+</style>
   
