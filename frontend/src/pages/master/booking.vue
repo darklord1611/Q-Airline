@@ -424,7 +424,7 @@ export default {
   /* Sử dụng Pacifico */
   font-weight: normal;
   /* Không cần in đậm vì font đã có kiểu chữ đẹp */
-  font-size: 40px;
+  font-size: 30px;
   /* Kích thước chữ */
   line-height: 2rem;
   /* Khoảng cách dòng */
@@ -432,8 +432,8 @@ export default {
   /* Đổ bóng chữ */
   font-style: italic;
   /* Để chữ in nghiêng */
-  margin-bottom: 20px;
-  margin-top: 20px;
+  margin-bottom: 0px;
+  margin-top: 10px;
 }
 
 
@@ -457,7 +457,7 @@ export default {
   /* Căn giữa video theo chiều ngang */
   align-items: center;
   /* Căn giữa video theo chiều dọc nếu có chiều cao */
-  height: 300px;
+  height: 200px;
 }
 
 .video {
@@ -469,9 +469,9 @@ export default {
 
 .planeimage {
   position: absolute;
-  width: 85%;
-  top: -12%;
-  height: 300px;
+  width: 80%;
+  top: -20%;
+  height: 240px;
 }
 
 .flight-search-container {
@@ -490,7 +490,7 @@ export default {
   /* Các nút nằm sát nhau */
   align-items: center;
   /* Căn giữa theo chiều dọc */
-  padding: 10px 0;
+  padding: 5px 0;
   /* Khoảng cách trên dưới */
 }
 
