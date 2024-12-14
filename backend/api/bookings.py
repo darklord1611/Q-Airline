@@ -14,7 +14,7 @@ async def get_bookings(flight_id: Optional[str] = None, user_id: Optional[str] =
     if flight_id:
         bookings = supabase.from_("booking_flight").select("bookings!booking_flight_booking_id_fkey(*)").eq("flight_id", flight_id).execute().data
     elif user_id:
-        bookings = supabase.table("bookings").select().eq("user_id", user_id).execute().data
+        bookings = supabase.table("bookings").select().eq("user_id", user_id).eq("booking_status", "CONFIRMED").execute().data
         for booking in bookings:
             # get flight ids according to the booking
             flights = supabase.from_("booking_flight").select("flight_id", "id").eq("booking_id", booking["id"]).execute().data

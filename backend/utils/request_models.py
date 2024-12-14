@@ -60,16 +60,16 @@ class GetFlightRequest(BaseModel):
 
 ################## AIRCRAFTS ##################
 class SeatLayout(BaseModel):
-    class_name: str
-    rows: int
-    columns: int
-    seat_number: List[str] = ["A", "B", "C", "D", "E", "F"]
+    business_rows: int
+    economy_rows: int
+    business_seats_per_row: int
+    economy_seats_per_row: int
 
 class CreateAircraftRequest(BaseModel):
     model: str
     manufacturer: str
     total_capacity: int
-    seat_configuration: List[SeatLayout]
+    seat_configuration: dict
 
 
 ################## BOOKINGS ##################
@@ -101,3 +101,12 @@ class CreateNotificationRequest(BaseModel):
     title: str
     description: str
     type: str = "info"
+
+
+################## NEWS ##################
+class CreateNewsRequest(BaseModel):
+    author_id: str
+    title: str
+    body: str
+    category: str = "Promotion"
+    visibility: str = "PUBLIC"

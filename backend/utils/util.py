@@ -66,3 +66,15 @@ def convert_timestamp_to_date(timestamp_str):
     
     # Format the datetime object to date-only string
     return dt_obj.strftime('%Y-%m-%d')
+
+
+def convert_timestamp(timestamp_str):
+    # Replace 'Z' with '+00:00' for UTC format compatibility
+    timestamp_str = timestamp_str.replace("Z", "+00:00")
+    # Parse the ISO 8601 timestamp
+    parsed_datetime = datetime.fromisoformat(timestamp_str)
+
+    # Format it into the desired user-friendly format
+    formatted_time = parsed_datetime.strftime("%I:%M %p %m/%d/%Y")
+
+    return formatted_time

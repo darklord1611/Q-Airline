@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Form
 from supabase_client import supabase
 from datetime import datetime
 from utils.request_models import CreateFlightRequest, GetFlightRequest, UpdateFlightRequest
-from utils.util import convert_timestamp_to_time, time_difference
+from utils.util import convert_timestamp_to_time, time_difference, convert_timestamp
 router = APIRouter(prefix="/flights", tags=["flights"])
 
 
@@ -63,6 +63,7 @@ async def create_flight(req: CreateFlightRequest):
         "departure_time": req.departure_time,
         "arrival_time": req.arrival_time,
         "aircraft_id": req.aircraft_id,
+        "flight_number": "AB123",
         "flight_status": req.flight_status,
         "is_active": req.is_active
     }).execute()
@@ -84,14 +85,14 @@ async def create_flight(req: CreateFlightRequest):
 @router.put("/{flight_id}")
 async def update_flight(req: UpdateFlightRequest, flight_id: int):
     # deactivate the old flight
-    response = supabase.table("flights").select().eq("id", flight_id).execute()
+    response = supabase.table("flights").select().eq("id", flight_id).execute().data[0]
 
     # save flight history
-    response.data[0]["flight_id"] = response.data[0].pop("id")
-    res = supabase.table("flight_audit").insert(response.data[0]).execute()
+    response["flight_id"] = response.pop("id")
+    insert_history_response = supabase.table("flight_audit").insert(response).execute()
     
 
-    response = supabase.table("flights").update({
+    update_response = supabase.table("flights").update({
         "departure_time": req.departure_time,
         "arrival_time": req.arrival_time,
         "aircraft_id": req.aircraft_id,
@@ -101,6 +102,8 @@ async def update_flight(req: UpdateFlightRequest, flight_id: int):
     # send out notifications about changes to customers
 
     flight_users = supabase.table("booking_flight").select("booking_id, bookings!booking_flight_booking_id_fkey(user_id)").eq("flight_id", flight_id).execute().data
+
+    res = await notify_users(flight_users, response, req)
 
     return {"status": "success", "data": flight_users}
 
@@ -131,3 +134,23 @@ async def get_flight_statistics(flight_id: int):
 async def get_all_flights_statistics(flight_id: int):
     
     pass
+
+
+
+async def notify_users(flight_users, old_flight_info, new_flight_info):
+    # notify users about the changes to flight schedule
+
+    old_depart_time = convert_timestamp(old_flight_info["departure_time"])
+    new_depart_time = convert_timestamp(new_flight_info.departure_time)
+
+    message = f"Flight schedule for flight {old_flight_info['flight_number']} has been changed from {old_depart_time} to {new_depart_time}. Please check your booking for more details."
+
+    notify_res = supabase.table("notifications").insert({
+        "title": f"Flight Schedule Changed",
+        "description": message,
+        "notification_type": "SCHEDULE_CHANGE"
+    }).execute().data[0]
+
+    res = supabase.rpc("associate_users_with_notification", params={"notification_id": notify_res["id"], "user_ids": [user["bookings"]["user_id"] for user in flight_users]}).execute()
+    print(res)
+    return res
