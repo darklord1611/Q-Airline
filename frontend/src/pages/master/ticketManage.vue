@@ -1,277 +1,195 @@
 <template>
     <div class="ticket-management">
-        <!-- Bộ lọc -->
-        <div class="filters">
-            <div class="filter-row">
-                <label for="from">From:</label>
-                <select v-model="filters.from">
-                    <option value="">All</option>
-                    <option value="Hanoi">Hanoi</option>
-                    <option value="Ho Chi Minh City">Ho Chi Minh City</option>
-                </select>
-
-                <label for="to">To:</label>
-                <select v-model="filters.to">
-                    <option value="">All</option>
-                    <option value="JFK">JFK</option>
-                    <option value="LAX">LAX</option>
-                </select>
-            </div>
-
-            <div class="filter-row">
-                <!-- Bộ lọc - Departure Airport -->
-                <label for="departureAirport">Departure Airport:</label>
-                <select v-model="filters.departureAirport">
-                    <option value="">All</option>
-                    <option value="JFK">JFK</option>
-                    <option value="LAX">LAX</option>
-                    <option value="Hanoi">Hanoi</option>
-                    <option value="Ho Chi Minh City">Ho Chi Minh City</option>
-                </select>
-
-                <!-- Bộ lọc - Arrival Airport -->
-                <label for="arrivalAirport">Arrival Airport:</label>
-                <select v-model="filters.arrivalAirport">
-                    <option value="">All</option>
-                    <option value="JFK">JFK</option>
-                    <option value="LAX">LAX</option>
-                    <option value="Hanoi">Hanoi</option>
-                    <option value="Ho Chi Minh City">Ho Chi Minh City</option>
-                </select>
-
-                <!-- Bộ lọc - Departure Time -->
-                <label for="departureTime">Departure Time:</label>
-                <input type="date" v-model="filters.departureTime" />
-
-                <!-- Bộ lọc - Arrival Time -->
-                <label for="arrivalTime">Arrival Time:</label>
-                <input type="date" v-model="filters.arrivalTime" />
-
-            </div>
-
-            <div class="filter-row">
-                <label for="checkinDate">Check-in:</label>
-                <input type="date" v-model="filters.checkin" />
-
-                <label for="checkoutDate">Check-out:</label>
-                <input type="date" v-model="filters.checkout" />
-
-                <label for="price">Price range:</label>
-                <div class="price-range">
-                    <input type="range" v-model="filters.minPrice" :max="filters.maxPrice" min="0" step="10"
-                        @input="checkPriceOrder" />
-                    <input type="range" v-model="filters.maxPrice" :min="filters.minPrice" max="1000" step="10"
-                        @input="checkPriceOrder" />
-                </div>
-                <div class="price-values">
-                    <span>Min: {{ filters.minPrice }} USD</span>
-                    <span>Max: {{ filters.maxPrice }} USD</span>
-                </div>
-            </div>
-
-            <div class="filter-row">
-                <label for="ticketType">Ticket Type:</label>
-                <select v-model="filters.ticketType">
-                    <option value="">All</option>
-                    <option value="Economy">Economy</option>
-                    <option value="Business">Business</option>
-                    <option value="First Class">First Class</option>
-                </select>
-
-                <label for="travelers">Travelers:</label>
-                <input type="number" v-model="filters.travelers" min="1" placeholder="Number of travelers" />
-
-                <label for="meals">Meals:</label>
-                <select v-model="filters.meals">
-                    <option value="">All</option>
-                    <option value="Veg">Veg</option>
-                    <option value="Non-Veg">Non-Veg</option>
-                </select>
-
-                <label for="luggageWeight">Luggage Weight (kg):</label>
-                <input type="number" v-model="filters.luggageWeight" min="0" placeholder="Max weight" />
-            </div>
-        </div>
         <label class="myheader"> Ticket Management</label>
-        <!-- Bảng thống kê -->
+
+        <!-- Biểu đồ cột -->
+        <div>
+            <canvas id="ticketChart" style="width: 100%; height: 400px;"></canvas>
+        </div>
+
+        <!-- Bảng liệt kê các tàu bay -->
         <table class="ticket-table">
             <thead>
                 <tr>
-                    <th>Ticket Number</th>
-                    <th>Travelers</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Check-in</th>
-                    <th>Check-out</th>
-                    <th>Departure Airport</th>
-                    <th>Departure Time</th>
-                    <th>Arrival Airport</th>
-                    <th>Arrival Time</th>
-                    <th>Meals</th>
-                    <th>Luggage Weight (kg)</th>
-                    <th>Price</th>
-                    <th>Ticket Type</th>
+                    <th>Aircraft Code</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(ticket, index) in paginatedTickets" :key="index">
-                    <td>{{ ticket.ticketNumber }}</td>
-                    <td>{{ ticket.travelers }}</td>
-                    <td>{{ filters.from || ticket.departureAirport }}</td>
-                    <td>{{ filters.to || ticket.arrivalAirport }}</td>
-                    <td>{{ filters.checkin || 'N/A' }}</td>
-                    <td>{{ filters.checkout || 'N/A' }}</td>
-                    <td>{{ ticket.departureAirport }}</td>
-                    <td>{{ ticket.departureTime }}</td>
-                    <td>{{ ticket.arrivalAirport }}</td>
-                    <td>{{ ticket.arrivalTime }}</td>
-                    <td>{{ ticket.meals }}</td>
-                    <td>{{ ticket.luggageWeight }}</td>
-                    <td>{{ ticket.price }}</td>
-                    <td>{{ ticket.ticketType }}</td>
+                <tr v-for="(aircraft, index) in aircrafts" :key="index">
+                    <td>{{ aircraft.code }}</td>
+                    <td><button @click="showDetails(index)">Detail</button></td>
                 </tr>
             </tbody>
         </table>
 
-        <!-- Phân trang -->
-        <div class="pagination">
-            <button @click="prevPage" :disabled="currentPage === 1">Previous</button>
-            <span>Page {{ currentPage }} of {{ totalPages }}</span>
-            <button @click="nextPage" :disabled="currentPage === totalPages">Next</button>
+        <!-- Bảng chi tiết vé -->
+        <div v-if="selectedAircraftIndex !== null" class="ticket-details">
+            <h3>Tickets for Aircraft {{ aircrafts[selectedAircraftIndex].code }}</h3>
+            <table class="ticket-table">
+                <thead>
+                    <tr>
+                        <th>Ticket Number</th>
+                        <th>Travelers</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Check-in</th>
+                        <th>Check-out</th>
+                        <th>Departure Time</th>
+                        <th>Arrival Time</th>
+                        <th>Meals</th>
+                        <th>Luggage Weight (kg)</th>
+                        <th>Price</th>
+                        <th>Ticket Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(ticket, index) in aircrafts[selectedAircraftIndex].tickets" :key="index">
+                        <td>{{ ticket.ticketNumber }}</td>
+                        <td>{{ ticket.travelers }}</td>
+                        <td>{{ ticket.departureAirport }}</td>
+                        <td>{{ ticket.arrivalAirport }}</td>
+                        <td>{{ ticket.checkin }}</td>
+                        <td>{{ ticket.checkout }}</td>
+                        <td>{{ ticket.departureTime }}</td>
+                        <td>{{ ticket.arrivalTime }}</td>
+                        <td>{{ ticket.meals }}</td>
+                        <td>{{ ticket.luggageWeight }}</td>
+                        <td>{{ ticket.price }}</td>
+                        <td>{{ ticket.ticketType }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </template>
 
 <script>
+import { Chart } from 'chart.js/auto';
+
 export default {
     data() {
         return {
-            filters: {
-                from: "",
-                to: "",
-                checkin: "",
-                checkout: "",
-                departureAirport: "",
-                arrivalAirport: "",
-                departureTime: "",
-                arrivalTime: "",
-                minPrice: 0,
-                maxPrice: 1000,
-                ticketType: "",
-                travelers: "",
-                meals: "",
-                luggageWeight: ""
-            },
-            tickets: [
+            aircrafts: [
                 {
-                    ticketNumber: "T123",
-                    travelers: 2,
-                    departureAirport: "JFK",
-                    arrivalAirport: "LAX",
-                    checkin: "2024-12-10",
-                    checkout: "2024-12-12",
-                    departureAirport: "JFK",
-                    departureTime: "2024-12-10",
-                    arrivalAirport: "LAX",
-                    arrivalTime: "2024-12-10",
-                    meals: "Veg",
-                    luggageWeight: 20,
-                    price: "$350",
-                    ticketType: "Economy"
+                    code: "A123",
+                    tickets: [
+                        {
+                            ticketNumber: "T001",
+                            travelers: 2,
+                            departureAirport: "JFK",
+                            arrivalAirport: "LAX",
+                            checkin: "2024-12-10",
+                            checkout: "2024-12-12",
+                            departureTime: "10:00 AM",
+                            arrivalTime: "1:00 PM",
+                            meals: "Veg",
+                            luggageWeight: 20,
+                            price: "$350",
+                            ticketType: "Economy"
+                        },
+                        {
+                            ticketNumber: "T002",
+                            travelers: 1,
+                            departureAirport: "JFK",
+                            arrivalAirport: "LAX",
+                            checkin: "2024-12-10",
+                            checkout: "2024-12-12",
+                            departureTime: "10:00 AM",
+                            arrivalTime: "1:00 PM",
+                            meals: "Non-Veg",
+                            luggageWeight: 25,
+                            price: "$450",
+                            ticketType: "Business"
+                        }
+                    ]
                 },
                 {
-                    ticketNumber: "T456",
-                    travelers: 1,
-                    departureAirport: "Hanoi",
-                    arrivalAirport: "Ho Chi Minh City",
-                    checkin: "2024-12-15",
-                    checkout: "2024-12-16",
-                    departureAirport: "JFK",
-                    departureTime: "2024-12-10",
-                    arrivalAirport: "LAX",
-                    arrivalTime: "2024-12-10",
-                    meals: "Non-Veg",
-                    luggageWeight: 25,
-                    price: "$120",
-                    ticketType: "Business"
-                },
-                {
-                    ticketNumber: "T789",
-                    travelers: 3,
-                    departureAirport: "LAX",
-                    arrivalAirport: "JFK",
-                    checkin: "2024-12-18",
-                    checkout: "2024-12-19",
-                    departureAirport: "JFK",
-                    departureTime: "2024-12-10",
-                    arrivalAirport: "LAX",
-                    arrivalTime: "2024-12-10",
-                    meals: "Veg",
-                    luggageWeight: 30,
-                    price: "$600",
-                    ticketType: "First Class"
+                    code: "B456",
+                    tickets: [
+                        {
+                            ticketNumber: "T003",
+                            travelers: 3,
+                            departureAirport: "Hanoi",
+                            arrivalAirport: "Ho Chi Minh City",
+                            checkin: "2024-12-15",
+                            checkout: "2024-12-16",
+                            departureTime: "9:00 AM",
+                            arrivalTime: "11:00 AM",
+                            meals: "Veg",
+                            luggageWeight: 30,
+                            price: "$120",
+                            ticketType: "Economy"
+                        }
+                    ]
                 }
             ],
-            currentPage: 1,
-            pageSize: 4
+            selectedAircraftIndex: null
         };
     },
-    computed: {
-        filteredTickets() {
-            return this.tickets.filter(ticket => {
-                const matchFrom = !this.filters.from || ticket.departureAirport === this.filters.from;
-                const matchTo = !this.filters.to || ticket.arrivalAirport === this.filters.to;
-                const matchCheckin = !this.filters.checkin || true;
-                const matchCheckout = !this.filters.checkout || true;
-                const matchDepartureAirport = !this.filters.departureAirport || ticket.departureAirport === this.filters.departureAirport;
-                const matchArrivalAirport = !this.filters.arrivalAirport || ticket.arrivalAirport === this.filters.arrivalAirport;
-                const matchDepartureTime = !this.filters.departureTime || ticket.departureTime === this.filters.departureTime;
-                const matchArrivalTime = !this.filters.arrivalTime || ticket.arrivalTime === this.filters.arrivalTime;
-                const matchPrice =
-                    parseFloat(ticket.price.replace('$', '')) >= this.filters.minPrice &&
-                    parseFloat(ticket.price.replace('$', '')) <= this.filters.maxPrice;
-                const matchTicketType = !this.filters.ticketType || ticket.ticketType === this.filters.ticketType;
-                const matchTravelers = !this.filters.travelers || ticket.travelers == this.filters.travelers;
-                const matchMeals = !this.filters.meals || ticket.meals === this.filters.meals;
-                const matchLuggageWeight =
-                    !this.filters.luggageWeight || ticket.luggageWeight <= this.filters.luggageWeight;
+    methods: {
+        showDetails(index) {
+            this.selectedAircraftIndex = index;
+        },
+        renderChart() {
+            const ctx = document.getElementById('ticketChart').getContext('2d');
 
-                return matchFrom && matchTo && matchCheckin && matchCheckout && matchDepartureAirport && matchArrivalAirport && matchDepartureTime && matchArrivalTime && matchPrice && matchTicketType && matchTravelers && matchMeals && matchLuggageWeight;
+            const labels = this.aircrafts.map(aircraft => aircraft.code);
+            const economyTickets = this.aircrafts.map(aircraft =>
+                aircraft.tickets.filter(ticket => ticket.ticketType === 'Economy').length
+            );
+            const businessTickets = this.aircrafts.map(aircraft =>
+                aircraft.tickets.filter(ticket => ticket.ticketType === 'Business').length
+            );
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Economy',
+                            data: economyTickets,
+                            backgroundColor: '#243B4A',
+                            barThickness: 20 // Độ rộng cột nhỏ lại
+                        },
+                        {
+                            label: 'Business',
+                            data: businessTickets,
+                            backgroundColor: '#D1495B',
+                            barThickness: 20 // Độ rộng cột nhỏ lại
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top' // Vị trí của chú thích
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: false // Không xếp chồng
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 5 // Giới hạn trục dọc tối đa là 5
+                        }
+                    }
+                }
             });
-        },
-        totalPages() {
-            return Math.ceil(this.filteredTickets.length / this.pageSize);
-        },
-        paginatedTickets() {
-            const start = (this.currentPage - 1) * this.pageSize;
-            const end = start + this.pageSize;
-            return this.filteredTickets.slice(start, end);
         }
     },
-    methods: {
-        nextPage() {
-            if (this.currentPage < this.totalPages) {
-                this.currentPage++;
-            }
-        },
-        prevPage() {
-            if (this.currentPage > 1) {
-                this.currentPage--;
-            }
-        },
-        checkPriceOrder() {
-            if (this.filters.minPrice > this.filters.maxPrice) {
-                this.filters.maxPrice = this.filters.minPrice;
-            }
-        }
+    mounted() {
+        this.renderChart();
     }
 };
 </script>
-
 <style scoped>
 /* Phần chính */
 .ticket-management {
-    width: 90%;
+    width: 100%;
     margin: auto;
     text-align: center;
     font-family: 'Arial', sans-serif;
@@ -334,81 +252,6 @@ export default {
     word-wrap: break-word;
 }
 
-/* Bộ lọc */
-.filters {
-    margin: 20px 0;
-}
-
-.filter-row {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 10px;
-    align-items: center;
-}
-
-input[type="date"],
-select {
-    padding: 8px;
-    border: 1px solid #cccccc;
-    border-radius: 4px;
-    font-size: 13px;
-    width: 150px;
-    text-align: center;
-}
-
-input[type="date"]:focus,
-select:focus {
-    outline: none;
-    border-color: #003D5B;
-    box-shadow: 0 0 5px rgba(0, 61, 91, 0.5);
-}
-
-/* Thanh kéo giá */
-.price-range {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-
-.price-range input[type="range"] {
-    -webkit-appearance: none;
-    width: 200px;
-    height: 6px;
-    background: #d9d9d9;
-    border-radius: 4px;
-    outline: none;
-}
-
-.price-range input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 14px;
-    height: 14px;
-    background: #003D5B;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-}
-
-.price-range input[type="range"]::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    background: #003D5B;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-}
-
-.price-values {
-    font-size: 13px;
-    color: #555555;
-    display: flex;
-    justify-content: space-between;
-    width: 200px;
-}
-
 /* Phân trang */
 .pagination {
     display: flex;
@@ -469,5 +312,18 @@ select:focus {
     font-size: 1.8rem;
     margin-bottom: 10px !important;
     font-family: 'Merriweather', serif;
+}
+
+.ticket-details {
+    margin-top: 20px;
+}
+
+.ticket-details h3 {
+    color: #003D5B;
+    margin-bottom: 10px;
+}
+
+.ticket-details table {
+    margin-top: 10px;
 }
 </style>

@@ -12,13 +12,6 @@
     </div>
 
     <div class="flight-search-container">
-      <div class="class-selection">
-        <button class="class-option" v-for="(option, index) in classOptions" :key="index"
-          :class="{ active: selectedClass === option }" @click="selectedClass = option">
-          {{ option }}
-        </button>
-      </div>
-
       <div class="input-group">
         <!-- From Dropdown -->
         <div class="input-field">
@@ -49,6 +42,8 @@
             </select>
           </div>
         </div>
+
+        <!-- Checkin Dropdown -->
         <div class="input-field">
           <div class="input-icon">
             <img :src="calendar" class="fromToImage" />
@@ -60,6 +55,8 @@
             <input type="date" ref="checkInDate" @change="handleDateChange('checkInDate')" class="typeIn" />
           </div>
         </div>
+
+        <!-- Checkout Dropdown -->
         <div class="input-field">
           <div class="input-icon">
             <img :src="calendar" class="fromToImage" />
@@ -71,6 +68,7 @@
             <input type="date" ref="checkOutDate" @change="handleDateChange('checkOutDate')" class="typeIn" />
           </div>
         </div>
+        <!-- search flights button-->
         <button class="search-btn" @click="searchFlights">Search Flight</button>
       </div>
     </div>
@@ -139,14 +137,105 @@
         </div>
         <!-- Thông tin giá và nút chọn -->
         <div class="price-info">
-          <span class="price">${{ flight.class_pricing[0].base_price }} USD</span>
-          <button class="select-button" v-if="!isChoosed" @click="selectFlight(flight)">Booking Now!</button>
-          <button class="select-button" v-if="isChoosed" @click="undo()">Undo</button>
+          <button class="select-button-economy" v-if="!isChoosed" @click="selectEconomyFlight(flight)">
+            <span class="icon-ticket">
+              <img src="@/assets/economy-ticket-whitee.png" alt="Economy Icon" class="icon-ticket-image" />
+            </span>
+            Economy
+            <span class="price-economy">${{ flight.class_pricing[0].base_price }} USD</span>
+          </button>
+          <button class="select-button-bussiness" v-if="!isChoosed" @click="selectBussinessFlight(flight)">
+            <span class="icon-ticket">
+              <img src="@/assets/bussiness-ticket-black.png" alt="Economy Icon" class="icon-ticket-image" />
+            </span>
+            Bussiness
+            <span class="price-bussiness">${{ flight.class_pricing[0].base_price }} USD</span>
+          </button>
+          <button class="select-button-economy" v-if="isEconomyChoosed" @click="undoEconomy()"><label class="Undo">Undo
+            </label>
+          </button>
+          <button class="select-button-bussiness" v-if="isBussinessChoosed" @click="undoBussiness()"><label
+              class="Undo">Undo</label>
+          </button>
         </div>
       </div>
     </div>
+
+    <!-- chọn ghế ngồi -->
+    <div class="service-container" v-if="isService">
+      <label class="myheader">Selecting Seats</label>
+      <div class="seat-choosing">
+        <img src="@/assets/seatImage2.jpg" class="seatImage" />
+
+        <div class="seat-choose-info">
+          <div class="passenger-numbers-row">
+            <label for="passenger-count" style="font-weight: bold;">Passengers:</label>
+            <input style="background-color: #f9f9f9;font-weight: bold;" id="passenger-count" type="number" min="1"
+              v-model.number="passengerCount" @input="updatePassengers" />
+          </div>
+          <div class="passenger-list">
+            <div v-for="(passenger, index) in passengers" :key="index" class="passenger-card">
+              <img src="@/assets/traveler-icon.png" class="fromToImage" />
+              <span style="font-weight: bold;">Passenger {{ index + 1 }}</span>
+              <span>Place: <input type="text" v-model="passenger.place" placeholder="_ _"
+                  style="background-color: #f9f9f9;font-weight: bold;" /></span>
+            </div>
+          </div>
+          <div class="seat-status-info">
+            <div class="status-item">
+              <div class="status-box" style="background-color: green;"></div>
+              <span>Successfull</span>
+            </div>
+            <div class="status-item">
+              <div class="status-box" style="background-color: #D1495B;"></div>
+              <span>Business</span>
+            </div>
+            <div class="status-item">
+              <div class="status-box" style="background-color: #243B4A;"></div>
+              <span>Economy</span>
+            </div>
+            <div class="status-item">
+              <div class="status-box" style="background-color: gray;"></div>
+              <span>Booked</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="seat-layout">
+          <!-- Hiển thị hàng A, B, C -->
+          <div v-for="row in topRows" :key="row" class="seat-row">
+            <span class="row-label">{{ row }}</span>
+            <div v-for="column in seatColumns" :key="column" class="seat-container">
+              <button class="seat" :class="{ booked: seats[`${column}${row}`] }"
+                :style="getSeatStyle(column, row, seats[`${column}${row}`])"
+                @click="toggleSeatSelection(`${column}${row}`)"></button>
+            </div>
+          </div>
+
+          <!-- Hiển thị số thứ tự từ 1 đến 10 -->
+          <div class="seat-row numbers">
+            <span class="row-label"></span>
+            <div v-for="column in seatColumns" :key="'number-' + column" class="number">
+              {{ column }}
+            </div>
+          </div>
+
+          <!-- Hiển thị hàng D, E, F -->
+          <div v-for="row in bottomRows" :key="row" class="seat-row">
+            <span class="row-label">{{ row }}</span>
+            <div v-for="column in seatColumns" :key="column" class="seat-container">
+              <button class="seat" :class="{ booked: seats[`${column}${row}`] }"
+                :style="getSeatStyle(column, row, seats[`${column}${row}`])"
+                @click="toggleSeatSelection(`${column}${row}`)"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- lựa chọn meal -->
-    <div class="meal-container" v-if="isService">
+    <div class="service-container" v-if="isService">
       <label class="myheader">Qmeal Service</label>
       <div class="meal-list">
         <div class="meal-card" v-for="meal in externalServices.meals" :key="meal.name">
@@ -182,10 +271,13 @@
           <span>{{ calculatePrice(selectedWeight) }} $USD</span>
         </div>
       </div>
-      <div class="price-info">
-        <span class="price">Total: ${{ totalPrice }} USD</span>
-        <button class="select-button">Finish!</button>
-      </div>
+    </div>
+
+
+
+    <div class="total-price-info">
+      <span class="price">Total: ${{ totalPrice }} USD</span>
+      <button class="select-button">Finish!</button>
     </div>
     <Footer />
   </div>
@@ -200,6 +292,7 @@ import tetImage from "@/assets/tet.jpg";
 import cityImage from "@/assets/city.jpg";
 import dnaImage from "@/assets/dna.jpg";
 import Footer from '@/pages/master/footer.vue';
+import { ref, watch } from "vue";
 
 import axios from 'axios';
 import { useUserStore } from '@/stores/user';
@@ -207,6 +300,105 @@ import { useUserStore } from '@/stores/user';
 export default {
   components: {
     Footer
+  },
+  setup() {
+    const topRows = ['A', 'B', 'C'];
+    const bottomRows = ['D', 'E', 'F'];
+    const seatColumns = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const seats = ref({}); // Sử dụng ref để quản lý trạng thái ghế
+    const selectedSeats = ref([]);
+
+    function toggleSeatSelection(seatName) {
+      if (seats.value[seatName] === true) return; // Ghế đã đặt
+
+      const seatIndex = selectedSeats.value.indexOf(seatName);
+
+      if (seatIndex !== -1) {
+        // Hủy chọn
+        selectedSeats.value.splice(seatIndex, 1);
+      } else if (selectedSeats.value.length < passengerCount.value) {
+        // Chọn thêm ghế
+        selectedSeats.value.push(seatName);
+      }
+      updatePassengerPlace();
+    }
+
+
+    // Hàm cập nhật vị trí (place) cho hành khách
+    function updatePassengerPlace() {
+      passengers.value.forEach((passenger, index) => {
+        passenger.place = selectedSeats.value[index] || ""; // Gán tên ghế hoặc rỗng
+      });
+    }
+
+    // Hàm khởi tạo trạng thái ghế
+    function initializeSeats() {
+      const newSeats = {};
+      [...topRows, ...bottomRows].forEach((row) => {
+        seatColumns.forEach((column) => {
+          const seatName = `${column}${row}`;
+          const isBooked = Math.random() < 0.3; // 20% ghế đã đặt (true)
+          newSeats[seatName] = isBooked; // Gán giá trị ban đầu
+        });
+      });
+      seats.value = newSeats; // Cập nhật giá trị của ref
+      selectedSeats.value = [];
+    }
+
+    // Gọi hàm khởi tạo
+    initializeSeats();
+
+    // Hàm lấy style ghế
+    function getSeatStyle(column, row, isBooked) {
+      const seatName = `${column}${row}`;
+      if (isBooked === true) {
+        return { backgroundColor: "gray", cursor: "not-allowed" }; // Ghế đã đặt
+      } else if (selectedSeats.value.includes(seatName)) {
+        return { backgroundColor: "green" }; // Ghế đã chọn
+      } else if (column >= 1 && column <= 4) {
+        return { backgroundColor: "#D1495B" }; // Ghế Business
+      } else {
+        return { backgroundColor: "#243B4A" }; // Ghế Economy
+      }
+    }
+
+
+
+    const passengerCount = ref(1);
+
+    // Danh sách hành khách
+    const passengers = ref([{ place: "" }]);
+
+    // Cập nhật danh sách hành khách khi số lượng thay đổi
+    const updatePassengers = () => {
+      const currentCount = passengers.value.length;
+      if (passengerCount.value > currentCount) {
+        // Thêm hành khách nếu số lượng tăng
+        for (let i = currentCount; i < passengerCount.value; i++) {
+          passengers.value.push({ place: "" });
+        }
+      } else if (passengerCount.value < currentCount) {
+        // Xóa hành khách nếu số lượng giảm
+        passengers.value.splice(passengerCount.value);
+      }
+    };
+
+    // Theo dõi sự thay đổi của passengerCount
+    watch(passengerCount, updatePassengers);
+
+    return {
+      topRows,
+      bottomRows,
+      seatColumns,
+      seats,
+      passengerCount,
+      passengers,
+      selectedSeats,
+      initializeSeats,
+      getSeatStyle,
+      updatePassengers,
+      toggleSeatSelection
+    };
   },
   name: "booking",
   data() {
@@ -229,6 +421,8 @@ export default {
       selectedClass: 'Economy',
       isSearched: false,
       isChoosed: false,
+      isEconomyChoosed: false,
+      isBussinessChoosed: false,
       isService: false,
       selectedFlight: {
         flightInfo: null,
@@ -245,7 +439,7 @@ export default {
         fromOptions: [],
         toOptions: [],
         departureAirport: null,
-        arrivalAirport: null      
+        arrivalAirport: null
       },
       flights: [],
       externalServices: {
@@ -275,7 +469,7 @@ export default {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/services/search?service_type=MEAL`);;
       this.externalServices.meals = response.data.data;
       console.log(this.externalServices.meals);
-    } catch(error) {
+    } catch (error) {
       console.error("Error fetching external services:", error);
     }
 
@@ -289,13 +483,13 @@ export default {
       );
     },
 
-    totalPrice() {
-      const flightPrice = this.isChoosed && this.selectedFlight ? this.selectedFlight.price : 0;
-      const mealsPrice = this.meals.reduce((sum, meal) => sum + meal.quantity * meal.price, 0);
-      const luggagePrice = this.calculatePrice(this.selectedWeight);
+    // totalPrice() {
+    //   const flightPrice = this.isChoosed && this.selectedFlight ? this.selectedFlight.price : 0;
+    //   const mealsPrice = this.meals.reduce((sum, meal) => sum + meal.quantity * meal.price, 0);
+    //   const luggagePrice = this.calculatePrice(this.selectedWeight);
 
-      return flightPrice + mealsPrice + luggagePrice;
-    }
+    //   return flightPrice + mealsPrice + luggagePrice;
+    // }
 
   },
 
@@ -307,7 +501,7 @@ export default {
         // Fetch possible "To" options based on selected "From"
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports/${this.airports.departureAirport.id}/get_arrival_airports`);
         this.airports.toOptions = response.data.data;
-        
+
         // Clear "To" selection if it's no longer valid
         if (this.airports.arrivalAirport && !this.airports.toOptions.find(option => option.id === this.airports.arrivalAirport.id)) {
           this.airports.arrivalAirport = null;
@@ -323,7 +517,7 @@ export default {
     //     // Fetch possible "From" options based on selected "To"
     //     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports/${this.to}/get_departure_airports`);
     //     this.airports.fromOptions = response.data.data;
-        
+
     //     // Clear "From" selection if it's no longer valid
     //     if (!this.airports.fromOptions.find(option => option.id === this.from)) {
     //       this.from = null;
@@ -350,21 +544,43 @@ export default {
 
       this.isSearched = true; // Đặt thành true khi bấm nút Search Flight
     },
-    async selectFlight(flight) {
+
+    async selectEconomyFlight(flight) {
       this.selectedFlight.flightInfo = flight; // Cập nhật chuyến bay được chọn
       // get available seats for selected flight
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/flights/${flight.id}/seats`);
       this.selectedFlight.seats = response.data.data;
       console.log(this.selectedFlight.seats);
-      this.isChoosed = true;
+      this.isEconomyChoosed = true;
       this.isService = true;
+      this.isChoosed = true;
     },
 
-    undo(flight) {
+    async selectBussinessFlight(flight) {
+      this.selectedFlight.flightInfo = flight; // Cập nhật chuyến bay được chọn
+      // get available seats for selected flight
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/flights/${flight.id}/seats`);
+      this.selectedFlight.seats = response.data.data;
+      console.log(this.selectedFlight.seats);
+      this.isBussinessChoosed = true;
+      this.isService = true;
+      this.isChoosed = true;
+    },
+
+    undoEconomy(flight) {
       this.selectedFlight.flightInfo = null;
       this.selectedFlight.seats = [];
-      this.isChoosed = false;
+      this.isEconomyChoosed = false;
       this.isService = false;
+      this.isChoosed = false;
+    },
+
+    undoBussiness(flight) {
+      this.selectedFlight.flightInfo = null;
+      this.selectedFlight.seats = [];
+      this.isBussinessChoosed = false;
+      this.isService = false;
+      this.isChoosed = false;
     },
 
     handleDateChange(refName) {
@@ -466,7 +682,7 @@ export default {
   font-style: italic;
   /* Để chữ in nghiêng */
   margin-bottom: 0px;
-  margin-top: 10px;
+  margin-top: 13px;
 }
 
 
@@ -478,7 +694,7 @@ export default {
   align-items: center;
   position: relative;
   border-radius: 5rem;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 .videoD {
@@ -490,7 +706,7 @@ export default {
   /* Căn giữa video theo chiều ngang */
   align-items: center;
   /* Căn giữa video theo chiều dọc nếu có chiều cao */
-  height: 200px;
+  height: 260px;
 }
 
 .video {
@@ -504,72 +720,23 @@ export default {
   position: absolute;
   width: 80%;
   top: -20%;
-  height: 240px;
+  height: 300px;
 }
 
 .flight-search-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px;
+  gap: 15px;
+  padding: 12px;
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   background-color: #fff;
 }
 
-.class-selection {
-  display: flex;
-  justify-content: center;
-  /* Các nút nằm sát nhau */
-  align-items: center;
-  /* Căn giữa theo chiều dọc */
-  padding: 5px 0;
-  /* Khoảng cách trên dưới */
-}
-
-.class-option {
-  padding: 10px 20px;
-  /* Khoảng cách bên trong nút */
-  border: none;
-  /* Loại bỏ viền */
-  background-color: #4CB5D2;
-  /* Màu nền cho nút */
-  border-radius: 4px;
-  /* Bo tròn nút */
-  cursor: pointer;
-  /* Hiển thị con trỏ khi hover */
-  transition: background-color 0.3s, transform 0.2s;
-  /* Hiệu ứng hover */
-  margin-right: 0;
-  /* Loại bỏ khoảng cách phải giữa các nút */
-  color: white;
-}
-
-.class-option:last-child {
-  margin-right: 0;
-  /* Đảm bảo nút cuối không có margin phải */
-}
-
-.class-option.active {
-  background-color: #003D5B;
-  /* Màu cho nút đang chọn */
-  font-weight: bold;
-  /* Chữ đậm */
-}
-
-.class-option:hover {
-  background-color: #4CB5D2;
-  /* Hiệu ứng hover */
-  transform: scale(1.05);
-  /* Hiệu ứng phóng to nhẹ */
-}
-
-
-
 .input-group {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.4rem;
 }
 
 .input-field {
@@ -578,7 +745,7 @@ export default {
   align-items: flex-start;
   font-size: 0.9rem;
   gap: 5px;
-  width: 100%;
+  width: 70%;
 }
 
 .input-icon {
@@ -598,9 +765,9 @@ export default {
   justify-content: center;
   align-items: center;
   min-width: 80px;
-  height: 90px;
+  height: 115px;
   border-radius: 30%;
-  margin: 0;
+  margin-left: 5px;
   padding: 0;
   overflow: hidden;
   /* Đảm bảo nội dung không vượt khỏi khung */
@@ -653,7 +820,6 @@ export default {
   /* Chiều rộng của hình ảnh */
   height: 20px;
   /* Chiều cao của hình ảnh */
-  border-radius: 20%;
   /* Tạo hình tròn */
   background-color: #f5f7f9;
   /* Màu nền tương tự ảnh mẫu */
@@ -662,7 +828,6 @@ export default {
   align-items: center;
   object-fit: cover;
   /* Đảm bảo hình ảnh hiển thị đầy đủ */
-  border: 1px solid #e0e0e0;
   /* Viền nhạt bao quanh */
   max-width: 20px;
   max-height: 20px;
@@ -718,7 +883,7 @@ export default {
 .flight-card {
   width: 100%;
   border: 4px solid transparent;
-  padding: 20px;
+  /* padding: 20px; */
   border-radius: 10px;
   margin-bottom: 30px;
   display: flex;
@@ -736,16 +901,37 @@ export default {
 .price-info {
   display: flex;
   justify-content: center;
-  width: 100%;
+  height: 120px;
+  align-items: center;
+  flex-direction: row;
+  margin-left: 20px;
+}
+
+.total-price-info {
+  display: flex;
+  justify-content: center;
+  height: 40%;
   align-items: center;
   flex-direction: column;
-  margin-left: 40px;
+  margin-left: 20px;
 }
 
 .price {
   font-size: 1.2em;
   font-weight: bold;
   color: red;
+}
+
+.price-economy {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: white;
+}
+
+.price-bussiness {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: black;
 }
 
 .select-button {
@@ -755,6 +941,33 @@ export default {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  height: 100%;
+}
+
+.select-button-economy {
+  position: relative;
+  padding: 10px 20px;
+  background-color: #243B4A;
+  color: white;
+  border: black;
+  cursor: pointer;
+  height: 100%;
+  width: 130px;
+}
+
+.select-button-bussiness {
+  position: relative;
+  padding: 10px 20px;
+  background-color: #D1495B;
+  color: black;
+  border: black;
+  cursor: pointer;
+  height: 100%;
+  width: 130px;
+}
+
+.select-button-bussiness:hover {
+  background-color: #B13A4A;
 }
 
 .select-button:hover {
@@ -772,10 +985,12 @@ export default {
   color: #3331319a;
 }
 
-.meal-container {
+.service-container {
   display: flex;
   flex-direction: column;
   justify-content: space-around;
+  align-items: center;
+  width: 100%;
 }
 
 .meal-list {
@@ -790,7 +1005,8 @@ export default {
   align-items: center;
   text-align: center;
   width: 200px;
-  border: 1px solid #ddd;
+  border: 2px solid #003D5B;
+  /* #003D5B, #1F7D8B */
   border-radius: 8px;
   padding: 10px;
 }
@@ -1217,5 +1433,189 @@ button:hover {
   display: flex;
   flex-direction: row;
   justify-content: center;
+}
+
+.icon-ticket {
+  position: absolute;
+  /* Định vị icon */
+  top: 10px;
+  /* Khoảng cách từ đỉnh nút */
+  right: 10px;
+  /* Khoảng cách từ bên phải nút */
+}
+
+.icon-ticket-image {
+  width: 20px;
+  /* Độ rộng của logo */
+  height: 20px;
+  /* Chiều cao của logo */
+  object-fit: contain;
+  /* Đảm bảo logo không bị méo */
+
+}
+
+.Undo {
+  font-size: 1.5rem;
+}
+
+.seat-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+  margin-right: 20px;
+  margin-bottom: 20px;
+  /* background-color: #ccc; */
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  margin: 1px 0;
+  /* Khoảng cách giữa các hàng */
+}
+
+.row-label {
+  width: 20px;
+  /* Hiển thị ký hiệu hàng */
+  text-align: center;
+  font-weight: bold;
+}
+
+.seat-container {
+  margin: 1px;
+  /* Khoảng cách giữa các ghế */
+}
+
+.seat {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background-color: transparent;
+  /* Nền nút trong suốt */
+  border-radius: 5px;
+}
+
+
+.seat.booked {
+  background-color: gray;
+  cursor: not-allowed;
+}
+
+.numbers .number {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin: 1px;
+}
+
+.seat-choosing {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  border: 4px solid;
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  justify-content: center;
+}
+
+.seat-choose-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 50%;
+  height: 260px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-left: 20px;
+}
+
+#passenger-count {
+  width: 60px;
+  padding: 0.3rem;
+  margin-left: 0.5rem;
+}
+
+.passenger-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-radius: 10px;
+}
+
+.passenger-card {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f9f9f9;
+  width: 430px;
+}
+
+.passenger-card input {
+  width: 40px;
+  padding: 0.3rem;
+  text-align: center;
+}
+
+.passenger-numbers-row {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.seat-status-info {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: auto;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-box {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #000;
+}
+
+.seatImage {
+  width: 30%;
+  /* Chiều rộng chiếm toàn bộ phần tử cha */
+  max-width: 205px;
+  /* Giới hạn kích thước tối đa */
+  height: auto;
+  /* Giữ tỉ lệ ảnh */
+  object-fit: contain;
+  /* Đảm bảo toàn bộ ảnh được hiển thị */
+  border-radius: 8px;
+  /* Bo tròn nhẹ các góc */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  /* Hiệu ứng đổ bóng mềm */
+  margin: 20px auto;
+  /* Căn giữa và tạo khoảng cách */
+  display: block;
+  /* Đảm bảo căn giữa nếu dùng margin auto */
+  border: 2px solid #ddd;
+  /* Viền màu nhạt */
+  background-color: #f9f9f9;
+  /* Màu nền nhẹ nếu ảnh không load */
+}
+
+.seat.selected {
+  background-color: green !important;
 }
 </style>
