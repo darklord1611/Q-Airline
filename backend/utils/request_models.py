@@ -85,6 +85,7 @@ class Passenger(BaseModel):
     phone: str
     birthday: str
     seat_id: int
+    place: str
 
 class CreateBookingRequest(BaseModel):
     user_id: str

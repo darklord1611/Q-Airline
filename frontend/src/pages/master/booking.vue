@@ -50,14 +50,14 @@
           </div>
           <div class="input-type">
             <label class="large-label">
-              Check In
+              Departure Date
             </label>
             <input type="date" ref="checkInDate" @change="handleDateChange('checkInDate')" class="typeIn" />
           </div>
         </div>
 
         <!-- Checkout Dropdown -->
-        <div class="input-field">
+        <!-- <div class="input-field">
           <div class="input-icon">
             <img :src="calendar" class="fromToImage" />
           </div>
@@ -67,7 +67,7 @@
             </label>
             <input type="date" ref="checkOutDate" @change="handleDateChange('checkOutDate')" class="typeIn" />
           </div>
-        </div>
+        </div> -->
         <!-- search flights button-->
         <button class="search-btn" @click="searchFlights">Search Flight</button>
       </div>
@@ -110,7 +110,7 @@
         </div>
         <div class="time">
           <div class="departureTime"> {{ flight.departure_time }}</div>
-          <div class="dateConvert"> {{ formattedDates.checkIn }}</div>
+          <div class="dateConvert"> {{ flight.formattedDepartureTime }}</div>
         </div>
         <div class="ticket-tour">
           <div class="icons">
@@ -133,28 +133,28 @@
         </div>
         <div class="time">
           <div class="arivalTime"> {{ flight.arrival_time }}</div>
-          <div class="dateConvert"> {{ formattedDates.checkOut }}</div>
+          <div class="dateConvert"> {{ flight.formattedArrivalTime }}</div>
         </div>
         <!-- Thông tin giá và nút chọn -->
         <div class="price-info">
-          <button class="select-button-economy" v-if="!isChoosed" @click="selectEconomyFlight(flight)">
+          <button class="select-button-economy" v-if="!isChoosed" @click="selectFlight(flight, flight.class_pricing[0].class_name)">
             <span class="icon-ticket">
               <img src="@/assets/economy-ticket-whitee.png" alt="Economy Icon" class="icon-ticket-image" />
             </span>
             Economy
             <span class="price-economy">${{ flight.class_pricing[0].base_price }} USD</span>
           </button>
-          <button class="select-button-bussiness" v-if="!isChoosed" @click="selectBussinessFlight(flight)">
+          <button class="select-button-bussiness" v-if="!isChoosed" @click="selectFlight(flight, flight.class_pricing[1].class_name)">
             <span class="icon-ticket">
               <img src="@/assets/bussiness-ticket-black.png" alt="Economy Icon" class="icon-ticket-image" />
             </span>
             Bussiness
             <span class="price-bussiness">${{ flight.class_pricing[0].base_price }} USD</span>
           </button>
-          <button class="select-button-economy" v-if="isEconomyChoosed" @click="undoEconomy()"><label class="Undo">Undo
+          <button class="select-button-economy" v-if="isEconomyChoosed" @click="undoFlight()"><label class="Undo">Undo
             </label>
           </button>
-          <button class="select-button-bussiness" v-if="isBussinessChoosed" @click="undoBussiness()"><label
+          <button class="select-button-bussiness" v-if="isBussinessChoosed" @click="undoFlight()"><label
               class="Undo">Undo</label>
           </button>
         </div>
@@ -174,7 +174,7 @@
               v-model.number="passengerCount" @input="updatePassengers" />
           </div>
           <div class="passenger-list">
-            <div v-for="(passenger, index) in passengers" :key="index" class="passenger-card">
+            <div v-for="(passenger, index) in this.booking.passengers" :key="index" class="passenger-card">
               <img src="@/assets/traveler-icon.png" class="fromToImage" />
               <span style="font-weight: bold;">Passenger {{ index + 1 }}</span>
               <span>Place: <input type="text" v-model="passenger.place" placeholder="_ _"
@@ -184,7 +184,7 @@
           <div class="seat-status-info">
             <div class="status-item">
               <div class="status-box" style="background-color: green;"></div>
-              <span>Successfull</span>
+              <span>Successful</span>
             </div>
             <div class="status-item">
               <div class="status-box" style="background-color: #D1495B;"></div>
@@ -206,8 +206,8 @@
           <div v-for="row in topRows" :key="row" class="seat-row">
             <span class="row-label">{{ row }}</span>
             <div v-for="column in seatColumns" :key="column" class="seat-container">
-              <button class="seat" :class="{ booked: seats[`${column}${row}`] }"
-                :style="getSeatStyle(column, row, seats[`${column}${row}`])"
+              <button class="seat" :class="{ booked: seats[`${column}${row}`].isBooked }"
+                :style="getSeatStyle(column, row, seats[`${column}${row}`].isBooked)"
                 @click="toggleSeatSelection(`${column}${row}`)"></button>
             </div>
           </div>
@@ -224,8 +224,8 @@
           <div v-for="row in bottomRows" :key="row" class="seat-row">
             <span class="row-label">{{ row }}</span>
             <div v-for="column in seatColumns" :key="column" class="seat-container">
-              <button class="seat" :class="{ booked: seats[`${column}${row}`] }"
-                :style="getSeatStyle(column, row, seats[`${column}${row}`])"
+              <button class="seat" :class="{ booked: seats[`${column}${row}`].isBooked }"
+                :style="getSeatStyle(column, row, seats[`${column}${row}`].isBooked)"
                 @click="toggleSeatSelection(`${column}${row}`)"></button>
             </div>
           </div>
@@ -271,13 +271,11 @@
           <span>{{ calculatePrice(selectedWeight) }} $USD</span>
         </div>
       </div>
-    </div>
 
-
-
-    <div class="total-price-info">
-      <span class="price">Total: ${{ totalPrice }} USD</span>
-      <button class="select-button">Finish!</button>
+      <div class="total-price-info">
+        <span class="price">Total: ${{ totalPrice }} USD</span>
+        <button class="select-button" @click="createBooking()">Finish!</button>
+      </div>
     </div>
     <Footer />
   </div>
@@ -293,6 +291,7 @@ import cityImage from "@/assets/city.jpg";
 import dnaImage from "@/assets/dna.jpg";
 import Footer from '@/pages/master/footer.vue';
 import { ref, watch } from "vue";
+import { faker } from '@faker-js/faker';
 
 import apiClient from "@/api/axios";
 import { useUserStore } from '@/stores/user';
@@ -302,114 +301,19 @@ export default {
   components: {
     Footer
   },
-  setup() {
-    const topRows = ['A', 'B', 'C'];
-    const bottomRows = ['D', 'E', 'F'];
-    const seatColumns = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    const seats = ref({}); // Sử dụng ref để quản lý trạng thái ghế
-    const selectedSeats = ref([]);
-
-    function toggleSeatSelection(seatName) {
-      if (seats.value[seatName] === true) return; // Ghế đã đặt
-
-      const seatIndex = selectedSeats.value.indexOf(seatName);
-
-      if (seatIndex !== -1) {
-        // Hủy chọn
-        selectedSeats.value.splice(seatIndex, 1);
-      } else if (selectedSeats.value.length < passengerCount.value) {
-        // Chọn thêm ghế
-        selectedSeats.value.push(seatName);
-      }
-      updatePassengerPlace();
-    }
-
-
-    // Hàm cập nhật vị trí (place) cho hành khách
-    function updatePassengerPlace() {
-      passengers.value.forEach((passenger, index) => {
-        passenger.place = selectedSeats.value[index] || ""; // Gán tên ghế hoặc rỗng
-      });
-    }
-
-    // Hàm khởi tạo trạng thái ghế
-    function initializeSeats() {
-      const newSeats = {};
-      [...topRows, ...bottomRows].forEach((row) => {
-        seatColumns.forEach((column) => {
-          const seatName = `${column}${row}`;
-          const isBooked = Math.random() < 0.3; // 20% ghế đã đặt (true)
-          newSeats[seatName] = isBooked; // Gán giá trị ban đầu
-        });
-      });
-      seats.value = newSeats; // Cập nhật giá trị của ref
-      selectedSeats.value = [];
-    }
-
-    // Gọi hàm khởi tạo
-    initializeSeats();
-
-    // Hàm lấy style ghế
-    function getSeatStyle(column, row, isBooked) {
-      const seatName = `${column}${row}`;
-      if (isBooked === true) {
-        return { backgroundColor: "gray", cursor: "not-allowed" }; // Ghế đã đặt
-      } else if (selectedSeats.value.includes(seatName)) {
-        return { backgroundColor: "green" }; // Ghế đã chọn
-      } else if (column >= 1 && column <= 4) {
-        return { backgroundColor: "#D1495B" }; // Ghế Business
-      } else {
-        return { backgroundColor: "#243B4A" }; // Ghế Economy
-      }
-    }
-
-
-
-    const passengerCount = ref(1);
-
-    // Danh sách hành khách
-    const passengers = ref([{ place: "" }]);
-
-    // Cập nhật danh sách hành khách khi số lượng thay đổi
-    const updatePassengers = () => {
-      const currentCount = passengers.value.length;
-      if (passengerCount.value > currentCount) {
-        // Thêm hành khách nếu số lượng tăng
-        for (let i = currentCount; i < passengerCount.value; i++) {
-          passengers.value.push({ place: "" });
-        }
-      } else if (passengerCount.value < currentCount) {
-        // Xóa hành khách nếu số lượng giảm
-        passengers.value.splice(passengerCount.value);
-      }
-    };
-
-    // Theo dõi sự thay đổi của passengerCount
-    watch(passengerCount, updatePassengers);
-
-    return {
-      topRows,
-      bottomRows,
-      seatColumns,
-      seats,
-      passengerCount,
-      passengers,
-      selectedSeats,
-      initializeSeats,
-      getSeatStyle,
-      updatePassengers,
-      toggleSeatSelection
-    };
-  },
   name: "booking",
   data() {
     return {
+      user: null,
       totalPrice: 0,
       selectedWeight: 0, // Giá trị ban đầu của số cân nặng
       maxWeight: 20, // Số cân tối đa
       dragging: false, // Trạng thái kéo
-      pricePerKg: 50,
       activeButtonIndex: null,
+      topRows: ['A', 'B', 'C'],
+      bottomRows: ['D', 'E', 'F'],
+      seatColumns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      selectedSeats: [],
       formattedDates: {
         checkIn: '',
         checkOut: ''
@@ -445,16 +349,23 @@ export default {
       flights: [],
       externalServices: {
         meals: [],
-        luggage: []
+        luggage: [],
+        luggageService: null,
       },
+      externalServiceCount: [],
       booking: {
-
-      }
+        passengers: [],
+      },
+      passengerCount: 1,
     };
+  },
+  watch: {
+    // Watch for changes in passengerCount
+    passengerCount: "updatePassengers",
   },
   async created() {
     const userStore = useUserStore();
-    console.log(userStore)
+    this.user = userStore.user;
     try {
       // Fetch all airports initially
       const response = await apiClient.get(`/airports`);
@@ -467,9 +378,17 @@ export default {
 
     try {
       // Fetching external services like meals or luggage
-      const response = await apiClient.get(`/services/search?service_type=MEAL`);;
+      const response = await apiClient.get(`/services/search?service_type=MEAL`);
       this.externalServices.meals = response.data.data;
+
+      const luggage_response = await apiClient.get(`/services/search?service_type=LUGGAGE`);
+      this.externalServices.luggage = luggage_response.data.data;
+      this.externalServices.luggageService = this.externalServices.luggage.find(service => service.id === 11);
       console.log(this.externalServices.meals);
+      console.log(this.externalServices.luggage);
+      console.log(this.externalServices.luggageService);
+
+
     } catch (error) {
       console.error("Error fetching external services:", error);
     }
@@ -484,17 +403,129 @@ export default {
       );
     },
 
-    // totalPrice() {
-    //   const flightPrice = this.isChoosed && this.selectedFlight ? this.selectedFlight.price : 0;
-    //   const mealsPrice = this.meals.reduce((sum, meal) => sum + meal.quantity * meal.price, 0);
-    //   const luggagePrice = this.calculatePrice(this.selectedWeight);
+    totalPrice() {
+      if (!this.selectedFlight) return 0;
+      let oneTicketPrice = null;
+      if (this.isEconomyChoosed) {
+        oneTicketPrice = this.selectedFlight.flightInfo.class_pricing[0].base_price;
+      } else {
+        oneTicketPrice = this.selectedFlight.flightInfo.class_pricing[1].base_price;
+      }
+      const ticketPrice = oneTicketPrice * this.passengerCount;
+      const mealsPrice = this.externalServices.meals.reduce((sum, meal) => sum + meal.quantity * meal.price, 0);
+      const luggagePrice = this.calculatePrice(this.selectedWeight);
 
-    //   return flightPrice + mealsPrice + luggagePrice;
-    // }
+      return ticketPrice + mealsPrice + luggagePrice;
+    }
 
   },
 
   methods: {
+    // Hàm khởi tạo trạng thái ghế
+    initializeSeats(class_name) {
+      const newSeats = {};
+      [...this.topRows, ...this.bottomRows].forEach((row) => {
+        this.seatColumns.forEach((column) => {
+          const seatName = `${column}${row}`;
+          let isBooked = false;
+          if (column >= 1 && column <= 3 && (row == "C" || row == "E")) {
+            isBooked = true;
+          }
+          newSeats[seatName] = { isBooked: isBooked, seatID: null }; // default seat_id is null
+        });
+      });
+
+      this.selectedFlight.seats.forEach((seat) => {
+        if (seat.is_available === false) {
+          newSeats[seat.seats.seat_number].isBooked = true;
+        } else {
+          newSeats[seat.seats.seat_number].seatID = seat.seat_id;
+        }
+      });
+
+      // seats are not available for selected class
+      this.selectedFlight.seats.forEach((seat) => {
+        if (seat.seats.class_name !== class_name) {
+          newSeats[seat.seats.seat_number].isBooked = true;
+          newSeats[seat.seats.seat_number].seatID = null;
+        } else {
+          newSeats[seat.seats.seat_number].seatID = seat.seat_id;
+        }
+      });
+      
+      // seats that are not considered in business rows
+
+
+      this.seats = newSeats; // Cập nhật giá trị của ref
+      this.selectedSeats = [];
+    },
+    initializePassengers() {
+      const first_fake_passengers = {
+        first_name: faker.person.firstName(),
+        last_name: faker.person.lastName(),
+        email: faker.internet.email(),
+        gender: faker.helpers.arrayElement(['MALE', 'FEMALE', 'OTHER']),
+        phone: faker.helpers.replaceSymbols('+##########'), // Generates +1234567890
+        birthday: faker.date.birthdate({ min: 18, max: 80, mode: 'age' }).toISOString().split('T')[0], // YYYY-MM-DD format
+        seat_id: -1
+      }
+      console.log(first_fake_passengers)
+      this.booking.passengers.push(first_fake_passengers);
+    },
+    // Hàm lấy style ghế
+    getSeatStyle(column, row, isBooked) {
+      const seatName = `${column}${row}`;
+      if (isBooked === true) {
+        return { backgroundColor: "gray", cursor: "not-allowed" }; // Ghế đã đặt
+      } else if (this.selectedSeats.some(seat => seat.id === this.seats[seatName].seatID)) {
+        return { backgroundColor: "green" }; // Ghế đã chọn
+      } else {
+        return { backgroundColor: "blue" }; // Ghế chưa chọn
+      }
+    },
+    // Hàm cập nhật vị trí (place) cho hành khách
+    updatePassengerPlace() {
+      this.booking.passengers.forEach((passenger, index) => {
+        passenger.seat_id = this.selectedSeats[index]?.id || null; // Gán tên ghế hoặc rỗng
+        passenger.place = this.selectedSeats[index]?.place || null; // Gán tên ghế hoặc rỗng
+      });
+    },
+    // Update passengers list when count changes
+    updatePassengers() {
+      const currentCount = this.booking.passengers.length;
+      if (this.passengerCount > currentCount) {
+        // Add new passengers if count increases
+        for (let i = currentCount; i < this.passengerCount; i++) {
+          this.booking.passengers.push({
+            first_name: faker.person.firstName(),
+            last_name: faker.person.lastName(),
+            email: faker.internet.email(),
+            gender: faker.helpers.arrayElement(['MALE', 'FEMALE']),
+            phone: faker.helpers.replaceSymbols('+##########'), // Generates +1234567890
+            birthday: faker.date.birthdate({ min: 18, max: 80, mode: 'age' }).toISOString().split('T')[0], // YYYY-MM-DD format
+            seat_id: null,
+            place: null
+          }); // add more fake information
+        }
+      } else if (this.passengerCount < currentCount) {
+        // Remove passengers if count decreases
+        this.booking.passengers.splice(this.passengerCount);
+      }
+    },
+    toggleSeatSelection(seatName) {
+      if (this.seats[seatName].isBooked === true) return; // Ghế đã đặt
+
+      const seatIndex = this.selectedSeats.findIndex(seat => seat.place === seatName);
+
+      if (seatIndex !== -1) {
+        // Hủy chọn
+        this.selectedSeats.splice(seatIndex, 1);
+      } else if (this.selectedSeats.length < this.passengerCount) {
+        // Chọn thêm ghế
+        this.selectedSeats.push({id: this.seats[seatName].seatID, place: seatName});
+      }
+      this.updatePassengerPlace();
+    },
     async updateToOptions() {
       if (!this.airports.departureAirport.id) return;
 
@@ -511,74 +542,85 @@ export default {
         console.error("Error updating 'To' options:", error);
       }
     },
-    // async updateFromOptions() {
-    //   if (!this.to) return;
+    async createBooking() {
 
-    //   try {
-    //     // Fetch possible "From" options based on selected "To"
-    //     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/airports/${this.to}/get_departure_airports`);
-    //     this.airports.fromOptions = response.data.data;
+      // calculate services used
+      this.externalServices.meals.forEach((meal) => {
+        if (meal.quantity > 0) {
+          this.externalServiceCount.push({ service_id: meal.id, quantity: meal.quantity });
+        }
+      });
+      if (this.selectedWeight > 0) {
+        this.externalServiceCount.push({ service_id: this.externalServices.luggageService.id, quantity: this.selectedWeight });
+      }
 
-    //     // Clear "From" selection if it's no longer valid
-    //     if (!this.airports.fromOptions.find(option => option.id === this.from)) {
-    //       this.from = null;
-    //     }
-    //   } catch (error) {
-    //     console.error("Error updating 'From' options:", error);
-    //   }
-    // },
+      // create booking with information
+      const payload = {
+        user_id: this.user.id,
+        flight_id: this.selectedFlight.flightInfo.id,
+        booking_status: "CONFIRMED",
+        passengers: this.booking.passengers,
+        class_name: this.selectedClass,
+        trip_type: "ONE_WAY",
+        services: this.externalServiceCount
+      }
+
+      console.log(payload)
+
+      const response = await apiClient.post(`/bookings`, payload);
+
+      if (response.status === 201) {
+        alert("Booking created successfully!");
+      } else {
+        alert("Failed to create booking!");
+      }
+    },
     async searchFlights() {
-
-      console.log(this.airports.departureAirport.id);
-      console.log(this.airports.arrivalAirport.id);
-      console.log(this.$refs["checkInDate"].value)
       const iso_date = new Date(this.$refs["checkInDate"].value).toISOString();
-      console.log(iso_date)
 
       // get all valid flights based on selected options and departure_date
       const response = await apiClient.get(`/flights/search?departure_airport_id=${this.airports.departureAirport.id}&arrival_airport_id=${this.airports.arrivalAirport.id}&departure_date=${iso_date}`);
 
       this.flights = response.data.data;
-      console.log(response.data.data)
 
       console.log(this.flights);
+
+      this.flights = this.flights.map((flight) => ({
+        ...flight,
+        formattedDepartureTime: this.formatDate(flight.checkin),
+        formattedArrivalTime: this.formatDate(flight.checkout),
+      }));
 
       this.isSearched = true; // Đặt thành true khi bấm nút Search Flight
     },
 
-    async selectEconomyFlight(flight) {
+    async selectFlight(flight, class_name) {
       this.selectedFlight.flightInfo = flight; // Cập nhật chuyến bay được chọn
       // get available seats for selected flight
       const response = await apiClient.get(`/flights/${flight.id}/seats`);
       this.selectedFlight.seats = response.data.data;
       console.log(this.selectedFlight.seats);
-      this.isEconomyChoosed = true;
+
+      if (class_name === 'ECONOMY') {
+        this.isEconomyChoosed = true;
+      } else {
+        this.isBussinessChoosed = true;
+      }
+      this.initializeSeats(class_name);
+      this.initializePassengers();
       this.isService = true;
       this.isChoosed = true;
+      this.selectedClass = class_name;
     },
 
-    async selectBussinessFlight(flight) {
-      this.selectedFlight.flightInfo = flight; // Cập nhật chuyến bay được chọn
-      // get available seats for selected flight
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/flights/${flight.id}/seats`);
-      this.selectedFlight.seats = response.data.data;
-      console.log(this.selectedFlight.seats);
-      this.isBussinessChoosed = true;
-      this.isService = true;
-      this.isChoosed = true;
-    },
-
-    undoEconomy(flight) {
+    undoFlight() {
       this.selectedFlight.flightInfo = null;
       this.selectedFlight.seats = [];
       this.isEconomyChoosed = false;
-      this.isService = false;
-      this.isChoosed = false;
-    },
-
-    undoBussiness(flight) {
-      this.selectedFlight.flightInfo = null;
-      this.selectedFlight.seats = [];
+      this.booking.passengers = [];
+      this.selectedSeats = [];
+      this.passengerCount = 1;
+      this.selectedClass = null;
       this.isBussinessChoosed = false;
       this.isService = false;
       this.isChoosed = false;
@@ -617,7 +659,7 @@ export default {
     },
 
     calculatePrice(weight) {
-      return weight * this.pricePerKg; // Tính giá tiền dựa trên số kg
+      return weight * this.externalServices.luggageService.price; // Tính giá tiền dựa trên số kg
     },
 
     showSlide(index) {

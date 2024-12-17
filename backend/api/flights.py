@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Form
 from supabase_client import supabase
 from datetime import datetime
 from utils.request_models import CreateFlightRequest, GetFlightRequest, UpdateFlightRequest
-from utils.util import convert_timestamp_to_time, time_difference, convert_timestamp
+from utils.util import convert_timestamp_to_time, time_difference, convert_timestamp, convert_timestamp_to_date
 router = APIRouter(prefix="/flights", tags=["flights"])
 
 
@@ -35,7 +35,8 @@ async def get_flights(departure_airport_id: int, arrival_airport_id: int, depart
         for flight in flights:
             flight["class_pricing"] = supabase.table("flight_class_pricing").select("class_name", "base_price", "tax_percentage", "discount_percentage").eq("flight_id", flight["id"]).execute().data
             flight["aircraft_info"] = supabase.table("aircrafts").select("model", "manufacturer").eq("id", flight["aircraft_id"]).execute().data        
-
+            flight["checkin"] = convert_timestamp_to_date(flight["departure_time"])
+            flight["checkout"] = convert_timestamp_to_date(flight["arrival_time"])
             flight["departure_time"] = convert_timestamp_to_time(flight["departure_time"])
             flight["arrival_time"] = convert_timestamp_to_time(flight["arrival_time"])
             flight["duration"] = time_difference(flight["departure_time"], flight["arrival_time"])
@@ -50,7 +51,8 @@ async def get_flights(departure_airport_id: int, arrival_airport_id: int, depart
 async def get_available_seats(
     flight_id : int
 ):
-    available_seats = supabase.table("flight_seat_availability").select("seat_id, seats!flight_seat_availability_seat_id_fkey(class_name, seat_number)").eq("flight_id", flight_id).execute().data
+    # only fetch 3 BUSINESS rows and 4 ECONOMY seats
+    available_seats = supabase.table("flight_seat_availability").select("seat_id, seats!flight_seat_availability_seat_id_fkey(class_name, seat_number)").eq("flight_id", flight_id).execute().data[:54]
 
     return {"status": "success", "data": available_seats}
 

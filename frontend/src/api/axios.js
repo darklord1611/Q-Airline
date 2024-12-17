@@ -4,7 +4,7 @@ import { useUserStore } from '@/stores/user'; // Adjust path as needed
 // Create an instance of axios
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_BACKEND_URL || 'https://your-api.com', // Replace with your API base URL
-    timeout: 10000, // Set a timeout in milliseconds
+    timeout: 60000, // Set a timeout in milliseconds
     headers: {
         'Content-Type': 'application/json',
     },
