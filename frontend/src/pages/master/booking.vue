@@ -436,18 +436,8 @@ export default {
       });
 
       this.selectedFlight.seats.forEach((seat) => {
-        if (seat.is_available === false) {
+        if (seat.is_available === false || seat.seats.class_name !== class_name) {
           newSeats[seat.seats.seat_number].isBooked = true;
-        } else {
-          newSeats[seat.seats.seat_number].seatID = seat.seat_id;
-        }
-      });
-
-      // seats are not available for selected class
-      this.selectedFlight.seats.forEach((seat) => {
-        if (seat.seats.class_name !== class_name) {
-          newSeats[seat.seats.seat_number].isBooked = true;
-          newSeats[seat.seats.seat_number].seatID = null;
         } else {
           newSeats[seat.seats.seat_number].seatID = seat.seat_id;
         }
