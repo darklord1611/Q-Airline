@@ -71,7 +71,7 @@
                 <div class="price-info-horizontal">
                     <span class="price">USD: {{ booking.total_price }}$</span>
                     <span class="ticket"> {{ booking.class_name }}</span>
-                    <button v-if="shouldRenderCancelButton(booking)" class="cancel-button" @click="removeFlight(flight.flightNumber)">Cancel</button>
+                    <button v-if="shouldRenderCancelButton(booking)" class="cancel-button" @click="removeFlight(booking.id)">Cancel</button>
                 </div>
             </div>
         </div>
@@ -152,12 +152,20 @@ export default {
             const options = { weekday: "short", day: "numeric", month: "short" };
             return date.toLocaleDateString("en-US", options);
         },
-        removeFlight(flightNumber) {
+        async removeFlight(id) {
             // Lọc bỏ chuyến bay có flightNumber tương ứng
+            const response = await apiClient.delete(`/bookings/${id}`);
+            
+            if (response.status == 200) {
+                alert('Booking has been canceled successfully');
+            } else {
+                alert('Failed to cancel booking');
+            }
+
             this.bookings = this.bookings.filter(booking => booking.id !== id);
+            
         },
         calcTotalMeal(services) {
-            console.log(services);
             return services.reduce((total, service) => {
                 if (service.services.type === 'MEAL') {
                     total += service.quantity;
@@ -166,7 +174,6 @@ export default {
             }, 0);
         },
         calcTotalLuggage(services) {
-            console.log(services);
             return services.reduce((total, service) => {
                 if (service.services.type === 'LUGGAGE') {
                     total += service.quantity;

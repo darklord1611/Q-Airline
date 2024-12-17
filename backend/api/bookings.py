@@ -106,8 +106,8 @@ async def create_booking(req: CreateBookingRequest):
     return {"status" : "success", "data": res.data}
 
 
-@router.patch("/{booking_id}", description="Cancel a booking")
-async def cancel_booking(booking_id: str):
+@router.delete("/{booking_id}", description="Cancel a booking")
+async def cancel_booking(booking_id: int):
     res = supabase.table("bookings").update({"booking_status": "CANCELLED"}).eq("id", booking_id).execute()
     print(res)
     return {"status" : "success", "data": res.data[0]}

@@ -54,8 +54,11 @@ async def get_available_seats(
     flight_id : int
 ):
     available_seats = supabase.table("flight_seat_availability").select("seat_id, is_available, seats!flight_seat_availability_seat_id_fkey(class_name, seat_number)").eq("flight_id", flight_id).order("id", desc=False).execute().data
-    # only fetch the first 10 rows of the available seats
-    return {"status": "success", "data": available_seats[:54]}
+    # only fetch the first 10 rows of the available seats   
+    data = available_seats
+    filtered_seats = [seat for seat in available_seats if int(seat["seats"]["seat_number"][:-1]) <= 10]
+
+    return {"status": "success", "data": filtered_seats}
 
 @router.post("")
 async def create_flight(req: CreateFlightRequest):
