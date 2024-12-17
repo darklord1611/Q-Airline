@@ -273,12 +273,11 @@
       </div>
     </div>
 
-
-
-    <div class="total-price-info">
+    <div class="total-price-info" v-if="isService">
       <span class="price">Total: ${{ totalPrice }} USD</span>
       <button class="select-button">Finish!</button>
     </div>
+
     <Footer />
   </div>
 </template>
@@ -836,7 +835,7 @@ export default {
 }
 
 .search-btn {
-  background-color: #003D5B;
+  background: linear-gradient(135deg, #003D5B, #00577A);
   color: white;
   font-weight: bold;
   border: none;
@@ -936,7 +935,7 @@ export default {
 
 .select-button {
   padding: 10px 20px;
-  background-color: #003D5B;
+  background: linear-gradient(135deg, #003D5B, #00577A);
   color: white;
   border: none;
   border-radius: 5px;

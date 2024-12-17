@@ -4,7 +4,7 @@
     <div class="main-content w-full h-full bg-gray-50 max-w-full overflow-y-auto">
       <!-- Navbar (Hàng đầu) -->
       <div class="navbar-top w-full max-h-[150px] text-white flex items-center justify-between px-40"
-        style="background-color: #003D5B;">
+        style="background: linear-gradient(135deg, #003D5B, #00577A);">
         <!-- Nội dung hàng đầu -->
         <div class="flex items-center space-x-2">
           <h3 class="font-bold text-2xl">Qairline</h3>
