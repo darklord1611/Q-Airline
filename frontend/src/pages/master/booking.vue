@@ -424,12 +424,13 @@ export default {
   methods: {
     // Hàm khởi tạo trạng thái ghế
     initializeSeats(class_name) {
-      const newSeats = {};
+      const newSeats = {}; // fix this
+      const maxBusinessRow = (this.selectedFlight.flightInfo.aircraft_id === 1) ? 3 : 4;
       [...this.topRows, ...this.bottomRows].forEach((row) => {
         this.seatColumns.forEach((column) => {
           const seatName = `${column}${row}`;
           let isBooked = false;
-          if (column >= 1 && column <= 3 && (row == "C" || row == "E")) {
+          if (column >= 1 && column <= maxBusinessRow && (row == "C" || row == "E")) {
             isBooked = true;
           }
           newSeats[seatName] = { isBooked: isBooked, seatID: null }; // default seat_id is null
@@ -562,7 +563,7 @@ export default {
 
       const response = await apiClient.post(`/bookings`, payload);
 
-      if (response.status === 201) {
+      if (response.status === 200) {
         alert("Booking created successfully!");
       } else {
         alert("Failed to create booking!");

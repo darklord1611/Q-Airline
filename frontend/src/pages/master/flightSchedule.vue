@@ -485,9 +485,9 @@ export default {
       const response = await apiClient.put(`/flights/${this.selectedFlight.id}`, payload);
 
       if (response.status === 200) {
-        console.log("Flight updated successfully");
+        alert("Flight updated successfully");
       } else {
-        console.error("Failed to update flight");
+        alert("Failed to update flight");
       }
 
       this.closeModal(); // Đóng modal sau khi thay đổi
