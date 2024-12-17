@@ -66,7 +66,7 @@
             <div class="price-info-horizontal">
                 <span class="price">USD: {{ booking.total_price }}$</span>
                 <span class="ticket"> {{ booking.class_name }}</span>
-                <button class="cancel-button" @click="removeFlight(flight.flightNumber)">Cancel</button>
+                <button v-if="shouldRenderCancelButton(booking)" class="cancel-button" @click="removeFlight(flight.flightNumber)">Cancel</button>
             </div>
         </div>
     </div>
@@ -114,6 +114,22 @@ export default {
     },
 
     methods: {
+        // Check if the "Cancel" button should be rendered for a particular booking
+        shouldRenderCancelButton(booking) {
+        // Get today's date (without time)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to midnight for comparison purposes
+
+        // Parse the booking's check-in date (yyyy-mm-dd)
+        const checkInDate = new Date(booking.flights[0].checkin);
+        
+        // Calculate the difference in days
+        const timeDifference = checkInDate - today;
+        const daysDifference = timeDifference / (1000 * 3600 * 24); // Convert from milliseconds to days
+
+        // If the difference is greater than 3 days, render the cancel button
+        return daysDifference > 3;
+        },
         formatDate(inputDate) {
             // Chuyển đổi định dạng ngày tháng
             const date = new Date(inputDate);
