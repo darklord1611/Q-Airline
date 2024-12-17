@@ -1,86 +1,102 @@
 <template>
-    <div class="flight-list">
-        <div class="flight-card" v-for="booking in bookings" :key="booking.id">
-            <div class="flight-info-horizontal">
-                <!-- Cột trái: Thời gian -->
-                <div class="time-column">
-                    <div class="time-block departure-time">
-                        <span class="time">{{ booking.flights[0].departure_time }}</span>
-                        <div class="date">{{ booking.formattedCheckIn }}</div>
-                    </div>
-                    <div class="spacer"></div>
-                    <div class="duration"><span>{{ booking.flights[0].duration }}</span></div>
-                    <div class="time-block arrival-time">
-                        <span class="time">{{ booking.flights[0].arrival_time }}</span>
-                        <div class="date">{{ booking.formattedCheckOut }}</div>
-                    </div>
-                </div>
-
-                <!-- Cột giữa: Đường bay -->
-                <div class="route-column">
-                    <div class="icon icon-departure">●</div>
-                    <div class="line"></div>
-                    <div class="icon icon-plane">
-                        <img src="@/assets/plane.png" alt="plane icon" />
-                    </div>
-                    <div class="line"></div>
-                    <div class="icon icon-location">
-                        <img src="@/assets/location-sign.png" alt="location icon" />
-                    </div>
-                </div>
-
-                <!-- Cột phải: Sân bay -->
-                <div class="airport-column">
-                    <div class="airport-block departure-airport">
-                        <span>{{ booking.flights[0].departure_iata_code }}</span>
-                        <div class="from"> {{ booking.flights[0].departure_city }}</div>
-                    </div>
-                    <div class="service">
-                        <!-- Phần Hành lý -->
-                        <div class="luggage">
-                            <img src="@/assets/luggage.png" alt="Luggage Icon" class="service-icon" />
-                            <span class="service-text">{{ booking.totalLuggage }} kg</span>
-                        </div>
-
-                        <!-- Phần Bữa ăn -->
-                        <div class="meal">
-                            <img src="@/assets/breakfast.png" alt="Meal Icon" class="service-icon" />
-                            <span class="service-text">{{ booking.totalMeal }} meals</span>
-                        </div>
-                        <div class="travelers">
-                            <img src="@/assets/passenger.png" alt="passerger Icon" class="service-icon" />
-                            <span class="service-text">{{ booking.number_of_passengers }} passengers</span>
-                        </div>
-                    </div>
-
-                    <div class="airport-block arrival-airport">
-                        <span>{{ booking.flights[0].arrival_iata_code }}</span>
-                        <div class="from"> {{ booking.flights[0].arrival_city }}</div>
-                    </div>
-                </div>
-
+    <div class="myflight-profile">
+        <div class="flight-list">
+            <div class="search-bar">
+                <img src="@/assets/search.png" alt="Search Icon" class="icon" />
+                <input type="text" class="search-input" placeholder="Find your ticket here" v-model="searchQuery" />
             </div>
+            <div class="flight-card" v-for="booking in bookings" :key="booking.id">
+                <div class="flight-info-horizontal">
+                    <!-- Cột trái: Thời gian -->
+                    <div class="time-column">
+                        <div class="time-block departure-time">
+                            <span class="time">{{ booking.flights[0].departure_time }}</span>
+                            <div class="date">{{ booking.formattedCheckIn }}</div>
+                        </div>
+                        <div class="spacer"></div>
+                        <div class="duration"><span>{{ booking.flights[0].duration }}</span></div>
+                        <div class="time-block arrival-time">
+                            <span class="time">{{ booking.flights[0].arrival_time }}</span>
+                            <div class="date">{{ booking.formattedCheckOut }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Cột giữa: Đường bay -->
+                    <div class="route-column">
+                        <div class="icon icon-departure">●</div>
+                        <div class="line"></div>
+                        <div class="icon icon-plane">
+                            <img src="@/assets/plane.png" alt="plane icon" />
+                        </div>
+                        <div class="line"></div>
+                        <div class="icon icon-location">
+                            <img src="@/assets/location-sign.png" alt="location icon" />
+                        </div>
+                    </div>
+
+                    <!-- Cột phải: Sân bay -->
+                    <div class="airport-column">
+                        <div class="airport-block departure-airport">
+                            <span>{{ booking.flights[0].departure_iata_code }}</span>
+                            <div class="from"> {{ booking.flights[0].departure_city }}</div>
+                        </div>
+                        <div class="service">
+                            <!-- Phần Hành lý -->
+                            <div class="luggage">
+                                <img src="@/assets/luggage.png" alt="Luggage Icon" class="service-icon" />
+                                <span class="service-text">{{ booking.totalLuggage }} kg</span>
+                            </div>
+
+                            <!-- Phần Bữa ăn -->
+                            <div class="meal">
+                                <img src="@/assets/breakfast.png" alt="Meal Icon" class="service-icon" />
+                                <span class="service-text">{{ booking.totalMeal }} meals</span>
+                            </div>
+                            <div class="travelers">
+                                <img src="@/assets/passenger.png" alt="passerger Icon" class="service-icon" />
+                                <span class="service-text">{{ booking.number_of_passengers }} passengers</span>
+                            </div>
+                        </div>
+
+                        <div class="airport-block arrival-airport">
+                            <span>{{ booking.flights[0].arrival_iata_code }}</span>
+                            <div class="from"> {{ booking.flights[0].arrival_city }}</div>
+                        </div>
+                    </div>
+
+                </div>
 
 
-            <!-- Thông tin giá và nút chọn -->
-            <div class="price-info-horizontal">
-                <span class="price">USD: {{ booking.total_price }}$</span>
-                <span class="ticket"> {{ booking.class_name }}</span>
-                <button v-if="shouldRenderCancelButton(booking)" class="cancel-button" @click="removeFlight(flight.flightNumber)">Cancel</button>
+                <!-- Thông tin giá và nút chọn -->
+                <div class="price-info-horizontal">
+                    <span class="price">USD: {{ booking.total_price }}$</span>
+                    <span class="ticket"> {{ booking.class_name }}</span>
+                    <button v-if="shouldRenderCancelButton(booking)" class="cancel-button" @click="removeFlight(flight.flightNumber)">Cancel</button>
+                </div>
             </div>
         </div>
+        <div class="profile-weather">
+            <Profile />
+            <Weather />
+        </div>
+
     </div>
+
     <Footer />
 </template>
 
 <script>
 import Footer from '@/pages/master/footer.vue';
+import Profile from '@/pages/master/profile.vue';
+import Weather from '@/pages/master/weather.vue';
 import { useUserStore } from '@/stores/user';
 import apiClient from '@/api/axios';
 
 export default {
     components: {
-        Footer
+        Footer,
+        Profile,
+        Weather
     },
     data() {
         return {
@@ -384,5 +400,43 @@ h2 {
     color: #3331319a;
     /* Màu xám nhẹ */
     font-weight: bold;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 8px;
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 20px;
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+}
+
+.search-input {
+    border: none;
+    outline: none;
+    flex-grow: 1;
+    font-size: 14px;
+    /* background-color: ; */
+}
+
+.myflight-profile {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    margin-right: 20px;
+}
+
+.profile-weather {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 </style>

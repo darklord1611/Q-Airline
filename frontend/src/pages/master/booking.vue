@@ -277,6 +277,7 @@
         <button class="select-button" @click="createBooking()">Finish!</button>
       </div>
     </div>
+
     <Footer />
   </div>
 </template>
@@ -871,7 +872,7 @@ export default {
 }
 
 .search-btn {
-  background-color: #003D5B;
+  background: linear-gradient(135deg, #003D5B, #00577A);
   color: white;
   font-weight: bold;
   border: none;
@@ -971,7 +972,7 @@ export default {
 
 .select-button {
   padding: 10px 20px;
-  background-color: #003D5B;
+  background: linear-gradient(135deg, #003D5B, #00577A);
   color: white;
   border: none;
   border-radius: 5px;

@@ -639,7 +639,7 @@ export default {
 
 /* Header */
 .flight-table thead {
-  background-color: #003D5B;
+  background: linear-gradient(135deg, #003D5B, #00577A);
   /* Màu header */
   color: #ffffff;
   /* Màu chữ trắng */
