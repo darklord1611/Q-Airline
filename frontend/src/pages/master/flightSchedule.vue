@@ -1,9 +1,12 @@
 <template>
-  <TicketManage />
   <div class="flight-search">
+    <Statistic />
     <div class="header-row">
       <label class="myheader">Flight Schedule</label>
       <div class="over-table">
+        <button @click="openAddFlight" class="add-flight-btn">
+          <img src="@/assets/plus.png" class="add-flight-icon" /> Add Flight
+        </button>
         <button @click="toggleAircraft" class="add-aircraft-btn">
           <img src="@/assets/plus.png" class="add-aircraft-icon" /> Add Aircraft
         </button>
@@ -247,17 +250,17 @@
         <!-- Các trường nhập liệu trong modal -->
         <div class="edit-line">
           <label for="flightNumber">Flight Number:</label>
-          <input type="text" v-model="selectedFlight.flightNumber" disabled/>
+          <input type="text" v-model="selectedFlight.flightNumber" disabled />
         </div>
 
         <div class="edit-line">
           <label for="departureAirport">Departure Airport:</label>
-          <input type="text" v-model="selectedFlight.departureAirport" disabled/>
+          <input type="text" v-model="selectedFlight.departureAirport" disabled />
         </div>
 
         <div class="edit-line">
           <label for="arrivalAirport">Arrival Airport:</label>
-          <input type="text" v-model="selectedFlight.arrivalAirport" disabled/>
+          <input type="text" v-model="selectedFlight.arrivalAirport" disabled />
         </div>
 
         <div class="edit-line">
@@ -272,7 +275,7 @@
 
         <div class="edit-line">
           <label for="checkinDate">Check-in:</label>
-          <input type="date" v-model="selectedFlight.checkin"/>
+          <input type="date" v-model="selectedFlight.checkin" />
           <label for="checkoutDate">Check-out:</label>
           <input type="date" v-model="selectedFlight.checkout" />
         </div>
@@ -280,27 +283,67 @@
 
         <div class="edit-line" v-for="(pricing, index) in selectedFlight.class_pricing" :key="index">
           <label :for="`price-${index}`">Class:</label>
-          <input
-            type="text"
-            :id="`class-${index}`"
-            v-model="pricing.class_name"
-            placeholder="Class Name"
-            disabled
-          />
+          <input type="text" :id="`class-${index}`" v-model="pricing.class_name" placeholder="Class Name" disabled />
 
           <label :for="`price-${index}`">Price:</label>
-          <input
-            type="number"
-            :id="`price-${index}`"
-            v-model="pricing.base_price"
-            placeholder="Enter Price"
-          />
+          <input type="number" :id="`price-${index}`" v-model="pricing.base_price" placeholder="Enter Price" />
         </div>
       </div>
 
       <div class="modal-actions">
         <button @click="applyChanges">Apply</button>
         <button @click="closeModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="isAddFlight" class="modal-overlay" @click="closeFlightModal">
+    <div class="modal-content" @click.stop>
+      <h3>Flight Edit</h3>
+      <div class="modal-fields">
+        <!-- Các trường nhập liệu trong modal -->
+        <div class="edit-line">
+          <label for="flightNumber">Flight Number:</label>
+          <input type="text" />
+        </div>
+
+        <div class="edit-line">
+          <label for="departureAirport">Departure Airport:</label>
+          <input type="text" />
+        </div>
+
+        <div class="edit-line">
+          <label for="arrivalAirport">Arrival Airport:</label>
+          <input type="text" />
+        </div>
+
+        <div class="edit-line">
+          <label for="departureTime">Departure Time:</label>
+          <input type="time" />
+        </div>
+
+        <div class="edit-line">
+          <label for="arrivalTime">Arrival Time:</label>
+          <input type="time" />
+        </div>
+
+        <div class="edit-line">
+          <label for="checkinDate">Check-in:</label>
+          <input type="date" />
+          <label for="checkoutDate">Check-out:</label>
+          <input type="date" />
+        </div>
+
+
+        <div class="edit-line">
+          <label for="checkoutDate">Price:</label>
+          <input type="text" />
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button @click="addflight">Ok</button>
+        <button @click="closeFlightModal">Close</button>
       </div>
     </div>
   </div>
@@ -320,7 +363,7 @@
 
 <script>
 import Footer from '@/pages/master/footer.vue';
-import TicketManage from '@/pages/master/ticketManage.vue';
+import Statistic from '@/pages/master/statistics.vue';
 import { useUserStore } from '@/stores/user';
 
 import apiClient from '@/api/axios';
@@ -328,7 +371,7 @@ import apiClient from '@/api/axios';
 export default {
   components: {
     Footer,
-    TicketManage
+    Statistic
   },
   data() {
     return {
@@ -344,6 +387,7 @@ export default {
           cols: 0,
         },
       },
+      isAddFlight: false,
       selectedFlight: null,
       originalFlight: null,
       isAdmin: false,
@@ -363,7 +407,7 @@ export default {
       },
       flights: [],
       currentPage: 1,
-      pageSize: 4
+      pageSize: 8
     };
   },
 
@@ -451,9 +495,15 @@ export default {
       this.selectedFlight = { ...flight };// Lưu thông tin của dòng được chọn
       this.originalFlight = { ...flight }; // Lưu bản sao gốc để khôi phục khi đóng modal
     },
+    async openAddFlight() {
+      this.isAddFlight = true;
+    },
     closeModal() {
       this.selectedFlight = null; // Đóng modal và không thay đổi gì
       this.originalFlight = null;  // Đặt lại bản sao gốc
+    },
+    closeFlightModal() {
+      this.isAddFlight = false;
     },
     async applyChanges() {
       const hasChanges = Object.keys(this.selectedFlight).some(key => {
@@ -491,6 +541,10 @@ export default {
       }
 
       this.closeModal(); // Đóng modal sau khi thay đổi
+    },
+
+    async addflight() {
+      this.closeFlightModal();
     },
 
     nextPage() {
@@ -696,6 +750,7 @@ export default {
   justify-content: center;
   align-items: center;
   margin-top: 20px;
+  margin-bottom: 20px;
   font-size: 14px;
   gap: 10px;
 }
@@ -1046,6 +1101,7 @@ select:focus {
   padding: 5px;
 }
 
+.add-flight-btn,
 .add-aircraft-btn,
 .sort-btn,
 .filter-btn {
@@ -1058,6 +1114,7 @@ select:focus {
   cursor: pointer;
 }
 
+.add-flight-icon,
 .add-aircraft-icon,
 .sort-icon,
 .filter-icon {

@@ -77,8 +77,13 @@
             Booking
           </router-link>
           <router-link to="/myflight"
-            class="flex-1 py-3 px-4 text-sm text-center border-r border-gray-300 hover:bg-gray-100 transition rounded-md">
-            My Flight
+            class="flex-1 py-3 px-4 text-sm text-center border-r border-gray-300 hover:bg-gray-100 transition rounded-md flex items-center justify-center">
+            <!-- Nội dung My Flight -->
+            <span>My Flight</span>
+
+            <!-- Hiển thị icon chuông nếu isDelay = true -->
+            <img v-if="isDelay" src="@/assets/bell-icon.png" alt="Delay Icon"
+              class="w-4 h-4 ml-2 img-bell bell-animation" />
           </router-link>
           <router-link to="/flightSchedule"
             class="flex-1 py-3 px-4 text-sm text-center hover:bg-gray-100 transition rounded-md">
@@ -112,6 +117,7 @@ export default {
   data() {
     return {
       showDropDown: false,
+      isDelay: true,
     };
   },
   methods: {
@@ -175,5 +181,36 @@ body {
 .font {
   font-family: 'Merriweather', serif;
   font-weight: bold;
+}
+
+.img-bell {
+  display: inline-block;
+}
+
+@keyframes bell-shake {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-10deg);
+  }
+
+  50% {
+    transform: rotate(10deg);
+  }
+
+  75% {
+    transform: rotate(-5deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.bell-animation {
+  display: inline-block;
+  animation: bell-shake 0.5s ease-in-out infinite;
 }
 </style>
