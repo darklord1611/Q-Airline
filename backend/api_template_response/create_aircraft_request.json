@@ -1,0 +1,14 @@
+{
+    "model": "Boeing 747",
+    "manufacturer": "Boeing",
+    "seat_configuration": {
+        "BUSINESS": {
+            "rows": 10,
+            "columns": 4
+        },
+        "ECONOMY": {
+            "rows": 30,
+            "columns": 6
+        }
+    }
+}

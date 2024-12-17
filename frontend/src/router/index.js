@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useUserStore } from '@/stores/user';
 
 import dashboard from '../pages/master/dashboard.vue';
 import booking from '../pages/master/booking.vue';
@@ -22,12 +23,14 @@ const routes = [
             {
                 name: 'myFlight',
                 path: '/myflight',
-                component: myFlight
+                component: myFlight,
+                meta: { requiresAuth: true }
             },
             {
                 name: 'flightSchedule',
                 path: '/flightSchedule',
-                component: flightSchedule
+                component: flightSchedule,
+                meta: { requiresAuth: true }
             },
             {
                 name: 'Login',
@@ -43,12 +46,22 @@ const routes = [
     },
 ];
 
-const router = Router();
+const router = new createRouter({
+    history: createWebHistory(),
+    routes,
+});
+
+
+// Global Navigation Guard
+router.beforeEach((to, from, next) => {
+    const userStore = useUserStore();
+    if (to.meta.requiresAuth && !userStore.isLoggedIn) {
+        // Redirect to login page if not authenticated
+        next({ name: 'Login' });
+    } else {
+        next(); // Proceed to the route
+    }
+});
+
+
 export default router;
-function Router() {
-    const router = new createRouter({
-        history: createWebHistory(),
-        routes,
-    });
-    return router;
-}

@@ -7,6 +7,7 @@ from .bookings import router as bookings_router
 from .notifications import router as notifications_router
 from .news import router as news_router
 from .services import router as services_router
+from .aircrafts import router as aircrafts_router
 
 router = APIRouter(prefix="/api/v1")
 
@@ -17,3 +18,4 @@ router.include_router(bookings_router)
 router.include_router(notifications_router)
 router.include_router(news_router)
 router.include_router(services_router)
+router.include_router(aircrafts_router)

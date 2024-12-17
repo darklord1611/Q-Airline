@@ -6,6 +6,7 @@ export const useUserStore = defineStore(
     () => {
         // State
         const isLoggedIn = ref(false);
+        const isAdmin = ref(false);
         const user = ref(null);
         const accessToken = ref("");
         const refreshToken = ref("");
@@ -14,6 +15,9 @@ export const useUserStore = defineStore(
         const setUser = (userData, userAccessToken, userRefreshToken) => {
             isLoggedIn.value = true;
             user.value = userData;
+            if (userData.role === 'admin') {
+                isAdmin.value = true;
+            }
             accessToken.value = userAccessToken;
             refreshToken.value = userRefreshToken;
         };
@@ -21,6 +25,7 @@ export const useUserStore = defineStore(
         // Logout functionality
         const logout = () => {
             isLoggedIn.value = false;
+            isAdmin.value = false;
             user.value = null;
             accessToken.value = "";
             refreshToken.value = "";
@@ -29,6 +34,7 @@ export const useUserStore = defineStore(
         // Return all states and methods
         return {
             isLoggedIn,
+            isAdmin,
             user,
             accessToken,
             refreshToken,

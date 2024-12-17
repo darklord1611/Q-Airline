@@ -3,3 +3,7 @@ supabase
 pydantic
 python-dotenv
 faker
+phonenumbers
+uvicorn
+python-jose
+httpx

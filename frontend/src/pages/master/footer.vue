@@ -1,5 +1,5 @@
 <template>
-    <footer class="footer w-full bg-[#003D5B] text-white py-8 px-40">
+    <footer class="footer w-full text-white py-8 px-40" style="background: linear-gradient(135deg, #003D5B, #00577A);">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
                 <h3 class="font-bold text-lg mb-4">About Qairline</h3>
