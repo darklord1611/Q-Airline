@@ -149,7 +149,7 @@
               <img src="@/assets/bussiness-ticket-black.png" alt="Economy Icon" class="icon-ticket-image" />
             </span>
             Bussiness
-            <span class="price-bussiness">${{ flight.class_pricing[0].base_price }} USD</span>
+            <span class="price-bussiness">${{ flight.class_pricing[1].base_price }} USD</span>
           </button>
           <button class="select-button-economy" v-if="isEconomyChoosed" @click="undoFlight()"><label class="Undo">Undo
             </label>
@@ -442,12 +442,8 @@ export default {
           newSeats[seat.seats.seat_number].seatID = seat.seat_id;
         }
       });
-      
-      // seats that are not considered in business rows
 
-
-      this.seats = newSeats; // Cập nhật giá trị của ref
-      this.selectedSeats = [];
+      this.seats = newSeats;
     },
     initializePassengers() {
       const first_fake_passengers = {
@@ -469,8 +465,14 @@ export default {
         return { backgroundColor: "gray", cursor: "not-allowed" }; // Ghế đã đặt
       } else if (this.selectedSeats.some(seat => seat.id === this.seats[seatName].seatID)) {
         return { backgroundColor: "green" }; // Ghế đã chọn
+      } else if (column >= 1 && column <= 3) {
+        if (row === "C" || row === "E") {
+          return { backgroundColor: "gray", cursor: "not-allowed" }; // Ghế Business
+        } else {
+          return { backgroundColor: "#D1495B" }; // Ghế Business
+        }
       } else {
-        return { backgroundColor: "blue" }; // Ghế chưa chọn
+        return { backgroundColor: "#243B4A" }; // Ghế Economy
       }
     },
     // Hàm cập nhật vị trí (place) cho hành khách

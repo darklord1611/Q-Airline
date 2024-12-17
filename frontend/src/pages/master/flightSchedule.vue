@@ -23,8 +23,6 @@
           <th>To</th>
           <th>Departure Time</th>
           <th>Arrival Time</th>
-          <th>Price</th>
-          <th>Ticket Type</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -35,8 +33,6 @@
           <td>{{ flight.to }}</td>
           <td>{{ flight.departureTime }}</td>
           <td>{{ flight.arrivalTime }}</td>
-          <td>{{ flight.price }}</td>
-          <td>{{ flight.ticketType }}</td>
           <td v-if="isAdmin"> <img src="@/assets/edit.png" alt="Details" @click="openModal(flight)"
               style="cursor: pointer; width: 24px; height: 30px;" /></td>
           <td v-if="!isAdmin"> <img src="@/assets/search-file.png" alt="Details" @click="openModal(flight)"
@@ -58,7 +54,7 @@
 
       <!-- Manufacturer -->
       <div class="mb-3">
-        <label for="manufacturer" class="block text-sm font-medium text-gray-700 mb-0.2">Manufacturer</label>
+        <label for="manufacturer" class="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
         <input type="text" id="manufacturer" v-model="aircraft.manufacturer"
           class="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-300"
           placeholder="Enter manufacturer name" />
@@ -66,19 +62,50 @@
 
       <!-- Business Seats -->
       <div class="mb-3">
-        <label for="business" class="block text-sm font-medium text-gray-700 mb-0.2">Business Seats</label>
-        <input type="number" id="business" v-model="aircraft.business"
-          class="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-300"
-          placeholder="Enter number of business seats" />
+        <label class="block text-sm font-medium text-gray-700 mb-1">Business Class</label>
+
+        <!-- Rows -->
+        <div class="flex gap-2 mb-2">
+          <div class="flex-1">
+            <label for="business-rows" class="text-sm text-gray-600">Rows</label>
+            <input type="number" id="business-rows" v-model="aircraft.business.rows"
+              class="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+              placeholder="Enter number of rows" />
+          </div>
+
+          <!-- Columns -->
+          <div class="flex-1">
+            <label for="business-cols" class="text-sm text-gray-600">Columns</label>
+            <input type="number" id="business-cols" v-model="aircraft.business.cols"
+              class="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+              placeholder="Enter number of columns" />
+          </div>
+        </div>
       </div>
 
       <!-- Economy Seats -->
       <div class="mb-3">
-        <label for="economy" class="block text-sm font-medium text-gray-700 mb-0.2">Economy Seats</label>
-        <input type="number" id="economy" v-model="aircraft.economy"
-          class="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-300"
-          placeholder="Enter number of economy seats" />
+        <label class="block text-sm font-medium text-gray-700 mb-1">Economy Class</label>
+
+        <!-- Rows -->
+        <div class="flex gap-2 mb-2">
+          <div class="flex-1">
+            <label for="economy-rows" class="text-sm text-gray-600">Rows</label>
+            <input type="number" id="economy-rows" v-model="aircraft.economy.rows"
+              class="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+              placeholder="Enter number of rows" />
+          </div>
+
+          <!-- Columns -->
+          <div class="flex-1">
+            <label for="economy-cols" class="text-sm text-gray-600">Columns</label>
+            <input type="number" id="economy-cols" v-model="aircraft.economy.cols"
+              class="block w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-300"
+              placeholder="Enter number of columns" />
+          </div>
+        </div>
       </div>
+
 
       <!-- Submit Button -->
       <div class="flex justify-end">
@@ -220,17 +247,17 @@
         <!-- Các trường nhập liệu trong modal -->
         <div class="edit-line">
           <label for="flightNumber">Flight Number:</label>
-          <input type="text" v-model="selectedFlight.flightNumber" />
+          <input type="text" v-model="selectedFlight.flightNumber" disabled/>
         </div>
 
         <div class="edit-line">
           <label for="departureAirport">Departure Airport:</label>
-          <input type="text" v-model="selectedFlight.departureAirport" />
+          <input type="text" v-model="selectedFlight.departureAirport" disabled/>
         </div>
 
         <div class="edit-line">
           <label for="arrivalAirport">Arrival Airport:</label>
-          <input type="text" v-model="selectedFlight.arrivalAirport" />
+          <input type="text" v-model="selectedFlight.arrivalAirport" disabled/>
         </div>
 
         <div class="edit-line">
@@ -245,24 +272,29 @@
 
         <div class="edit-line">
           <label for="checkinDate">Check-in:</label>
-          <input type="date" v-model="selectedFlight.checkin" />
+          <input type="date" v-model="selectedFlight.checkin"/>
           <label for="checkoutDate">Check-out:</label>
           <input type="date" v-model="selectedFlight.checkout" />
         </div>
 
 
-        <div class="edit-line">
-          <label for="price">Price:</label>
-          <input type="text" v-model="selectedFlight.price" />
-        </div>
+        <div class="edit-line" v-for="(pricing, index) in selectedFlight.class_pricing" :key="index">
+          <label :for="`price-${index}`">Class:</label>
+          <input
+            type="text"
+            :id="`class-${index}`"
+            v-model="pricing.class_name"
+            placeholder="Class Name"
+            disabled
+          />
 
-        <div class="edit-line">
-          <label for="ticketType">Ticket Type:</label>
-          <select v-model="selectedFlight.ticketType">
-            <option value="Economy">Economy</option>
-            <option value="Business">Business</option>
-            <option value="First Class">First Class</option>
-          </select>
+          <label :for="`price-${index}`">Price:</label>
+          <input
+            type="number"
+            :id="`price-${index}`"
+            v-model="pricing.base_price"
+            placeholder="Enter Price"
+          />
         </div>
       </div>
 
@@ -303,8 +335,14 @@ export default {
       aircraft: {
         model: "",
         manufacturer: "",
-        business: null,
-        economy: null,
+        business: {
+          rows: 0,
+          cols: 0,
+        },
+        economy: {
+          rows: 0,
+          cols: 0,
+        },
       },
       selectedFlight: null,
       originalFlight: null,
@@ -323,43 +361,7 @@ export default {
         maxPrice: 1000,
         ticketType: ""
       },
-      flights: [
-        {
-          departureAirport: "JFK",
-          departureTime: "08:00 AM",
-          arrivalAirport: "LAX",
-          arrivalTime: "11:30 AM",
-          flightNumber: "AA123",
-          price: "$299",
-          ticketType: "Economy",
-          from: "HN",
-          to: "HCM"
-        },
-        {
-          departureAirport: "Hanoi",
-          departureTime: "06:00 AM",
-          arrivalAirport: "Ho Chi Minh City",
-          arrivalTime: "08:30 AM",
-          flightNumber: "VN456",
-          price: "$120",
-          ticketType: "Business",
-          from: "HNR",
-          to: "BGLG"
-        },
-        {
-          departureAirport: "LAX",
-          departureTime: "09:00 AM",
-          arrivalAirport: "JFK",
-          arrivalTime: "12:30 PM",
-          flightNumber: "AA789",
-          price: "$450",
-          ticketType: "First Class",
-          from: "HNN",
-          to: "UET"
-        }
-      ],
-
-
+      flights: [],
       currentPage: 1,
       pageSize: 4
     };
@@ -367,7 +369,31 @@ export default {
 
   async created() {
     const userStore = useUserStore();
-    this.isAdmin = user.role === 'admin';
+    this.isAdmin = userStore.isAdmin;
+
+    // get all flights
+
+    const response = await apiClient.get('/flights');
+
+    this.flights = response.data.data;
+    console.log(this.flights);
+
+    this.flights = this.flights.map((flight) => {
+      return {
+        id: flight.flight_id,
+        departureAirport: flight.departure_iata_code,
+        departureTime: this.formatHour(flight.departure_time),
+        arrivalAirport: flight.arrival_iata_code,
+        arrivalTime: this.formatHour(flight.arrival_time),
+        checkin: this.formatDate(flight.departure_time),
+        checkout: this.formatDate(flight.arrival_time),
+        flightNumber: flight.flight_number,
+        price: "$450",
+        ticketType: "First Class",
+        from: flight.departure_city,
+        to: flight.arrival_city
+      };
+    })
   },
 
   computed: {
@@ -398,7 +424,30 @@ export default {
     }
   },
   methods: {
-    openModal(flight) {
+    formatHour(isoString) {
+      const date = new Date(isoString);
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return `${hours}:${minutes}`;
+    },
+    // Format ISO date to "YYYY-MM-DD" for input[type="date"]
+    formatDate(isoString) {
+      if (!isoString) return "";
+      const date = new Date(isoString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    },
+    // Helper function to combine checkin and time into ISO format
+    assembleDateTime(date, time) {
+      return `${date}T${time}:00.000Z`;
+    },
+    async openModal(flight) {
+      // fetch additional information about the flight including class pricings
+      const price_response = await apiClient.get(`/flights/${flight.id}/class_pricings`);
+
+      flight.class_pricing = price_response.data.data;
       this.selectedFlight = { ...flight };// Lưu thông tin của dòng được chọn
       this.originalFlight = { ...flight }; // Lưu bản sao gốc để khôi phục khi đóng modal
     },
@@ -406,7 +455,7 @@ export default {
       this.selectedFlight = null; // Đóng modal và không thay đổi gì
       this.originalFlight = null;  // Đặt lại bản sao gốc
     },
-    applyChanges() {
+    async applyChanges() {
       const hasChanges = Object.keys(this.selectedFlight).some(key => {
         return this.selectedFlight[key] !== this.originalFlight[key];
       });
@@ -417,6 +466,30 @@ export default {
           this.flights.splice(index, 1, { ...this.selectedFlight }); // Cập nhật chuyến bay
         }
       }
+
+      console.log(this.selectedFlight.departureTime)
+      console.log(this.selectedFlight.arrivalTime)
+      console.log(this.selectedFlight.checkin)
+      console.log(this.selectedFlight.checkout)
+      //send request to update the flight
+      const payload = {
+        flight_id: this.selectedFlight.id,
+        flight_status: "DELAYED",
+        departure_time: this.assembleDateTime(this.selectedFlight.checkin, this.selectedFlight.departureTime),
+        arrival_time: this.assembleDateTime(this.selectedFlight.checkout, this.selectedFlight.arrivalTime),
+        class_pricing: this.selectedFlight.class_pricing
+      };
+
+      console.log(payload);
+
+      const response = await apiClient.put(`/flights/${this.selectedFlight.id}`, payload);
+
+      if (response.status === 200) {
+        console.log("Flight updated successfully");
+      } else {
+        console.error("Failed to update flight");
+      }
+
       this.closeModal(); // Đóng modal sau khi thay đổi
     },
 
@@ -489,15 +562,42 @@ export default {
       this.showFilters = false; // Close after applying
     },
 
-    handleSubmit() {
+    async handleSubmit() {
       console.log("Aircraft Details:", this.aircraft);
+
+      // send request to create new aircraft
+
+      const payload = {
+        model: this.aircraft.model,
+        manufacturer: this.aircraft.manufacturer,
+        seat_configuration: {
+          "BUSINESS": {
+            rows: this.aircraft.business.rows,
+            cols: this.aircraft.business.cols,
+          },
+          "ECONOMY": {
+            rows: this.aircraft.economy.rows,
+            cols: this.aircraft.economy.cols,
+          }
+        }
+      };
+      console.log(payload)
+      const response = await apiClient.post('/aircrafts', payload);
+
       // Reset the form after submission
       this.aircraft = {
         model: "",
         manufacturer: "",
-        business: null,
-        economy: null,
+        business: {
+          rows: 0,
+          cols: 0,
+        },
+        economy: {
+          rows: 0,
+          cols: 0,
+        },
       };
+
       this.showAircraft = false; // Close the popover
     },
   }

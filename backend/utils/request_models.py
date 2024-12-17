@@ -47,10 +47,11 @@ class CreateFlightRequest(BaseModel):
 
 
 class UpdateFlightRequest(BaseModel):
+    flight_id: int
     departure_time: str
     arrival_time: str
-    aircraft_id: int
     flight_status: str = "SCHEDULED"
+    class_pricing: list
 
 class GetFlightRequest(BaseModel):
     arrival_airport_id: int
@@ -68,7 +69,7 @@ class SeatLayout(BaseModel):
 class CreateAircraftRequest(BaseModel):
     model: str
     manufacturer: str
-    total_capacity: int
+    total_capacity: int = 0
     seat_configuration: dict
 
 
