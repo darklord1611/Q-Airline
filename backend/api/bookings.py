@@ -102,6 +102,9 @@ async def create_booking(req: CreateBookingRequest):
             "quantity": service.quantity,
             "total_price": service_price * service.quantity
         }).execute()
+
+    
+    notify_res = await notify_successful_booking_to_user(req.user_id, req.flight_id)
     
     return {"status" : "success", "data": res.data}
 
@@ -111,3 +114,21 @@ async def cancel_booking(booking_id: int):
     res = supabase.table("bookings").update({"booking_status": "CANCELLED"}).eq("id", booking_id).execute()
     print(res)
     return {"status" : "success", "data": res.data[0]}
+
+
+async def notify_successful_booking_to_user(user_id, flight_id):
+    # notify users about the changes to flight schedule
+
+    flight_info = supabase.from_("flight_details").select().eq("flight_id", flight_id).execute().data[0]
+
+    message = f"Your booking for flight {flight_info['flight_number']} has been confirmed!"
+
+    notify_res = supabase.table("notifications").insert({
+        "title": f"Flight Booking Confirmed",
+        "description": message,
+        "notification_type": "BOOKING_CONFIRMED"
+    }).execute().data[0]
+
+    res = supabase.rpc("associate_users_with_notification", params={"notification_id": notify_res["id"], "user_ids": [user_id]}).execute()
+    print(res)
+    return res

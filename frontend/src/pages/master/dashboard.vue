@@ -107,7 +107,7 @@
 <script>
 import { useUserStore } from '@/stores/user';
 import login from "@/pages/auth/login.vue";
-import { computed } from 'vue';
+import apiClient from '@/api/axios';
 
 export default {
   components: {
@@ -117,37 +117,45 @@ export default {
     return {
       showDropDown: false,
       isDelay: true,
+      userStore: useUserStore(), // Access the store in data to use it later
+      notifications: []
     };
+  },
+  computed: {
+    // Use computed properties to reactively get store state
+    isLoggedIn() {
+      return this.userStore.isLoggedIn;
+    },
+    user() {
+      return this.userStore.user;
+    },
+  },
+  async created() {
+    // Any setup logic you want to run when the component is created
+    console.log("User data on created:", this.user);
+
+    // fetch notifications
+
+    const response = await apiClient.get(`/notifications/${this.user.id}`);
+
+
+    this.notifications = response.data.data;
+
+    console.log("Notifications:", this.notifications);
   },
   methods: {
+    // Toggles the dropdown state
     toggleDrop() {
-      this.showDropDown = !this.showDropDown
-
-    }
+      this.showDropDown = !this.showDropDown;
+    },
+    // Handles user logout by calling the store logout method
+    handleLogout() {
+      this.userStore.logout();
+    },
   },
-  setup() {
-    const userStore = useUserStore();
-
-    // Use computed properties to ensure the dashboard re-renders when the store state changes
-    const isLoggedIn = computed(() => userStore.isLoggedIn);
-    const user = computed(() => userStore.user);
-
-    // Handle logout by calling the logout method from the store
-    const handleLogout = () => {
-      userStore.logout();
-    };
-
-    return {
-      isLoggedIn,
-      user,
-      handleLogout,
-    };
-  },
-
-
-}
-
+};
 </script>
+
 
 
 
