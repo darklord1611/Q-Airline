@@ -452,7 +452,7 @@ export default {
         first_name: faker.person.firstName(),
         last_name: faker.person.lastName(),
         email: faker.internet.email(),
-        gender: faker.helpers.arrayElement(['MALE', 'FEMALE', 'OTHER']),
+        gender: faker.helpers.arrayElement(['MALE', 'FEMALE']),
         phone: faker.helpers.replaceSymbols('+##########'), // Generates +1234567890
         birthday: faker.date.birthdate({ min: 18, max: 80, mode: 'age' }).toISOString().split('T')[0], // YYYY-MM-DD format
         seat_id: -1

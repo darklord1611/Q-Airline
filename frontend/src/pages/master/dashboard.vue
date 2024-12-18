@@ -47,7 +47,6 @@
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z"
                   clip-rule="evenodd"></path>
               </svg>
-              account
             </div>
             <!-- Drop-down -->
             <div v-show="showDropDown"
@@ -77,8 +76,13 @@
             Booking
           </router-link>
           <router-link to="/myflight"
-            class="flex-1 py-3 px-4 text-sm text-center border-r border-gray-300 hover:bg-gray-100 transition rounded-md">
-            My Flight
+            class="flex-1 py-3 px-4 text-sm text-center border-r border-gray-300 hover:bg-gray-100 transition rounded-md flex items-center justify-center">
+            <!-- Nội dung My Flight -->
+            <span>My Flight</span>
+
+            <!-- Hiển thị icon chuông nếu isDelay = true -->
+            <img v-if="isDelay" src="@/assets/bell-icon.png" alt="Delay Icon"
+              class="w-4 h-4 ml-2 img-bell bell-animation" />
           </router-link>
           <router-link to="/flightSchedule"
             class="flex-1 py-3 px-4 text-sm text-center hover:bg-gray-100 transition rounded-md">
@@ -103,7 +107,7 @@
 <script>
 import { useUserStore } from '@/stores/user';
 import login from "@/pages/auth/login.vue";
-import { computed } from 'vue';
+import apiClient from '@/api/axios';
 
 export default {
   components: {
@@ -112,37 +116,46 @@ export default {
   data() {
     return {
       showDropDown: false,
+      isDelay: true,
+      userStore: useUserStore(), // Access the store in data to use it later
+      notifications: []
     };
+  },
+  computed: {
+    // Use computed properties to reactively get store state
+    isLoggedIn() {
+      return this.userStore.isLoggedIn;
+    },
+    user() {
+      return this.userStore.user;
+    },
+  },
+  async created() {
+    // Any setup logic you want to run when the component is created
+    console.log("User data on created:", this.user);
+
+    // fetch notifications
+
+    const response = await apiClient.get(`/notifications/${this.user.id}`);
+
+
+    this.notifications = response.data.data;
+
+    console.log("Notifications:", this.notifications);
   },
   methods: {
+    // Toggles the dropdown state
     toggleDrop() {
-      this.showDropDown = !this.showDropDown
-
-    }
+      this.showDropDown = !this.showDropDown;
+    },
+    // Handles user logout by calling the store logout method
+    handleLogout() {
+      this.userStore.logout();
+    },
   },
-  setup() {
-    const userStore = useUserStore();
-
-    // Use computed properties to ensure the dashboard re-renders when the store state changes
-    const isLoggedIn = computed(() => userStore.isLoggedIn);
-    const user = computed(() => userStore.user);
-
-    // Handle logout by calling the logout method from the store
-    const handleLogout = () => {
-      userStore.logout();
-    };
-
-    return {
-      isLoggedIn,
-      user,
-      handleLogout,
-    };
-  },
-
-
-}
-
+};
 </script>
+
 
 
 
@@ -175,5 +188,36 @@ body {
 .font {
   font-family: 'Merriweather', serif;
   font-weight: bold;
+}
+
+.img-bell {
+  display: inline-block;
+}
+
+@keyframes bell-shake {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-10deg);
+  }
+
+  50% {
+    transform: rotate(10deg);
+  }
+
+  75% {
+    transform: rotate(-5deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.bell-animation {
+  display: inline-block;
+  animation: bell-shake 0.5s ease-in-out infinite;
 }
 </style>

@@ -14,6 +14,19 @@ TEMPLATE_PRICING = {
     }
 }
 
+TEMPLATE_PRICING_2 = [
+    {
+        "class_name": "ECONOMY",
+        "base_price": 50,
+        "tax_percentage": 10
+    },
+    {
+        "class_name": "BUSINESS",
+        "base_price": 250,
+        "tax_percentage": 10
+    }
+]
+
 
 ################## AUTH ##################
 class RegisterRequest(BaseModel):
@@ -36,6 +49,7 @@ class LogoutRequest(BaseModel):
 
 ################## FLIGHTS ##################
 class CreateFlightRequest(BaseModel):
+    flight_number: str
     departure_airport_id: int
     arrival_airport_id: int
     departure_time: str
@@ -43,8 +57,8 @@ class CreateFlightRequest(BaseModel):
     aircraft_id: int
     flight_status: str = "SCHEDULED"
     is_active: bool = True
-    class_pricing: dict = TEMPLATE_PRICING
-
+    class_pricing: list = TEMPLATE_PRICING_2
+    
 
 class UpdateFlightRequest(BaseModel):
     flight_id: int

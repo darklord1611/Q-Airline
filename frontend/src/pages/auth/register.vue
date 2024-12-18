@@ -141,8 +141,7 @@ export default {
 
         // Handle successful response
         console.log(response.data);
-        const router = useRouter();
-        router.push('/login'); // Redirect to login page
+        this.$router.push('/login');
       } catch (error) {
         // Handle error response
         this.errorMessage =

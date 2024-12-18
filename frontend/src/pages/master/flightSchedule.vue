@@ -1,9 +1,12 @@
 <template>
-  <TicketManage />
   <div class="flight-search">
+    <Statistic />
     <div class="header-row">
       <label class="myheader">Flight Schedule</label>
       <div class="over-table">
+        <button @click="openAddFlight" class="add-flight-btn">
+          <img src="@/assets/plus.png" class="add-flight-icon" /> Add Flight
+        </button>
         <button @click="toggleAircraft" class="add-aircraft-btn">
           <img src="@/assets/plus.png" class="add-aircraft-icon" /> Add Aircraft
         </button>
@@ -247,17 +250,17 @@
         <!-- Các trường nhập liệu trong modal -->
         <div class="edit-line">
           <label for="flightNumber">Flight Number:</label>
-          <input type="text" v-model="selectedFlight.flightNumber" disabled/>
+          <input type="text" v-model="selectedFlight.flightNumber" disabled />
         </div>
 
         <div class="edit-line">
           <label for="departureAirport">Departure Airport:</label>
-          <input type="text" v-model="selectedFlight.departureAirport" disabled/>
+          <input type="text" v-model="selectedFlight.departureAirport" disabled />
         </div>
 
         <div class="edit-line">
           <label for="arrivalAirport">Arrival Airport:</label>
-          <input type="text" v-model="selectedFlight.arrivalAirport" disabled/>
+          <input type="text" v-model="selectedFlight.arrivalAirport" disabled />
         </div>
 
         <div class="edit-line">
@@ -272,7 +275,7 @@
 
         <div class="edit-line">
           <label for="checkinDate">Check-in:</label>
-          <input type="date" v-model="selectedFlight.checkin"/>
+          <input type="date" v-model="selectedFlight.checkin" />
           <label for="checkoutDate">Check-out:</label>
           <input type="date" v-model="selectedFlight.checkout" />
         </div>
@@ -280,27 +283,100 @@
 
         <div class="edit-line" v-for="(pricing, index) in selectedFlight.class_pricing" :key="index">
           <label :for="`price-${index}`">Class:</label>
-          <input
-            type="text"
-            :id="`class-${index}`"
-            v-model="pricing.class_name"
-            placeholder="Class Name"
-            disabled
-          />
+          <input type="text" :id="`class-${index}`" v-model="pricing.class_name" placeholder="Class Name" disabled />
 
           <label :for="`price-${index}`">Price:</label>
-          <input
-            type="number"
-            :id="`price-${index}`"
-            v-model="pricing.base_price"
-            placeholder="Enter Price"
-          />
+          <input type="number" :id="`price-${index}`" v-model="pricing.base_price" placeholder="Enter Price" />
         </div>
       </div>
 
       <div class="modal-actions">
-        <button @click="applyChanges">Apply</button>
+        <button @click="updateFlight">Apply</button>
         <button @click="closeModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="isAddFlight" class="modal-overlay" @click="closeFlightModal">
+    <div class="modal-content" @click.stop>
+      <h3>Flight Edit</h3>
+      <div class="modal-fields">
+        <!-- Các trường nhập liệu trong modal -->
+        <!-- <div class="edit-line">
+          <label for="flightNumber">Flight Number:</label>
+          <input type="text" />
+        </div> -->
+
+        <div class="edit-line">
+          <label for="departureAirport">Departure Airport:</label>
+          <select id="departureAirport" v-model="newFlight.departureAirportId" @change="updateToOptions">
+            <option value="" disabled>Select Departure Airport</option>
+            <option v-for="airport in airports.fromOptions" :key="airport.id" :value="airport.id">
+              {{ airport.city }} ({{ airport.iata_code }})
+            </option>
+          </select>
+        </div>
+
+        <div class="edit-line">
+          <label for="arrivalAirport">Arrival Airport:</label>
+          <select id="arrivalAirport" v-model="newFlight.arrivalAirportId">
+            <option value="" disabled>Select Arrival Airport</option>
+            <option v-for="airport in airports.toOptions" :key="airport.id" :value="airport.id">
+              {{ airport.city }} ({{ airport.iata_code }})
+            </option>
+          </select>
+        </div>
+
+        <div class="edit-line">
+          <label for="aircraft">Aircraft:</label>
+          <select id="aircraft" v-model="newFlight.aircraftId">
+            <option value="" disabled>Select Aircraft</option>
+            <option v-for="aircraft in aircrafts" :key="aircraft.id" :value="aircraft.id">
+              {{ aircraft.model }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Departure and Arrival Times -->
+        <div class="edit-line time-row">
+          <div>
+            <label for="departureTime">Departure Time:</label>
+            <input type="time" id="departureTime" v-model="newFlight.departureTime" />
+          </div>
+          <div>
+            <label for="arrivalTime">Arrival Time:</label>
+            <input type="time" id="arrivalTime" v-model="newFlight.arrivalTime" />
+          </div>
+        </div>
+        <p class="error-message" v-if="errors.timeError">{{ errors.timeError }}</p>
+        
+
+        <!-- Check-in and Check-out Dates -->
+        <div class="edit-line date-row">
+          <div>
+            <label for="checkinDate">Check-in:</label>
+            <input type="date" id="checkinDate" v-model="newFlight.checkinDate" />
+          </div>
+          <div>
+            <label for="checkoutDate">Check-out:</label>
+            <input type="date" id="checkoutDate" v-model="newFlight.checkoutDate" />
+          </div>
+        </div>
+        <p class="error-message" v-if="errors.dateError">{{ errors.dateError }}</p>
+
+
+        <div class="edit-line" v-for="(pricing, index) in newFlight.classPricing" :key="index">
+          <label :for="`price-${index}`">Class:</label>
+          <input type="text" :id="`class-${index}`" v-model="pricing.class_name" placeholder="Class Name" disabled />
+
+          <label :for="`price-${index}`">Price:</label>
+          <input type="number" :id="`price-${index}`" v-model="pricing.base_price" placeholder="Enter Price" />
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button @click="createFlight">Ok</button>
+        <button @click="closeFlightModal">Close</button>
       </div>
     </div>
   </div>
@@ -320,15 +396,17 @@
 
 <script>
 import Footer from '@/pages/master/footer.vue';
-import TicketManage from '@/pages/master/ticketManage.vue';
+import Statistic from '@/pages/master/statistics.vue';
 import { useUserStore } from '@/stores/user';
-
+import { faker } from '@faker-js/faker';
 import apiClient from '@/api/axios';
+
+// import {formatDate, formatHour, assembleDateTime} from '@/utils/time';
 
 export default {
   components: {
     Footer,
-    TicketManage
+    Statistic
   },
   data() {
     return {
@@ -344,6 +422,7 @@ export default {
           cols: 0,
         },
       },
+      isAddFlight: false,
       selectedFlight: null,
       originalFlight: null,
       isAdmin: false,
@@ -363,7 +442,40 @@ export default {
       },
       flights: [],
       currentPage: 1,
-      pageSize: 4
+      pageSize: 8,
+      airports: {
+        defaultOptions: [],
+        fromOptions: [],
+        toOptions: [],
+        departureAirport: null,
+        arrivalAirport: null
+      },
+      aircrafts: [],
+      newFlight: {
+        flightNumber: "",
+        departureAirportId: null,
+        arrivalAirportId: null,
+        departureTime: "",
+        arrivalTime: "",
+        checkinDate: "",
+        checkoutDate: "",
+        classPricing: [
+          {
+            class_name: "ECONOMY",
+            base_price: 0,
+            tax_percentage: 10
+          },
+          {
+            class_name: "BUSINESS",
+            base_price: 0,
+            tax_percentage: 10
+          }
+        ],
+      },
+      errors: {
+        dateError: "",
+        timeError: "",
+      },
     };
   },
 
@@ -394,6 +506,30 @@ export default {
         to: flight.arrival_city
       };
     })
+
+    // fetch all airports for creating new flight
+
+    try {
+      // Fetch all airports initially
+      const response = await apiClient.get(`/airports`);
+      this.airports.defaultOptions = response.data.data;
+      this.airports.fromOptions = [...this.airports.defaultOptions];
+      this.airports.toOptions = [...this.airports.defaultOptions];
+      console.log(this.airports);
+    } catch (error) {
+      console.error("Error fetching initial airports:", error);
+    }
+
+
+    // fetch all aircrafts for creating new flight
+    try {
+      // Fetch all aircrafts initially
+      const aircraft_response = await apiClient.get(`/aircrafts`);
+      this.aircrafts = aircraft_response.data.data;
+      console.log(this.aircrafts);
+    } catch (error) {
+      console.error("Error fetching aircrafts:", error);
+    }
   },
 
   computed: {
@@ -423,7 +559,52 @@ export default {
       return this.filteredFlights.slice(start, end);
     }
   },
+  watch: {
+    "newFlight.checkinDate": "validateDates",
+    "newFlight.checkoutDate": "validateDates",
+    "newFlight.departureTime": "validateTimes",
+    "newFlight.arrivalTime": "validateTimes",
+  },
   methods: {
+    validateDates() {
+      const { checkinDate, checkoutDate } = this.newFlight;
+
+      if (checkinDate && checkoutDate) {
+        const checkin = new Date(checkinDate);
+        const checkout = new Date(checkoutDate);
+
+        if (checkout < checkin) {
+          this.errors.dateError = "Check-out date cannot be earlier than Check-in date.";
+        } else {
+          this.errors.dateError = ""; // Clear error if valid
+          this.validateTimes(); // Validate time if the dates are equal
+        }
+      }
+    },
+
+    validateTimes() {
+      const { checkinDate, checkoutDate, departureTime, arrivalTime } = this.newFlight;
+
+      if (checkinDate === checkoutDate) {
+        if (departureTime && arrivalTime) {
+          const [depHours, depMinutes] = departureTime.split(":").map(Number);
+          const [arrHours, arrMinutes] = arrivalTime.split(":").map(Number);
+
+          // Compare times when dates are equal
+          const departure = depHours * 60 + depMinutes;
+          const arrival = arrHours * 60 + arrMinutes;
+
+          if (arrival <= departure) {
+            this.errors.timeError =
+              "Arrival time must be greater than Departure time when Check-in and Check-out dates are the same.";
+          } else {
+            this.errors.timeError = ""; // Clear error if valid
+          }
+        }
+      } else {
+        this.errors.timeError = ""; // No need to compare times if dates are different
+      }
+    },
     formatHour(isoString) {
       const date = new Date(isoString);
       const hours = String(date.getHours()).padStart(2, "0");
@@ -443,6 +624,25 @@ export default {
     assembleDateTime(date, time) {
       return `${date}T${time}:00.000Z`;
     },
+    async updateToOptions() {
+      if (!this.newFlight.departureAirportId) return;
+
+      console.log(this.newFlight.departureAirportId);
+
+      try {
+        // Fetch possible "To" options based on selected "From"
+        const response = await apiClient.get(`/airports/${this.newFlight.departureAirportId}/get_arrival_airports`);
+        this.airports.toOptions = response.data.data;
+
+        // Clear "To" selection if it's no longer valid
+        if (this.airports.arrivalAirport && !this.airports.toOptions.find(option => option.id === this.newFlight.arrivalAirportId)) {
+          this.newFlight.arrivalAirportId = null;
+        }
+      } catch (error) {
+        console.error("Error updating 'To' options:", error);
+      }
+    },
+
     async openModal(flight) {
       // fetch additional information about the flight including class pricings
       const price_response = await apiClient.get(`/flights/${flight.id}/class_pricings`);
@@ -451,11 +651,43 @@ export default {
       this.selectedFlight = { ...flight };// Lưu thông tin của dòng được chọn
       this.originalFlight = { ...flight }; // Lưu bản sao gốc để khôi phục khi đóng modal
     },
+    async openAddFlight() {
+      this.isAddFlight = true;
+    },
     closeModal() {
       this.selectedFlight = null; // Đóng modal và không thay đổi gì
       this.originalFlight = null;  // Đặt lại bản sao gốc
     },
-    async applyChanges() {
+    closeFlightModal() {
+      this.newFlight = {
+        flightNumber: "",
+        departureAirportId: null,
+        arrivalAirportId: null,
+        aircraftId: null,
+        departureTime: "",
+        arrivalTime: "",
+        checkinDate: "",
+        checkoutDate: "",
+        classPricing: [
+          {
+            class_name: "ECONOMY",
+            base_price: 0,
+            tax_percentage: 10
+          },
+          {
+            class_name: "BUSINESS",
+            base_price: 0,
+            tax_percentage: 10
+          }
+        ],
+        errors: {
+          dateError: "",
+          timeError: "",
+        },
+      }
+      this.isAddFlight = false;
+    },
+    async updateFlight() {
       const hasChanges = Object.keys(this.selectedFlight).some(key => {
         return this.selectedFlight[key] !== this.originalFlight[key];
       });
@@ -491,6 +723,36 @@ export default {
       }
 
       this.closeModal(); // Đóng modal sau khi thay đổi
+    },
+
+    async createFlight() {
+      const letters = faker.string.alpha({ count: 2, casing: 'upper' }); // Two uppercase letters
+      const numbers = faker.number.int({ min: 100, max: 999 }).toString(); // Three-digit number
+
+      const flight_number = `${letters}${numbers}`;
+
+      const payload = {
+        flight_number: flight_number,
+        departure_airport_id: this.newFlight.departureAirportId,
+        arrival_airport_id: this.newFlight.arrivalAirportId,
+        aircraft_id: this.newFlight.aircraftId,
+        departure_time: this.assembleDateTime(this.newFlight.checkinDate, this.newFlight.departureTime),
+        arrival_time: this.assembleDateTime(this.newFlight.checkoutDate, this.newFlight.arrivalTime),
+        class_pricing: this.newFlight.classPricing
+      }
+
+      console.log(payload);
+
+      const response = await apiClient.post('/flights', payload);
+
+      if (response.status === 200) {
+        alert("Flight created successfully");
+      } else {
+        alert("Failed to create flight");
+      }
+
+      // send request to create new flight
+      this.closeFlightModal();
     },
 
     nextPage() {
@@ -696,6 +958,7 @@ export default {
   justify-content: center;
   align-items: center;
   margin-top: 20px;
+  margin-bottom: 20px;
   font-size: 14px;
   gap: 10px;
 }
@@ -1046,6 +1309,7 @@ select:focus {
   padding: 5px;
 }
 
+.add-flight-btn,
 .add-aircraft-btn,
 .sort-btn,
 .filter-btn {
@@ -1058,6 +1322,7 @@ select:focus {
   cursor: pointer;
 }
 
+.add-flight-icon,
 .add-aircraft-icon,
 .sort-icon,
 .filter-icon {
@@ -1141,4 +1406,7 @@ select:focus {
   flex-direction: row;
   gap: 5px;
 }
+
+
+
 </style>
