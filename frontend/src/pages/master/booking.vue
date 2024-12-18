@@ -95,7 +95,7 @@
 
 
     <div class="flight-list" v-if="isSearched">
-      <label class="myheader">Available Flights</label>
+      <h1 class="title">Available Flights</h1>
       <div class="flight-card" v-for="flight in filteredFlights" :key="flight.id">
         <div class="ticket-icon">
           <img src="@/assets/flight.png" alt="take off icon" class="takeOff" />
@@ -137,14 +137,16 @@
         </div>
         <!-- Thông tin giá và nút chọn -->
         <div class="price-info">
-          <button class="select-button-economy" v-if="!isChoosed" @click="selectFlight(flight, flight.class_pricing[0].class_name)">
+          <button class="select-button-economy" v-if="!isChoosed"
+            @click="selectFlight(flight, flight.class_pricing[0].class_name)">
             <span class="icon-ticket">
               <img src="@/assets/economy-ticket-whitee.png" alt="Economy Icon" class="icon-ticket-image" />
             </span>
             Economy
             <span class="price-economy">${{ flight.class_pricing[0].base_price }} USD</span>
           </button>
-          <button class="select-button-bussiness" v-if="!isChoosed" @click="selectFlight(flight, flight.class_pricing[1].class_name)">
+          <button class="select-button-bussiness" v-if="!isChoosed"
+            @click="selectFlight(flight, flight.class_pricing[1].class_name)">
             <span class="icon-ticket">
               <img src="@/assets/bussiness-ticket-black.png" alt="Economy Icon" class="icon-ticket-image" />
             </span>
@@ -163,7 +165,7 @@
 
     <!-- chọn ghế ngồi -->
     <div class="service-container" v-if="isService">
-      <label class="myheader">Selecting Seats</label>
+      <h1 class="title">Selecting Seats</h1>
       <div class="seat-choosing">
         <img src="@/assets/seatImage2.jpg" class="seatImage" />
 
@@ -236,7 +238,7 @@
 
     <!-- lựa chọn meal -->
     <div class="service-container" v-if="isService">
-      <label class="myheader">Qmeal Service</label>
+      <h1 class="title">Qmeal Service</h1>
       <div class="meal-list">
         <div class="meal-card" v-for="meal in externalServices.meals" :key="meal.name">
           <img class="meal-img" :src="meal.img_src" alt="meal image" />
@@ -253,7 +255,7 @@
     </div>
     <div class="luggage-finish" v-if="isService">
       <div class="baggage-slider">
-        <label class="myheader">Qluggage Service</label>
+        <h1 class="title">Qluggage Service</h1>
         <!-- Thanh kéo -->
         <div class="slider-container">
           <div class="track">
@@ -278,6 +280,8 @@
       </div>
     </div>
 
+    <News />
+    <TrendingDes />
     <Footer />
   </div>
 </template>
@@ -291,16 +295,18 @@ import tetImage from "@/assets/tet.jpg";
 import cityImage from "@/assets/city.jpg";
 import dnaImage from "@/assets/dna.jpg";
 import Footer from '@/pages/master/footer.vue';
-import { ref, watch } from "vue";
 import { faker } from '@faker-js/faker';
-
+import News from '@/pages/master/news.vue';
 import apiClient from "@/api/axios";
 import { useUserStore } from '@/stores/user';
+import TrendingDes from '@/pages/master/trendingDestination.vue'
 
 
 export default {
   components: {
-    Footer
+    Footer,
+    News,
+    TrendingDes
   },
   name: "booking",
   data() {
@@ -516,7 +522,7 @@ export default {
         this.selectedSeats.splice(seatIndex, 1);
       } else if (this.selectedSeats.length < this.passengerCount) {
         // Chọn thêm ghế
-        this.selectedSeats.push({id: this.seats[seatName].seatID, place: seatName});
+        this.selectedSeats.push({ id: this.seats[seatName].seatID, place: seatName });
       }
       this.updatePassengerPlace();
     },
@@ -568,6 +574,9 @@ export default {
       } else {
         alert("Failed to create booking!");
       }
+
+      this.isService = false;
+      this.isSearched = false;
     },
     async searchFlights() {
       const iso_date = new Date(this.$refs["checkInDate"].value).toISOString();
@@ -914,7 +923,7 @@ export default {
   color: #333;
   font-size: 1.8rem;
   margin-bottom: 10px !important;
-  font-family: 'Merriweather', serif;
+  font-family: "Arial", sans-serif;
 }
 
 .flight-card {
@@ -950,11 +959,11 @@ export default {
   height: 40%;
   align-items: center;
   flex-direction: column;
-  margin-left: 20px;
+  margin-left: 40px;
 }
 
 .price {
-  font-size: 1.2em;
+  font-size: 1.8em;
   font-weight: bold;
   color: red;
 }
@@ -1028,6 +1037,7 @@ export default {
   justify-content: space-around;
   align-items: center;
   width: 100%;
+  margin: 30px;
 }
 
 .meal-list {
@@ -1470,6 +1480,7 @@ button:hover {
   display: flex;
   flex-direction: row;
   justify-content: center;
+  align-items: center;
 }
 
 .icon-ticket {
@@ -1654,5 +1665,11 @@ button:hover {
 
 .seat.selected {
   background-color: green !important;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 2rem;
+  margin-bottom: 0.8rem;
 }
 </style>

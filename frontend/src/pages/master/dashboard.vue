@@ -81,7 +81,7 @@
             <span>My Flight</span>
 
             <!-- Hiển thị icon chuông nếu isDelay = true -->
-            <img v-if="isDelay" src="@/assets/bell-icon.png" alt="Delay Icon"
+            <img v-if="isNotified" src="@/assets/bell-icon.png" alt="Delay Icon"
               class="w-4 h-4 ml-2 img-bell bell-animation" />
           </router-link>
           <router-link to="/flightSchedule"
@@ -89,6 +89,50 @@
             Flight Schedule
           </router-link>
         </div>
+      </div>
+
+      <!-- Container chính của thông báo -->
+      <div v-if="showDelayNotification" class="notification-container">
+
+        <!-- Nội dung thông báo -->
+        <div class="notification-content">
+          <!-- Icon đồng hồ minh họa -->
+          <img src="@/assets/clock-icon.png" alt="Clock Icon" class="notification-icon" />
+
+          <!-- Nội dung chuyến bay delay -->
+          <p class="notification-title">
+            Your flight has been <span class="text-red">delayed</span>
+          </p>
+          <p class="notification-time">
+            New departure time: <span class="bold-text">18h30</span>
+          </p>
+        </div>
+
+        <!-- Nút Get It! -->
+        <button @click="handleGetIt" class="notification-button">
+          Get It!
+        </button>
+      </div>
+
+      <div v-if="showSuccessNotification" class="notification-container">
+        <!-- Nội dung thông báo -->
+        <div class="notification-content">
+          <!-- Icon minh họa -->
+          <img src="@/assets/success-icon.png" alt="Success Icon" class="notification-icon" />
+
+          <!-- Nội dung đặt vé thành công -->
+          <p class="notification-title">
+            Your ticket has been <span class="text-green">successfully booked!</span>
+          </p>
+          <p class="notification-details">
+            Booking reference: <span class="bold-text">ABC123XYZ</span>
+          </p>
+        </div>
+
+        <!-- Nút OK -->
+        <button @click="handleOk" class="notification-button">
+          Get It!
+        </button>
       </div>
 
       <!-- Nội dung chính -->
@@ -116,9 +160,11 @@ export default {
   data() {
     return {
       showDropDown: false,
-      isDelay: true,
+      isNotified: true,
       userStore: useUserStore(), // Access the store in data to use it later
-      notifications: []
+      notifications: [],
+      showDelayNotification: false,
+      showSuccessNotification: true,
     };
   },
   computed: {
@@ -151,6 +197,14 @@ export default {
     // Handles user logout by calling the store logout method
     handleLogout() {
       this.userStore.logout();
+    },
+    handleGetIt() {
+      this.showDelayNotification = false;
+      this.isNotified = false;
+    },
+    handleOk() {
+      this.showSuccessNotification = false;
+      this.isNotified = false;
     },
   },
 };
@@ -219,5 +273,85 @@ body {
 .bell-animation {
   display: inline-block;
   animation: bell-shake 0.5s ease-in-out infinite;
+}
+
+.notification-container {
+  background-color: #ffffff;
+  width: 100%;
+  max-height: 300px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+}
+
+
+/* Nội dung thông báo */
+.notification-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  background-color: #f0f7ff;
+  width: 100%;
+  text-align: center;
+}
+
+/* Icon đồng hồ */
+.notification-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+}
+
+/* Tiêu đề thông báo */
+.notification-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+/* Nội dung giờ khởi hành */
+.notification-time {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Văn bản màu đỏ */
+.text-red {
+  color: #e63946;
+}
+
+/* Chữ in đậm */
+.bold-text {
+  font-weight: bold;
+}
+
+/* Nút "Get It!" */
+.notification-button {
+  width: 100%;
+  padding: 12px 0;
+  background: linear-gradient(135deg, #00A8E8, #4FC3F7);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.notification-button:hover {
+  opacity: 0.9;
+}
+
+.notification-details {
+  font-size: 0.95rem;
+  color: #555555;
+  margin-top: 5px;
 }
 </style>

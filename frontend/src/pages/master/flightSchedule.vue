@@ -1,5 +1,6 @@
 <template>
   <div class="flight-search">
+    <Grow />
     <Statistic />
     <div class="header-row">
       <label class="myheader">Flight Schedule</label>
@@ -349,7 +350,7 @@
           </div>
         </div>
         <p class="error-message" v-if="errors.timeError">{{ errors.timeError }}</p>
-        
+
 
         <!-- Check-in and Check-out Dates -->
         <div class="edit-line date-row">
@@ -400,13 +401,14 @@ import Statistic from '@/pages/master/statistics.vue';
 import { useUserStore } from '@/stores/user';
 import { faker } from '@faker-js/faker';
 import apiClient from '@/api/axios';
-
+import Grow from '@/pages/master/grow.vue';
 // import {formatDate, formatHour, assembleDateTime} from '@/utils/time';
 
 export default {
   components: {
     Footer,
-    Statistic
+    Statistic,
+    Grow
   },
   data() {
     return {
@@ -1406,7 +1408,4 @@ select:focus {
   flex-direction: row;
   gap: 5px;
 }
-
-
-
 </style>
