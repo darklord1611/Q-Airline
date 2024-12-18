@@ -65,21 +65,21 @@ async def create_flight(req: CreateFlightRequest):
 
     route_id = supabase.table("routes").select("id").eq("arrival_airport_id", req.arrival_airport_id).eq("departure_airport_id", req.departure_airport_id).execute().data[0]["id"]
     res = supabase.table("flights").insert({
+        "flight_number": req.flight_number,
         "route_id": route_id,
         "departure_time": req.departure_time,
         "arrival_time": req.arrival_time,
         "aircraft_id": req.aircraft_id,
-        "flight_number": "AB123",
         "flight_status": req.flight_status,
         "is_active": req.is_active
     }).execute()
 
     flight_id = res.data[0]["id"]
 
-    for class_name, pricing in req.class_pricing.items():
+    for pricing in req.class_pricing:
         pricing_res = supabase.table("flight_class_pricing").insert({
             "flight_id": flight_id,
-            "class_name": class_name,
+            "class_name": pricing["class_name"],
             "base_price": pricing["base_price"],
             "tax_percentage": pricing["tax_percentage"]
         }).execute()
