@@ -1,10 +1,10 @@
 
-
 from fastapi import APIRouter, Body, Form
 from supabase_client import supabase
 from datetime import datetime
 from utils.request_models import CreateFlightRequest, GetFlightRequest, UpdateFlightRequest
 from utils.util import convert_timestamp_to_time, time_difference, convert_timestamp, convert_timestamp_to_date
+from typing import Optional
 router = APIRouter(prefix="/flights", tags=["flights"])
 
 
@@ -117,7 +117,7 @@ async def update_flight(req: UpdateFlightRequest, flight_id: int):
 
     flight_users = supabase.table("booking_flight").select("booking_id, bookings!booking_flight_booking_id_fkey(user_id)").eq("flight_id", flight_id).execute().data
 
-    res = await notify_users(flight_users, response, req)
+    res = await notify_delay_to_users(flight_users, response, req)
 
     return {"status": "success", "data": flight_users}
 
@@ -138,11 +138,20 @@ async def get_flight_statistics(flight_id: int):
     # seat + class utilization
     # revenue generated
     # customer demographics
-    flight_info = supabase.from_("flight_details").select().eq("flight_id", flight_id).execute().data[0]
+    if flight_id:
+        flight_info = supabase.from_("flight_details").select().eq("flight_id", flight_id).execute().data[0]
+        
+        flight_info["service_statistics"] = supabase.table("flight_revenues").select().eq("flight_id", flight_id).execute().data
     
-    flight_info["service_statistics"] = supabase.table("flight_revenues").select().eq("flight_id", flight_id).execute().data
     return {"status": "success", "data": flight_info}
 
+@router.get("/analytics/all", description="Get analytics of all flights")
+async def get_all_flight_statistics():
+    flight_info = supabase.from_("flight_details").select("flight_number", "flight_id").execute().data
+    for flight in flight_info:
+        flight["services"] = supabase.table("flight_revenues").select("name", "count", "revenue").eq("flight_id", flight["flight_id"]).eq("type", "TICKET").execute().data
+
+    return {"status": "success", "data": flight_info}
 
 @router.get("/analytics", description="Get analytics of all flights")
 async def get_all_flights_statistics(flight_id: int):
@@ -151,7 +160,7 @@ async def get_all_flights_statistics(flight_id: int):
 
 
 
-async def notify_users(flight_users, old_flight_info, new_flight_info):
+async def notify_delay_to_users(flight_users, old_flight_info, new_flight_info):
     # notify users about the changes to flight schedule
 
     old_depart_time = convert_timestamp(old_flight_info["departure_time"])

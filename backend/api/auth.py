@@ -7,17 +7,17 @@ from utils.request_models import RegisterRequest, LoginRequest
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register")
-async def register(req: RegisterRequest = Body(...)):
+async def register(req: RegisterRequest):
     print(req)
     response = supabase.auth.sign_up(
     {"email": req.email, "password": req.password}
 )
     print(response)
-    supabase.table('users').insert({"id": response.user.id, "first_name": req.first_name, "last_name": req.last_name, "username": req.username, "phone": req.phone, "role": req.role}).execute()
-    return {"status": "success", "user": response.user}
+    user_response = supabase.table('users').insert({"id": response.user.id, "first_name": req.first_name, "last_name": req.last_name, "username": req.username, "phone": req.phone, "role": req.role}).execute().data
+    return {"status": "success", "user": user_response}
 
 @router.post("/login")
-async def login(req: LoginRequest = Body(...)):
+async def login(req: LoginRequest):
     print(req)
     response = supabase.auth.sign_in_with_password(
     {"email": req.email, "password": req.password}
