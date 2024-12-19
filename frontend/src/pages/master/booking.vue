@@ -79,14 +79,10 @@
         <div class="slider-item" v-for="(item, index) in items" :key="index" v-show="currentIndex === index">
           <img :src="item.image" :alt="'Image ' + (index + 1)">
           <div class="text-overlay">{{ item.text }}</div>
-          <div class="discount-buttons">
-            <button class="discount-button" :class="{ active: activeButtonIndex === 0 }"
-              @click="handleDiscountButtonClick(0)">NewYork Traveling</button>
-            <button class="discount-button" :class="{ active: activeButtonIndex === 1 }"
-              @click="handleDiscountButtonClick(1)">Tet Homecoming Flight</button>
-            <button class="discount-button" :class="{ active: activeButtonIndex === 2 }"
-              @click="handleDiscountButtonClick(2)">Southeast Asia Traveling</button>
-          </div>
+        </div>
+        <div class="discount-buttons">
+            <button class="discount-button" v-for="(item, index) in items" :key="index" :class="{ active: activeButtonIndex === index }"
+              @click="handleDiscountButtonClick(index)">{{ item.title }}</button>
         </div>
       </div>
       <button @click="nextSlide" class="next-btn">&#10095;</button>
@@ -291,9 +287,6 @@ import video from "@/assets/58475-488682084_small.mp4";
 import image from "@/assets/vecteezy_plane-png-with-ai-generated_26773766.png";
 import fromTo from "@/assets/pin.png";
 import calendar from "@/assets/calendar.png";
-import tetImage from "@/assets/tet.jpg";
-import cityImage from "@/assets/city.jpg";
-import dnaImage from "@/assets/dna.jpg";
 import Footer from '@/pages/master/footer.vue';
 import { faker } from '@faker-js/faker';
 import News from '@/pages/master/news.vue';
@@ -341,11 +334,7 @@ export default {
         seats: []
       },
       currentIndex: 0,
-      items: [
-        { image: cityImage, text: 'NewYork Traveling - Discount 30%' },
-        { image: tetImage, text: 'Tet Holiday: flight coming home - Discount 50%' },
-        { image: dnaImage, text: 'Southeast Aisa Traveling - Discount 40%' }
-      ],
+      items: [],
       airports: {
         defaultOptions: [],
         fromOptions: [],
@@ -373,6 +362,24 @@ export default {
   async created() {
     const userStore = useUserStore();
     this.user = userStore.user;
+
+
+
+    try {
+      // fetch all discounts
+      const response = await apiClient.get(`/discounts`);
+      console.log(response.data.data);
+      this.items = response.data.data.map((discount) => ({
+        id: discount.id,
+        image: discount.image_url,
+        text: discount.description,
+        title: discount.name,
+        discountFactor: discount.discount_factor
+      }));
+    } catch (error) {
+      console.log("Error fetching discounts:", error);
+    }
+
     try {
       // Fetch all airports initially
       const response = await apiClient.get(`/airports`);
@@ -391,10 +398,6 @@ export default {
       const luggage_response = await apiClient.get(`/services/search?service_type=LUGGAGE`);
       this.externalServices.luggage = luggage_response.data.data;
       this.externalServices.luggageService = this.externalServices.luggage.find(service => service.id === 11);
-      console.log(this.externalServices.meals);
-      console.log(this.externalServices.luggage);
-      console.log(this.externalServices.luggageService);
-
 
     } catch (error) {
       console.error("Error fetching external services:", error);
@@ -690,6 +693,7 @@ export default {
       } else {
         // Nếu bấm vào nút khác, đổi trạng thái nút
         this.activeButtonIndex = index;
+        this.showSlide(index);
       }
     }
   },

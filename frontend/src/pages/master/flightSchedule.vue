@@ -114,7 +114,7 @@
       <!-- Submit Button -->
       <div class="flex justify-end">
         <button type="button" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-          @click="handleSubmit">
+          @click="createAircraft">
           Submit
         </button>
       </div>
@@ -743,8 +743,6 @@ export default {
         class_pricing: this.newFlight.classPricing
       }
 
-      console.log(payload);
-
       const response = await apiClient.post('/flights', payload);
 
       if (response.status === 200) {
@@ -752,6 +750,27 @@ export default {
       } else {
         alert("Failed to create flight");
       }
+
+      // refetch the new flight and add to current list
+      const flight_response = await apiClient.get(`/flights/${response.data.data}`);
+
+      let temp = flight_response.data.data;
+      const newFlight = {
+        id: temp.flight_id,
+        departureAirport: temp.departure_iata_code,
+        departureTime: this.formatHour(temp.departure_time),
+        arrivalAirport: temp.arrival_iata_code,
+        arrivalTime: this.formatHour(temp.arrival_time),
+        checkin: this.formatDate(temp.departure_time),
+        checkout: this.formatDate(temp.arrival_time),
+        flightNumber: temp.flight_number,
+        price: "$450",
+        ticketType: "First Class",
+        from: temp.departure_city,
+        to: temp.arrival_city
+      }
+
+      this.flights.push(newFlight);
 
       // send request to create new flight
       this.closeFlightModal();
@@ -826,7 +845,7 @@ export default {
       this.showFilters = false; // Close after applying
     },
 
-    async handleSubmit() {
+    async createAircraft() {
       console.log("Aircraft Details:", this.aircraft);
 
       // send request to create new aircraft
@@ -847,6 +866,21 @@ export default {
       };
       console.log(payload)
       const response = await apiClient.post('/aircrafts', payload);
+
+
+      if (response.status === 200) {
+        alert("Aircraft created successfully");
+      } else {
+        alert("Failed to create aircraft");
+      }
+
+      // Add the new aircraft to the list
+      this.aircrafts.push({
+        id: response.data.data.id,
+        model: this.aircraft.model,
+        manufacturer: this.aircraft.manufacturer,
+      });
+
 
       // Reset the form after submission
       this.aircraft = {

@@ -12,6 +12,20 @@ async def get_news():
     return {"status": "success", "data": news}
 
 
+
+@router.get("/destinations")
+async def get_destination_news():
+    news = supabase.table("news").select().eq("visibility", "PUBLIC").eq("category", "Destination").execute().data
+    return {"status": "success", "data": news}
+
+
+
+@router.get("/promotions")
+async def get_destination_news():
+    news = supabase.table("news").select().eq("visibility", "PUBLIC").eq("category", "Promotion").execute().data
+    return {"status": "success", "data": news}
+
+
 @router.post("")
 async def create_news(req: CreateNewsRequest):
     res = supabase.table("news").insert({

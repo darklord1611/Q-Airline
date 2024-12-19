@@ -197,6 +197,7 @@ export default {
     // Handles user logout by calling the store logout method
     handleLogout() {
       this.userStore.logout();
+      this.$router.push("/login");
     },
     handleGetIt() {
       this.showDelayNotification = false;

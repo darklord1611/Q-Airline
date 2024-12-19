@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, Dict, List
 from .constant import TRIP_TYPE, BOOKING_STATUS, GENDER
-
+from .util import generate_random_phone_number
 
 TEMPLATE_PRICING = {
     "ECONOMY": {
@@ -35,7 +35,7 @@ class RegisterRequest(BaseModel):
     first_name: str
     last_name: str
     username: Optional[str] = None
-    phone : Optional[str] = None
+    phone : str = generate_random_phone_number("VN")
     role: str = "user"
 
 

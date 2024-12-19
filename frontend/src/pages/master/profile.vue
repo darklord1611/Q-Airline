@@ -4,28 +4,28 @@
             <img src="@/assets/avatar.jpg" alt="Profile Image" class="profile-image" />
         </div>
         <div class="profile-body">
-            <h2 class="profile-name">John Doe</h2>
+            <h2 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h2>
             <p class="profile-bio">Software Engineer | Tech Enthusiast</p>
             <ul class="profile-info">
                 <li>
                     <img src="@/assets/mail.png" alt="Email Icon" class="info-icon" />
-                    <span>johndoe@example.com</span>
+                    <span>{{user.email}}</span>
                 </li>
                 <li>
                     <img src="@/assets/facebook.png" alt="Facebook Icon" class="info-icon" />
-                    <span>facebook.com/johndoe</span>
+                    <span>facebook.com/{{ user.first_name }}_{{ user.last_name }}</span>
                 </li>
                 <li>
                     <img src="@/assets/phone-call.png" alt="Phone Icon" class="info-icon" />
-                    <span>+1 234 567 890</span>
+                    <span>{{ user.phone }}</span>
                 </li>
                 <li>
                     <img src="@/assets/address.png" alt="Address Icon" class="info-icon" />
-                    <span>123 Main St, City, Country</span>
+                    <span>{{ user.address }}</span>
                 </li>
                 <li>
                     <img src="@/assets/nation.png" alt="Nation Icon" class="info-icon" />
-                    <span>Viet Nam</span>
+                    <span>{{ user.country }}</span>
                 </li>
             </ul>
         </div>
@@ -33,7 +33,40 @@
 </template>
 
 <script>
-export default {};
+import { useUserStore } from '@/stores/user';
+import { faker } from '@faker-js/faker';
+
+export default {
+    name: "profile",
+    data() {
+        return {
+            user: null,
+        }
+    },
+    async created() {
+        const userStore = useUserStore();
+        this.user = userStore.user;
+
+        const country = faker.location.country(); // Generate a random country
+        const address = {
+            street: faker.location.streetAddress(), // Generate a street address
+            city: faker.location.city(),            // Generate a city
+            state: faker.location.state(),          // Generate a state
+            postalCode: faker.location.zipCode(),   // Generate a postal code
+            country: country                        // Assign the generated country
+        };
+
+        const address_str = `${address.street}, ${address.city}`;
+
+        this.user = {
+            ...this.user,
+            address: address_str,
+            country: country
+        };
+
+    }
+
+};
 </script>
 
 <style scoped>
