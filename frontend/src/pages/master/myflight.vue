@@ -1,51 +1,4 @@
 <template>
-
-    <!-- Container chính của thông báo -->
-    <div v-if="showDelayNotification" class="notification-container">
-
-        <!-- Nội dung thông báo -->
-        <div class="notification-content">
-            <!-- Icon đồng hồ minh họa -->
-            <img src="@/assets/clock-icon.png" alt="Clock Icon" class="notification-icon" />
-
-            <!-- Nội dung chuyến bay delay -->
-            <p class="notification-title">
-                Your flight has been <span class="text-red">delayed</span>
-            </p>
-            <p class="notification-time">
-                New departure time: <span class="bold-text">18h30</span>
-            </p>
-        </div>
-
-        <!-- Nút Get It! -->
-        <button @click="handleGetIt" class="notification-button">
-            Get It!
-        </button>
-    </div>
-
-    <div v-if="showSuccessNotification" class="notification-container">
-        <!-- Nội dung thông báo -->
-        <div class="notification-content">
-            <!-- Icon minh họa -->
-            <img src="@/assets/success-icon.png" alt="Success Icon" class="notification-icon" />
-
-            <!-- Nội dung đặt vé thành công -->
-            <p class="notification-title">
-                Your ticket has been <span class="text-green">successfully booked!</span>
-            </p>
-            <p class="notification-details">
-                Booking reference: <span class="bold-text">ABC123XYZ</span>
-            </p>
-        </div>
-
-        <!-- Nút OK -->
-        <button @click="handleOk" class="notification-button">
-            Get It!
-        </button>
-    </div>
-
-
-
     <div class="myflight-profile">
         <div class="flight-list">
             <div class="search-bar">
@@ -138,6 +91,9 @@ import Footer from '@/pages/master/footer.vue';
 import Profile from '@/pages/master/profile.vue';
 import Weather from '@/pages/master/weather.vue';
 import { useUserStore } from '@/stores/user';
+
+import { useBookingStore } from '@/stores/myFlight';
+
 import apiClient from '@/api/axios';
 
 export default {
@@ -149,8 +105,6 @@ export default {
     data() {
         return {
             bookings: [],
-            showDelayNotification: false,
-            showSuccessNotification: true,
         };
     },
 
@@ -158,25 +112,17 @@ export default {
         const userStore = useUserStore();
         console.log(userStore.user)
 
-        // get all bookings of an user (information includes flight details, price, meal, luggage, etc.)
-        const response = await apiClient.get(`/bookings?user_id=${userStore.user.id}`);
+        try {
+            // get all bookings of an user (information includes flight details, price, meal, luggage, etc.)
+            const bookingStore = useBookingStore();
 
+            this.bookings = await bookingStore.fetchBookings(userStore.user.id);
 
-        // Định dạng ngày tháng ngay khi component được khởi tạo
-
-        this.bookings = response.data.data;
-
-        console.log(this.bookings);
-
-        this.bookings = this.bookings.map((booking) => ({
-            ...booking,
-            totalMeal: this.calcTotalMeal(booking.flights[0].services),
-            totalLuggage: this.calcTotalLuggage(booking.flights[0].services),
-            formattedCheckIn: this.formatDate(booking.flights[0].checkin),
-            formattedCheckOut: this.formatDate(booking.flights[0].checkout),
-        }));
-
-        console.log(this.bookings);
+            console.log(this.bookings);
+        } catch (error) {
+            console.error(error);
+            this.$toastr.error('Failed to fetch bookings');
+        }
     },
 
     methods: {
@@ -196,46 +142,18 @@ export default {
             // If the difference is greater than 3 days, render the cancel button
             return daysDifference > 3;
         },
-        formatDate(inputDate) {
-            // Chuyển đổi định dạng ngày tháng
-            const date = new Date(inputDate);
-            const options = { weekday: "short", day: "numeric", month: "short" };
-            return date.toLocaleDateString("en-US", options);
-        },
         async removeFlight(id) {
             // Lọc bỏ chuyến bay có flightNumber tương ứng
             const response = await apiClient.delete(`/bookings/${id}`);
 
-            if (response.status == 200) {
-                alert('Booking has been canceled successfully');
-            } else {
-                alert('Failed to cancel booking');
-            }
-
             this.bookings = this.bookings.filter(booking => booking.id !== id);
 
-        },
-        calcTotalMeal(services) {
-            return services.reduce((total, service) => {
-                if (service.services.type === 'MEAL') {
-                    total += service.quantity;
-                }
-                return total;
-            }, 0);
-        },
-        calcTotalLuggage(services) {
-            return services.reduce((total, service) => {
-                if (service.services.type === 'LUGGAGE') {
-                    total += service.quantity;
-                }
-                return total;
-            }, 0);
-        },
-        handleGetIt() {
-            this.showDelayNotification = false;
-        },
-        handleOk() {
-            this.showSuccessNotification = false;
+            if (response.status == 200) {
+                this.$toastr.success('Booking canceled successfully');
+            } else {
+                this.$toastr.error('Failed to cancel booking');
+            }
+
         },
     }
 };
@@ -501,87 +419,5 @@ h2 {
     display: flex;
     flex-direction: column;
     gap: 10px;
-}
-
-
-/* Container chính */
-.notification-container {
-    background-color: #ffffff;
-    width: 100%;
-    max-height: 300px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    overflow: hidden;
-}
-
-
-/* Nội dung thông báo */
-.notification-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 24px;
-    background-color: #f0f7ff;
-    width: 100%;
-    text-align: center;
-}
-
-/* Icon đồng hồ */
-.notification-icon {
-    width: 64px;
-    height: 64px;
-    margin-bottom: 16px;
-}
-
-/* Tiêu đề thông báo */
-.notification-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 8px;
-}
-
-/* Nội dung giờ khởi hành */
-.notification-time {
-    font-size: 0.875rem;
-    color: #6b7280;
-}
-
-/* Văn bản màu đỏ */
-.text-red {
-    color: #e63946;
-}
-
-/* Chữ in đậm */
-.bold-text {
-    font-weight: bold;
-}
-
-/* Nút "Get It!" */
-.notification-button {
-    width: 100%;
-    padding: 12px 0;
-    background: linear-gradient(135deg, #00A8E8, #4FC3F7);
-    color: #ffffff;
-    font-size: 0.875rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    border: none;
-    cursor: pointer;
-    transition: opacity 0.3s ease;
-}
-
-.notification-button:hover {
-    opacity: 0.9;
-}
-
-.notification-details {
-    font-size: 0.95rem;
-    color: #555555;
-    margin-top: 5px;
 }
 </style>

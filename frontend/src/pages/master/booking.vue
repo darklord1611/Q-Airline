@@ -79,14 +79,10 @@
         <div class="slider-item" v-for="(item, index) in items" :key="index" v-show="currentIndex === index">
           <img :src="item.image" :alt="'Image ' + (index + 1)">
           <div class="text-overlay">{{ item.text }}</div>
-          <div class="discount-buttons">
-            <button class="discount-button" :class="{ active: activeButtonIndex === 0 }"
-              @click="handleDiscountButtonClick(0)">NewYork Traveling</button>
-            <button class="discount-button" :class="{ active: activeButtonIndex === 1 }"
-              @click="handleDiscountButtonClick(1)">Tet Homecoming Flight</button>
-            <button class="discount-button" :class="{ active: activeButtonIndex === 2 }"
-              @click="handleDiscountButtonClick(2)">Southeast Asia Traveling</button>
-          </div>
+        </div>
+        <div class="discount-buttons">
+            <button class="discount-button" v-for="(item, index) in items" :key="index" :class="{ active: activeButtonIndex === index }"
+              @click="handleDiscountButtonClick(index)">{{ item.title }}</button>
         </div>
       </div>
       <button @click="nextSlide" class="next-btn">&#10095;</button>
@@ -95,7 +91,7 @@
 
 
     <div class="flight-list" v-if="isSearched">
-      <label class="myheader">Available Flights</label>
+      <h1 class="title">Available Flights</h1>
       <div class="flight-card" v-for="flight in filteredFlights" :key="flight.id">
         <div class="ticket-icon">
           <img src="@/assets/flight.png" alt="take off icon" class="takeOff" />
@@ -137,14 +133,16 @@
         </div>
         <!-- Thông tin giá và nút chọn -->
         <div class="price-info">
-          <button class="select-button-economy" v-if="!isChoosed" @click="selectFlight(flight, flight.class_pricing[0].class_name)">
+          <button class="select-button-economy" v-if="!isChoosed"
+            @click="selectFlight(flight, flight.class_pricing[0].class_name)">
             <span class="icon-ticket">
               <img src="@/assets/economy-ticket-whitee.png" alt="Economy Icon" class="icon-ticket-image" />
             </span>
             Economy
             <span class="price-economy">${{ flight.class_pricing[0].base_price }} USD</span>
           </button>
-          <button class="select-button-bussiness" v-if="!isChoosed" @click="selectFlight(flight, flight.class_pricing[1].class_name)">
+          <button class="select-button-bussiness" v-if="!isChoosed"
+            @click="selectFlight(flight, flight.class_pricing[1].class_name)">
             <span class="icon-ticket">
               <img src="@/assets/bussiness-ticket-black.png" alt="Economy Icon" class="icon-ticket-image" />
             </span>
@@ -163,7 +161,7 @@
 
     <!-- chọn ghế ngồi -->
     <div class="service-container" v-if="isService">
-      <label class="myheader">Selecting Seats</label>
+      <h1 class="title">Selecting Seats</h1>
       <div class="seat-choosing">
         <img src="@/assets/seatImage2.jpg" class="seatImage" />
 
@@ -236,7 +234,7 @@
 
     <!-- lựa chọn meal -->
     <div class="service-container" v-if="isService">
-      <label class="myheader">Qmeal Service</label>
+      <h1 class="title">Qmeal Service</h1>
       <div class="meal-list">
         <div class="meal-card" v-for="meal in externalServices.meals" :key="meal.name">
           <img class="meal-img" :src="meal.img_src" alt="meal image" />
@@ -253,7 +251,7 @@
     </div>
     <div class="luggage-finish" v-if="isService">
       <div class="baggage-slider">
-        <label class="myheader">Qluggage Service</label>
+        <h1 class="title">Qluggage Service</h1>
         <!-- Thanh kéo -->
         <div class="slider-container">
           <div class="track">
@@ -278,6 +276,8 @@
       </div>
     </div>
 
+    <News />
+    <TrendingDes />
     <Footer />
   </div>
 </template>
@@ -287,20 +287,20 @@ import video from "@/assets/58475-488682084_small.mp4";
 import image from "@/assets/vecteezy_plane-png-with-ai-generated_26773766.png";
 import fromTo from "@/assets/pin.png";
 import calendar from "@/assets/calendar.png";
-import tetImage from "@/assets/tet.jpg";
-import cityImage from "@/assets/city.jpg";
-import dnaImage from "@/assets/dna.jpg";
 import Footer from '@/pages/master/footer.vue';
-import { ref, watch } from "vue";
 import { faker } from '@faker-js/faker';
-
+import News from '@/pages/master/news.vue';
 import apiClient from "@/api/axios";
 import { useUserStore } from '@/stores/user';
+import { useAirportStore } from "@/stores/airports";
+import TrendingDes from '@/pages/master/trendingDestination.vue'
 
 
 export default {
   components: {
-    Footer
+    Footer,
+    News,
+    TrendingDes
   },
   name: "booking",
   data() {
@@ -335,11 +335,7 @@ export default {
         seats: []
       },
       currentIndex: 0,
-      items: [
-        { image: cityImage, text: 'NewYork Traveling - Discount 30%' },
-        { image: tetImage, text: 'Tet Holiday: flight coming home - Discount 50%' },
-        { image: dnaImage, text: 'Southeast Aisa Traveling - Discount 40%' }
-      ],
+      items: [],
       airports: {
         defaultOptions: [],
         fromOptions: [],
@@ -367,15 +363,36 @@ export default {
   async created() {
     const userStore = useUserStore();
     this.user = userStore.user;
+
+    const airportStore = useAirportStore()
+
     try {
-      // Fetch all airports initially
-      const response = await apiClient.get(`/airports`);
-      this.airports.defaultOptions = response.data.data;
+      // Fetch airports from the store (which handles fetching and caching)
+      this.airports.defaultOptions = await airportStore.fetchAirports()
       this.airports.fromOptions = [...this.airports.defaultOptions];
       this.airports.toOptions = [...this.airports.defaultOptions];
+
     } catch (error) {
       console.error("Error fetching initial airports:", error);
+      this.$toastr.error("Error fetching airports. Please try again.");
     }
+
+    try {
+      // fetch all discounts
+      const response = await apiClient.get(`/discounts`);
+      console.log(response.data.data);
+      this.items = response.data.data.map((discount) => ({
+        id: discount.id,
+        image: discount.image_url,
+        text: discount.description,
+        title: discount.name,
+        discountFactor: discount.discount_factor
+      }));
+    } catch (error) {
+      console.log("Error fetching discounts:", error);
+      this.$toastr.error("Error fetching discounts. Please try again.");
+    }
+
 
     try {
       // Fetching external services like meals or luggage
@@ -385,13 +402,10 @@ export default {
       const luggage_response = await apiClient.get(`/services/search?service_type=LUGGAGE`);
       this.externalServices.luggage = luggage_response.data.data;
       this.externalServices.luggageService = this.externalServices.luggage.find(service => service.id === 11);
-      console.log(this.externalServices.meals);
-      console.log(this.externalServices.luggage);
-      console.log(this.externalServices.luggageService);
-
 
     } catch (error) {
-      console.error("Error fetching external services:", error);
+      console.log(error)
+      this.$toastr.error("Error fetching external services. Please try again.");
     }
 
   },
@@ -516,7 +530,7 @@ export default {
         this.selectedSeats.splice(seatIndex, 1);
       } else if (this.selectedSeats.length < this.passengerCount) {
         // Chọn thêm ghế
-        this.selectedSeats.push({id: this.seats[seatName].seatID, place: seatName});
+        this.selectedSeats.push({ id: this.seats[seatName].seatID, place: seatName });
       }
       this.updatePassengerPlace();
     },
@@ -533,7 +547,7 @@ export default {
           this.airports.arrivalAirport = null;
         }
       } catch (error) {
-        console.error("Error updating 'To' options:", error);
+        this.$toastr.error("Error fetching arrival airports. Please try again.");
       }
     },
     async createBooking() {
@@ -564,12 +578,29 @@ export default {
       const response = await apiClient.post(`/bookings`, payload);
 
       if (response.status === 200) {
-        alert("Booking created successfully!");
+        this.$toastr.success("Booking created successfully!");
       } else {
-        alert("Failed to create booking!");
+        this.$toastr.error("Error creating booking. Please try again.");
+        return 
       }
+
+      this.isService = false;
+      this.isSearched = false;
     },
     async searchFlights() {
+      // validate input
+      if (!this.airports.departureAirport || !this.airports.arrivalAirport) {
+        this.$toastr.error("Please select departure and arrival airports.");
+        return;
+      }
+
+      if (!this.$refs["checkInDate"].value) {
+        this.$toastr.error("Please select a departure date.");
+        return;
+      }
+
+      console.log(this.$refs["checkInDate"].value);
+
       const iso_date = new Date(this.$refs["checkInDate"].value).toISOString();
 
       // get all valid flights based on selected options and departure_date
@@ -681,6 +712,7 @@ export default {
       } else {
         // Nếu bấm vào nút khác, đổi trạng thái nút
         this.activeButtonIndex = index;
+        this.showSlide(index);
       }
     }
   },
@@ -914,7 +946,7 @@ export default {
   color: #333;
   font-size: 1.8rem;
   margin-bottom: 10px !important;
-  font-family: 'Merriweather', serif;
+  font-family: "Arial", sans-serif;
 }
 
 .flight-card {
@@ -950,11 +982,11 @@ export default {
   height: 40%;
   align-items: center;
   flex-direction: column;
-  margin-left: 20px;
+  margin-left: 40px;
 }
 
 .price {
-  font-size: 1.2em;
+  font-size: 1.8em;
   font-weight: bold;
   color: red;
 }
@@ -1028,6 +1060,7 @@ export default {
   justify-content: space-around;
   align-items: center;
   width: 100%;
+  margin: 30px;
 }
 
 .meal-list {
@@ -1470,6 +1503,7 @@ button:hover {
   display: flex;
   flex-direction: row;
   justify-content: center;
+  align-items: center;
 }
 
 .icon-ticket {
@@ -1654,5 +1688,11 @@ button:hover {
 
 .seat.selected {
   background-color: green !important;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 2rem;
+  margin-bottom: 0.8rem;
 }
 </style>

@@ -141,7 +141,10 @@ export default {
 
         // Handle successful response
         console.log(response.data);
-        this.$router.push('/login');
+        this.$toastr.success("Register successfully!. Redirecting to login page...");
+        setTimeout(() => {
+          this.$router.push('/login');
+        }, 2000);
       } catch (error) {
         // Handle error response
         this.errorMessage =

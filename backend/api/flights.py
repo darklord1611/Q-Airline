@@ -22,6 +22,20 @@ async def get_all_flights():
     
     return {"status" : "success", "data": flights}
 
+
+@router.get("/get_single_flight/{flight_id}", description="Get detail of one flight")
+async def get_single_flight(flight_id: int):
+
+    flight = supabase.from_("flight_details").select().eq("flight_id", flight_id).execute().data[0]
+
+    # flights = supabase.table("flights").select().execute().data
+    # for flight in flights:
+    #     flight["class_pricing"] = supabase.table("flight_class_pricing").select("class_name", "base_price", "tax_percentage", "discount_percentage").eq("flight_id", flight["id"]).execute().data
+
+    #     flight["aircraft_info"] = supabase.table("aircrafts").select("model", "manufacturer").eq("id", flight["aircraft_id"]).execute().data
+    
+    return {"status" : "success", "data": flight}
+
 @router.get("/search", description="Get all flights that match the search criteria")
 async def get_flights(departure_airport_id: int, arrival_airport_id: int, departure_date: str):
     try:
@@ -86,7 +100,7 @@ async def create_flight(req: CreateFlightRequest):
     
     seat_associate_response = supabase.rpc("associate_seats_with_flight", {"flight_id": flight_id, "_aircraft_id" : req.aircraft_id}).execute()
 
-    return {"status": "success", "data": res.data[0]}
+    return {"status": "success", "data": flight_id}
 
 @router.put("/{flight_id}")
 async def update_flight(req: UpdateFlightRequest, flight_id: int):
@@ -132,6 +146,15 @@ async def get_flight_history(flight_id: int):
     return {"status": "success", "data": flight_history}
 
 
+@router.get("/yearly_analytics/{year}", description="Get statistic figures of all flights yearly")
+async def get_all_flight_statistics(year: Optional[int] = None):
+    
+    if year:
+        statistics = supabase.rpc("calculate_yearly_monthly_statistics", params={"year": year}).execute().data
+        return {"status": "success", "data": statistics}
+    
+    return {"status": "error", "message": "Year not provided"}
+
 
 @router.get("/{flight_id}/analytics", description="Get analytics of a flight")
 async def get_flight_statistics(flight_id: int):
@@ -141,23 +164,18 @@ async def get_flight_statistics(flight_id: int):
     if flight_id:
         flight_info = supabase.from_("flight_details").select().eq("flight_id", flight_id).execute().data[0]
         
-        flight_info["service_statistics"] = supabase.table("flight_revenues").select().eq("flight_id", flight_id).execute().data
+        flight_info["services"] = supabase.table("flight_revenues").select().eq("flight_id", flight_id).execute().data
     
     return {"status": "success", "data": flight_info}
 
+
 @router.get("/analytics/all", description="Get analytics of all flights")
-async def get_all_flight_statistics():
+async def get_flights_ticket_statistics():
     flight_info = supabase.from_("flight_details").select("flight_number", "flight_id").execute().data
     for flight in flight_info:
         flight["services"] = supabase.table("flight_revenues").select("name", "count", "revenue").eq("flight_id", flight["flight_id"]).eq("type", "TICKET").execute().data
 
     return {"status": "success", "data": flight_info}
-
-@router.get("/analytics", description="Get analytics of all flights")
-async def get_all_flights_statistics(flight_id: int):
-    
-    pass
-
 
 
 async def notify_delay_to_users(flight_users, old_flight_info, new_flight_info):

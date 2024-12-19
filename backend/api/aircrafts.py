@@ -18,7 +18,7 @@ def calc_total_capacity(seat_configuration: dict):
 @router.get("", description="Get all aircrafts")
 async def get_aircrafts(
 ):
-    aircrafts = supabase.table("aircrafts").select().execute().data
+    aircrafts = supabase.table("aircrafts").select("id", "model", "manufacturer").execute().data
     return {"status" : "success", "data": aircrafts}
 
 # TEMPORARY
@@ -39,5 +39,5 @@ async def create_aircraft(req: CreateAircraftRequest):
 
     create_seats_res = supabase.rpc("create_seats_for_aircraft", params={"_aircraft_id": res["id"], "seat_config": req.seat_configuration}).execute().data
     print(create_seats_res)
-    return {"status": "success", "data": res}
+    return {"status": "success", "data": res["id"]}
 
