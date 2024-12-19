@@ -40,7 +40,7 @@
 </template>
 
 <script>
-// Import các icon cần thiết
+// Import necessary icons
 import upIcon from "@/assets/up.png";
 import bicepsIcon from "@/assets/biceps.png";
 import passengerIcon from "@/assets/passenger-data.png";
@@ -48,10 +48,12 @@ import mealIcon from "@/assets/meal-data.png";
 import flightIcon from "@/assets/flight-data.png";
 import airlinesIcon from "@/assets/airlines-data.png";
 
-// Import thư viện Chart.js
+import apiClient from "@/api/axios";
+
+// Import Chart.js library
 import { Chart, registerables } from "chart.js";
 
-// Đăng ký các thành phần cần thiết của Chart.js
+// Register Chart.js components
 Chart.register(...registerables);
 
 export default {
@@ -60,24 +62,68 @@ export default {
         return {
             totalRevenue: {
                 title: "Total Revenue",
-                date: "December 2024",
-                value: "$75,843.52",
-                growth: "24.21%",
-                performanceMessage: "You have a great performance",
+                date: "",
+                value: "",
+                growth: "",
+                performanceMessage: "",
             },
             icons: {
                 arrowUp: upIcon,
                 arm: bicepsIcon,
             },
             statistics: [
-                { name: "Total Passengers", value: "3.000", icon: passengerIcon },
-                { name: "Service Revenue", value: "10.000", icon: mealIcon },
-                { name: "Flights Happended", value: "320", icon: flightIcon },
-                { name: "Airlines Avaiable", value: "4", icon: airlinesIcon },
+                { name: "Total Passengers", value: "", icon: passengerIcon },
+                { name: "Service Revenue", value: "", icon: mealIcon },
+                { name: "Flights Happened", value: "", icon: flightIcon },
+                { name: "Airlines Available", value: "", icon: airlinesIcon },
             ],
+            revenueData: [], // To store revenue data for the chart
         };
     },
+    async created() {
+        try {
+            // Fetch total revenue data from the API
+            const response = await apiClient.get(`/flights/yearly_analytics/2024`);
+            const data = response.data.data;
+
+            // Process the data
+            this.processApiData(data);
+        } catch (error) {
+            console.error("Error fetching analytics data:", error);
+        }
+    },
     methods: {
+        processApiData(data) {
+            // Fill in the revenue chart data and calculate growth
+            this.revenueData = data.map(item => item.total_revenue);
+
+            // Calculate total revenue for December and growth from November
+            const decRevenue = data.find(item => item.month === 12)?.total_revenue || 0;
+            const novRevenue = data.find(item => item.month === 11)?.total_revenue || 0;
+            const growth = novRevenue > 0 ? ((decRevenue - novRevenue) / novRevenue) * 100 : 0;
+
+            this.totalRevenue = {
+                title: "Total Revenue",
+                date: "December 2024",
+                value: `$${decRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                growth: `${growth.toFixed(2)}%`,
+                performanceMessage: growth >= 0 ? "You have a great performance" : "Performance needs improvement",
+            };
+
+            // Fill in the statistics
+            const totalPassengers = data.reduce((acc, cur) => acc + (cur.total_tickets || 0), 0);
+            const totalFlights = data.reduce((acc, cur) => acc + (cur.total_flights || 0), 0);
+
+            this.statistics = [
+                { name: "Total Passengers", value: totalPassengers.toLocaleString(), icon: passengerIcon },
+                { name: "Service Revenue", value: `$${this.revenueData.reduce((a, b) => a + b, 0).toLocaleString()}`, icon: mealIcon },
+                { name: "Flights Happened", value: totalFlights.toLocaleString(), icon: flightIcon },
+                { name: "Airlines Available", value: "4", icon: airlinesIcon }, // Placeholder as API doesn't provide airline count
+            ];
+
+            // Generate the revenue growth chart
+            this.generateChart();
+        },
         generateChart() {
             const ctx = this.$refs.revenueChart.getContext("2d");
             new Chart(ctx, {
@@ -89,7 +135,7 @@ export default {
                     datasets: [
                         {
                             label: "Revenue Growth",
-                            data: [10, 20, 30, 40, 50, 60, 70, 85, 90, 100, 95, 110],
+                            data: this.revenueData,
                             borderColor: "#003D5B",
                             backgroundColor: "rgba(0, 61, 91, 0.1)",
                             fill: true,
@@ -112,11 +158,9 @@ export default {
             });
         },
     },
-    mounted() {
-        this.generateChart();
-    },
 };
 </script>
+
 
 <style scoped>
 .dashboard-container {

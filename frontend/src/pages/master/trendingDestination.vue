@@ -10,7 +10,6 @@
                         <div class="info">
                             <h2>{{ destination.name }}</h2>
                             <p>{{ destination.description }}</p>
-                            <p>{{ destination.economy }}</p>
                         </div>
                         <button class="discover-btn">Discover</button>
                     </div>
@@ -21,53 +20,29 @@
 </template>
 
 <script>
-import dubaiImg from '@/assets/dubai.jpg';
-import newYorkImg from '@/assets/newYork.jpg';
-import singaporeImg from '@/assets/sing.jpg';
-import tokyoImg from '@/assets/tokyo.jpg';
-import parisImg from '@/assets/paris.jpg';
+import apiClient from '@/api/axios';
+
 export default {
     name: "TouristDestinations",
     data() {
         return {
-            destinations: [
-                {
-                    name: "Dubai",
-                    description: "A futuristic city with stunning architecture and vibrant nightlife.",
-                    link: "https://www.visitdubai.com",
-                    economy: "Economy from 300 USD",
-                    image: dubaiImg // Add image URL here
-                },
-                {
-                    name: "New York",
-                    description: "The city that never sleeps, full of iconic landmarks.",
-                    link: "https://www.nycgo.com",
-                    economy: "Economy from 250 USD",
-                    image: newYorkImg // Add image URL here
-                },
-                {
-                    name: "Singapore",
-                    description: "A modern city with lush greenery and a blend of cultures.",
-                    link: "https://www.visitsingapore.com",
-                    economy: "Economy from 200 USD",
-                    image: singaporeImg // Add image URL here
-                },
-                {
-                    name: "Tokyo",
-                    description: "A bustling metropolis that blends tradition with innovation.",
-                    link: "https://www.gotokyo.org",
-                    economy: "Economy from 400 USD",
-                    image: tokyoImg  // Add image URL here
-                },
-                {
-                    name: "Paris",
-                    description: "The city of love, known for its art, fashion, and cuisine.",
-                    link: "https://en.parisinfo.com",
-                    economy: "Economy from 350 USD",
-                    image: parisImg // Add image URL here
-                }
-            ]
+            destinations: []
         };
+    },
+    async created() {
+        // Fetch data from an API and set it to the destinations array
+        
+        const response = await apiClient.get('/news/destinations');
+
+        console.log(response.data.data);
+    
+        this.destinations = response.data.data.map(destination => ({
+            name: destination.title,
+            description: destination.body,
+            link: destination.external_article_link,
+            image: destination.image_url
+        }));
+
     },
     methods: {
         goToLink(url) {

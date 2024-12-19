@@ -10,7 +10,6 @@
             <div v-for="(item, index) in visibleItems" :key="index" class="info-card" @click="selectItem(item)">
                 <span class="card-number">{{ item.number }}</span>
                 <span class="card-title">{{ item.title }}</span>
-                <p class="card-summary">{{ item.summary }}</p>
             </div>
             <!-- Thanh cuốn -->
             <div v-show="items.length > 3" class="scrollbar">
@@ -35,18 +34,14 @@
 </template>
 
 <script>
+
+import apiClient from "@/api/axios";
+
 export default {
     name: "TravelNews",
     data() {
         return {
-            items: [
-                { number: "01", title: "Travel requirements for Dubai", summary: "Essential tips for booking flights and planning your Dubai trip.", details: "Make sure you have the right travel documents and learn about the latest guidelines for visiting Dubai." },
-                { number: "02", title: "Chauffeur services at arrival", summary: "Enjoy convenient transportation right when you land.", details: "Chauffeur services ensure stress-free and luxurious transport from the airport to your destination." },
-                { number: "03", title: "Multi-risk travel insurance", summary: "Travel with confidence with comprehensive insurance coverage.", details: "From health emergencies to baggage loss, travel insurance protects your journey." },
-                { number: "04", title: "Visa requirements for Canada", summary: "Simplify the visa process for traveling to Canada.", details: "Understand the steps, required documents, and timelines for obtaining a Canadian visa." },
-                { number: "05", title: "Top destinations in Asia", summary: "Discover breathtaking places across Asia for your next adventure.", details: "From bustling cities to serene landscapes, explore the magic of Asia." },
-                { number: "06", title: "Luxury hotels in Europe", summary: "Stay at Europe’s finest and most luxurious accommodations.", details: "Enjoy comfort, style, and world-class service at top European hotels." },
-            ],
+            items: [],
             startIndex: 0,
             visibleCount: 3,
             selectedItem: null,
@@ -55,6 +50,18 @@ export default {
             description:
                 "Latest updates and essential travel tips to make your journey stress-free and enjoyable.",
         };
+    },
+    async created() {
+        // fetch news from API
+
+        const response = await apiClient.get("/news/promotions");
+
+        this.items = response.data.data.map((item, index) => ({
+            number: `0${index + 1}`,
+            title: item.title,
+            details: item.body,
+        }));
+
     },
     computed: {
         visibleItems() {

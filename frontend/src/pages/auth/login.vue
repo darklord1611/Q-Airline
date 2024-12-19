@@ -80,10 +80,14 @@ export default {
         userStore.setUser(user, access_token, refresh_token);
 
         // Redirect to dashboard or other protected page
-        router.push("/booking");
+        this.$toastr.success("Login successful! Redirecting...");
+
+        setTimeout(() => {
+          router.push("/booking");
+        }, 1000);
       } catch (error) {
         console.log(error)
-        errorMessage.value = error.response?.data?.message || "Login failed. Please try again.";
+        this.$toastr.error("Login failed! Please try again.");
       }
     };
 

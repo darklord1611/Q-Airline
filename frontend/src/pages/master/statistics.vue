@@ -8,7 +8,7 @@
 
 <script>
 import Chart from "chart.js/auto";
-
+import { useFlightAnalyticStore } from '@/stores/flightAnalytics';
 import apiClient from "@/api/axios";
 
 export default {
@@ -20,40 +20,11 @@ export default {
     },
     async created() {
         try {
-            // Fetch flight data from API
-            const response = await apiClient.get("/flights/analytics/all");
+            // fetch
 
-            this.newFlights = response.data.data;
-
-            this.flights = this.newFlights.map(flight => {
-                // Initialize the ticket and revenue values
-                flight.economyTickets = 0;
-                flight.businessTickets = 0;
-                flight.economyRevenue = 0;
-                flight.businessRevenue = 0;
-
-                for (let i = 0; i < flight.services.length; i++) {
-                    if (flight.services[i].name === "ECONOMY") {
-                        flight.economyTickets = flight.services[i].count || 0;
-                        flight.economyRevenue = flight.services[i].revenue || 0;
-                    } else if (flight.services[i].name === "BUSINESS") {
-                        flight.businessTickets = flight.services[i].count || 0;
-                        flight.businessRevenue = flight.services[i].revenue || 0;
-                    }
-                }
-
-                return {
-                    flightId: flight.flight_id,
-                    flightNumber: flight.flight_number,
-                    economyTickets: flight.economyTickets,
-                    businessTickets: flight.businessTickets,
-                    economyRevenue: flight.economyRevenue,
-                    businessRevenue: flight.businessRevenue
-                };
-            });
-
-            console.log("Already mapped:", this.flights);
-
+            const flightAnalyticsStore = useFlightAnalyticStore();
+            this.flights = await flightAnalyticsStore.fetchFlightAnalytics();
+            console.log(this.flights);
             // Render the chart after the data is ready
             this.$nextTick(() => {
                 this.renderChart();

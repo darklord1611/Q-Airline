@@ -114,7 +114,7 @@
       <!-- Submit Button -->
       <div class="flex justify-end">
         <button type="button" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-          @click="handleSubmit">
+          @click="createAircraft">
           Submit
         </button>
       </div>
@@ -300,7 +300,7 @@
 
   <div v-if="isAddFlight" class="modal-overlay" @click="closeFlightModal">
     <div class="modal-content" @click.stop>
-      <h3>Flight Edit</h3>
+      <h3>Create Flight</h3>
       <div class="modal-fields">
         <!-- Các trường nhập liệu trong modal -->
         <!-- <div class="edit-line">
@@ -349,8 +349,6 @@
             <input type="time" id="arrivalTime" v-model="newFlight.arrivalTime" />
           </div>
         </div>
-        <p class="error-message" v-if="errors.timeError">{{ errors.timeError }}</p>
-
 
         <!-- Check-in and Check-out Dates -->
         <div class="edit-line date-row">
@@ -363,8 +361,6 @@
             <input type="date" id="checkoutDate" v-model="newFlight.checkoutDate" />
           </div>
         </div>
-        <p class="error-message" v-if="errors.dateError">{{ errors.dateError }}</p>
-
 
         <div class="edit-line" v-for="(pricing, index) in newFlight.classPricing" :key="index">
           <label :for="`price-${index}`">Class:</label>
@@ -399,6 +395,8 @@
 import Footer from '@/pages/master/footer.vue';
 import Statistic from '@/pages/master/statistics.vue';
 import { useUserStore } from '@/stores/user';
+import { useAirportStore } from '@/stores/airports';
+import { useFlightAnalyticStore } from '@/stores/flightAnalytics';
 import { faker } from '@faker-js/faker';
 import apiClient from '@/api/axios';
 import Grow from '@/pages/master/grow.vue';
@@ -486,40 +484,44 @@ export default {
     this.isAdmin = userStore.isAdmin;
 
     // get all flights
+    try {
+      const response = await apiClient.get('/flights');
 
-    const response = await apiClient.get('/flights');
+      this.flights = response.data.data;
 
-    this.flights = response.data.data;
-    console.log(this.flights);
-
-    this.flights = this.flights.map((flight) => {
-      return {
-        id: flight.flight_id,
-        departureAirport: flight.departure_iata_code,
-        departureTime: this.formatHour(flight.departure_time),
-        arrivalAirport: flight.arrival_iata_code,
-        arrivalTime: this.formatHour(flight.arrival_time),
-        checkin: this.formatDate(flight.departure_time),
-        checkout: this.formatDate(flight.arrival_time),
-        flightNumber: flight.flight_number,
-        price: "$450",
-        ticketType: "First Class",
-        from: flight.departure_city,
-        to: flight.arrival_city
-      };
-    })
+      this.flights = this.flights.map((flight) => {
+        return {
+          id: flight.flight_id,
+          departureAirport: flight.departure_iata_code,
+          departureTime: this.formatHour(flight.departure_time),
+          arrivalAirport: flight.arrival_iata_code,
+          arrivalTime: this.formatHour(flight.arrival_time),
+          checkin: this.formatDate(flight.departure_time),
+          checkout: this.formatDate(flight.arrival_time),
+          flightNumber: flight.flight_number,
+          price: "$450",
+          ticketType: "First Class",
+          from: flight.departure_city,
+          to: flight.arrival_city
+        };
+      })
+    } catch (error) {
+      console.error("Error fetching flights:", error);
+      this.$toastr.error("Failed to fetch flights");
+    }
 
     // fetch all airports for creating new flight
 
+    const airportStore = useAirportStore()
+
     try {
-      // Fetch all airports initially
-      const response = await apiClient.get(`/airports`);
-      this.airports.defaultOptions = response.data.data;
+      // Fetch airports from the store (which handles fetching and caching)
+      this.airports.defaultOptions = await airportStore.fetchAirports()
       this.airports.fromOptions = [...this.airports.defaultOptions];
       this.airports.toOptions = [...this.airports.defaultOptions];
-      console.log(this.airports);
     } catch (error) {
       console.error("Error fetching initial airports:", error);
+      this.$toastr.error("Failed to fetch airports");
     }
 
 
@@ -530,7 +532,8 @@ export default {
       this.aircrafts = aircraft_response.data.data;
       console.log(this.aircrafts);
     } catch (error) {
-      console.error("Error fetching aircrafts:", error);
+      console.log("Error fetching aircrafts:", error);
+      this.$toastr.error("Failed to fetch aircrafts");
     }
   },
 
@@ -576,7 +579,7 @@ export default {
         const checkout = new Date(checkoutDate);
 
         if (checkout < checkin) {
-          this.errors.dateError = "Check-out date cannot be earlier than Check-in date.";
+          this.$toastr.error("Check-out date cannot be earlier than Check-in date.");
         } else {
           this.errors.dateError = ""; // Clear error if valid
           this.validateTimes(); // Validate time if the dates are equal
@@ -597,8 +600,7 @@ export default {
           const arrival = arrHours * 60 + arrMinutes;
 
           if (arrival <= departure) {
-            this.errors.timeError =
-              "Arrival time must be greater than Departure time when Check-in and Check-out dates are the same.";
+              this.$toastr.error("Arrival time must be greater than Departure time when Check-in and Check-out dates are the same.");
           } else {
             this.errors.timeError = ""; // Clear error if valid
           }
@@ -608,11 +610,20 @@ export default {
       }
     },
     formatHour(isoString) {
-      const date = new Date(isoString);
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      return `${hours}:${minutes}`;
-    },
+      try {
+        const date = new Date(isoString);
+
+        if (isNaN(date.getTime())) {
+          throw new Error("Invalid ISO string");
+        }
+        const hours = String(date.getUTCHours()).padStart(2, "0");
+        const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+        return `${hours}:${minutes}`;
+      } catch (error) {
+        console.error("Error in formatHour:", error.message);
+        return "Invalid time";
+      }
+  },
     // Format ISO date to "YYYY-MM-DD" for input[type="date"]
     formatDate(isoString) {
       if (!isoString) return "";
@@ -642,6 +653,7 @@ export default {
         }
       } catch (error) {
         console.error("Error updating 'To' options:", error);
+        this.$toastr.error("Error fetching arrival airports");
       }
     },
 
@@ -701,30 +713,31 @@ export default {
         }
       }
 
-      console.log(this.selectedFlight.departureTime)
-      console.log(this.selectedFlight.arrivalTime)
-      console.log(this.selectedFlight.checkin)
-      console.log(this.selectedFlight.checkout)
       //send request to update the flight
-      const payload = {
-        flight_id: this.selectedFlight.id,
-        flight_status: "DELAYED",
-        departure_time: this.assembleDateTime(this.selectedFlight.checkin, this.selectedFlight.departureTime),
-        arrival_time: this.assembleDateTime(this.selectedFlight.checkout, this.selectedFlight.arrivalTime),
-        class_pricing: this.selectedFlight.class_pricing
-      };
+      try {
+        const payload = {
+          flight_id: this.selectedFlight.id,
+          flight_status: "DELAYED",
+          departure_time: this.assembleDateTime(this.selectedFlight.checkin, this.selectedFlight.departureTime),
+          arrival_time: this.assembleDateTime(this.selectedFlight.checkout, this.selectedFlight.arrivalTime),
+          class_pricing: this.selectedFlight.class_pricing
+        };
 
-      console.log(payload);
+        console.log(payload);
 
-      const response = await apiClient.put(`/flights/${this.selectedFlight.id}`, payload);
+        const response = await apiClient.put(`/flights/${this.selectedFlight.id}`, payload);
 
-      if (response.status === 200) {
-        alert("Flight updated successfully");
-      } else {
-        alert("Failed to update flight");
+        if (response.status === 200) {
+          this.$toastr.success("Flight updated successfully");
+        } else {
+          this.$toastr.error("Failed to update flight");
+        }
+
+        this.closeModal(); // Đóng modal sau khi thay đổi
+      } catch (error) {
+        console.error("Error updating flight:", error);
+        this.$toastr.error("Failed to update flight");
       }
-
-      this.closeModal(); // Đóng modal sau khi thay đổi
     },
 
     async createFlight() {
@@ -732,29 +745,65 @@ export default {
       const numbers = faker.number.int({ min: 100, max: 999 }).toString(); // Three-digit number
 
       const flight_number = `${letters}${numbers}`;
+      try {
+        const payload = {
+          flight_number: flight_number,
+          departure_airport_id: this.newFlight.departureAirportId,
+          arrival_airport_id: this.newFlight.arrivalAirportId,
+          aircraft_id: this.newFlight.aircraftId,
+          departure_time: this.assembleDateTime(this.newFlight.checkinDate, this.newFlight.departureTime),
+          arrival_time: this.assembleDateTime(this.newFlight.checkoutDate, this.newFlight.arrivalTime),
+          class_pricing: this.newFlight.classPricing
+        }
 
-      const payload = {
-        flight_number: flight_number,
-        departure_airport_id: this.newFlight.departureAirportId,
-        arrival_airport_id: this.newFlight.arrivalAirportId,
-        aircraft_id: this.newFlight.aircraftId,
-        departure_time: this.assembleDateTime(this.newFlight.checkinDate, this.newFlight.departureTime),
-        arrival_time: this.assembleDateTime(this.newFlight.checkoutDate, this.newFlight.arrivalTime),
-        class_pricing: this.newFlight.classPricing
+        const response = await apiClient.post('/flights', payload);
+
+        if (response.status === 200) {
+          this.$toastr.success("Flight created successfully");
+        } else {
+          this.$toastr.error("Failed to create flight");
+          return;
+        }
+
+
+        const flight_response = await apiClient.get(`/flights/get_single_flight/${response.data.data}`);
+        let temp = flight_response.data.data;
+        const newFlight = {
+          id: temp.flight_id,
+          departureAirport: temp.departure_iata_code,
+          departureTime: this.formatHour(temp.departure_time),
+          arrivalAirport: temp.arrival_iata_code,
+          arrivalTime: this.formatHour(temp.arrival_time),
+          checkin: this.formatDate(temp.departure_time),
+          checkout: this.formatDate(temp.arrival_time),
+          flightNumber: temp.flight_number,
+          price: "$450",
+          ticketType: "First Class",
+          from: temp.departure_city,
+          to: temp.arrival_city
+        }
+
+        // update flight analytics cache
+
+        const analytic_response = await apiClient.get(`/flights/${newFlight.id}/analytics`);
+
+        const flightAnalyticStore = useFlightAnalyticStore();
+
+        flightAnalyticStore.addFlightToCache(analytic_response.data.data);
+
+
+        console.log(newFlight);
+
+        this.flights.push(newFlight);
+
+        // send request to create new flight
+        this.closeFlightModal();
+
+      } catch (error) {
+        console.error("Error creating flight:", error);
+        this.$toastr.error("Failed to create flight");
       }
 
-      console.log(payload);
-
-      const response = await apiClient.post('/flights', payload);
-
-      if (response.status === 200) {
-        alert("Flight created successfully");
-      } else {
-        alert("Failed to create flight");
-      }
-
-      // send request to create new flight
-      this.closeFlightModal();
     },
 
     nextPage() {
@@ -826,43 +875,75 @@ export default {
       this.showFilters = false; // Close after applying
     },
 
-    async handleSubmit() {
-      console.log("Aircraft Details:", this.aircraft);
+    async createAircraft() {
 
       // send request to create new aircraft
+      if (!this.aircraft.model || !this.aircraft.manufacturer) {
+        this.$toastr.error("Please fill in all fields");
+        return;
+      }
+      if (!this.aircraft.business.rows || !this.aircraft.business.cols) {
+        this.$toastr.error("Please fill in all fields");
+        return;
+      }
 
-      const payload = {
-        model: this.aircraft.model,
-        manufacturer: this.aircraft.manufacturer,
-        seat_configuration: {
-          "BUSINESS": {
-            rows: this.aircraft.business.rows,
-            cols: this.aircraft.business.cols,
-          },
-          "ECONOMY": {
-            rows: this.aircraft.economy.rows,
-            cols: this.aircraft.economy.cols,
+      if (!this.aircraft.economy.rows || !this.aircraft.economy.cols) {
+        this.$toastr.error("Please fill in all fields");
+        return;
+      }
+
+      try {
+        const payload = {
+          model: this.aircraft.model,
+          manufacturer: this.aircraft.manufacturer,
+          seat_configuration: {
+            "BUSINESS": {
+              rows: this.aircraft.business.rows,
+              cols: this.aircraft.business.cols,
+            },
+            "ECONOMY": {
+              rows: this.aircraft.economy.rows,
+              cols: this.aircraft.economy.cols,
+            }
           }
+        };
+        console.log(payload)
+        const response = await apiClient.post('/aircrafts', payload);
+
+
+        if (response.status === 200) {
+          this.$toastr.success("Aircraft created successfully");
+        } else {
+          this.$toastr.error("Failed to create aircraft");
         }
-      };
-      console.log(payload)
-      const response = await apiClient.post('/aircrafts', payload);
 
-      // Reset the form after submission
-      this.aircraft = {
-        model: "",
-        manufacturer: "",
-        business: {
-          rows: 0,
-          cols: 0,
-        },
-        economy: {
-          rows: 0,
-          cols: 0,
-        },
-      };
+        // Add the new aircraft to the list
+        this.aircrafts.push({
+          id: response.data.data.id,
+          model: this.aircraft.model,
+          manufacturer: this.aircraft.manufacturer,
+        });
 
-      this.showAircraft = false; // Close the popover
+
+        // Reset the form after submission
+        this.aircraft = {
+          model: "",
+          manufacturer: "",
+          business: {
+            rows: 0,
+            cols: 0,
+          },
+          economy: {
+            rows: 0,
+            cols: 0,
+          },
+        };
+
+        this.showAircraft = false; // Close the popover after submission
+      } catch (error) {
+        console.error("Error creating aircraft:", error);
+        this.$toastr.error("Failed to create aircraft");
+      }
     },
   }
 };
