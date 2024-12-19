@@ -292,6 +292,7 @@ import { faker } from '@faker-js/faker';
 import News from '@/pages/master/news.vue';
 import apiClient from "@/api/axios";
 import { useUserStore } from '@/stores/user';
+import { useAirportStore } from "@/stores/airports";
 import TrendingDes from '@/pages/master/trendingDestination.vue'
 
 
@@ -363,7 +364,18 @@ export default {
     const userStore = useUserStore();
     this.user = userStore.user;
 
+    const airportStore = useAirportStore()
 
+    try {
+      // Fetch airports from the store (which handles fetching and caching)
+      this.airports.defaultOptions = await airportStore.fetchAirports()
+      this.airports.fromOptions = [...this.airports.defaultOptions];
+      this.airports.toOptions = [...this.airports.defaultOptions];
+
+    } catch (error) {
+      console.error("Error fetching initial airports:", error);
+      this.$toastr.error("Error fetching airports. Please try again.");
+    }
 
     try {
       // fetch all discounts
@@ -378,17 +390,9 @@ export default {
       }));
     } catch (error) {
       console.log("Error fetching discounts:", error);
+      this.$toastr.error("Error fetching discounts. Please try again.");
     }
 
-    try {
-      // Fetch all airports initially
-      const response = await apiClient.get(`/airports`);
-      this.airports.defaultOptions = response.data.data;
-      this.airports.fromOptions = [...this.airports.defaultOptions];
-      this.airports.toOptions = [...this.airports.defaultOptions];
-    } catch (error) {
-      console.error("Error fetching initial airports:", error);
-    }
 
     try {
       // Fetching external services like meals or luggage
@@ -400,7 +404,8 @@ export default {
       this.externalServices.luggageService = this.externalServices.luggage.find(service => service.id === 11);
 
     } catch (error) {
-      console.error("Error fetching external services:", error);
+      console.log(error)
+      this.$toastr.error("Error fetching external services. Please try again.");
     }
 
   },
@@ -542,7 +547,7 @@ export default {
           this.airports.arrivalAirport = null;
         }
       } catch (error) {
-        console.error("Error updating 'To' options:", error);
+        this.$toastr.error("Error fetching arrival airports. Please try again.");
       }
     },
     async createBooking() {
@@ -573,15 +578,29 @@ export default {
       const response = await apiClient.post(`/bookings`, payload);
 
       if (response.status === 200) {
-        alert("Booking created successfully!");
+        this.$toastr.success("Booking created successfully!");
       } else {
-        alert("Failed to create booking!");
+        this.$toastr.error("Error creating booking. Please try again.");
+        return 
       }
 
       this.isService = false;
       this.isSearched = false;
     },
     async searchFlights() {
+      // validate input
+      if (!this.airports.departureAirport || !this.airports.arrivalAirport) {
+        this.$toastr.error("Please select departure and arrival airports.");
+        return;
+      }
+
+      if (!this.$refs["checkInDate"].value) {
+        this.$toastr.error("Please select a departure date.");
+        return;
+      }
+
+      console.log(this.$refs["checkInDate"].value);
+
       const iso_date = new Date(this.$refs["checkInDate"].value).toISOString();
 
       // get all valid flights based on selected options and departure_date

@@ -23,7 +23,7 @@ async def get_all_flights():
     return {"status" : "success", "data": flights}
 
 
-@router.get("/{flight_id}", description="Get detail of one flight")
+@router.get("/get_single_flight/{flight_id}", description="Get detail of one flight")
 async def get_single_flight(flight_id: int):
 
     flight = supabase.from_("flight_details").select().eq("flight_id", flight_id).execute().data[0]
@@ -164,7 +164,7 @@ async def get_flight_statistics(flight_id: int):
     if flight_id:
         flight_info = supabase.from_("flight_details").select().eq("flight_id", flight_id).execute().data[0]
         
-        flight_info["service_statistics"] = supabase.table("flight_revenues").select().eq("flight_id", flight_id).execute().data
+        flight_info["services"] = supabase.table("flight_revenues").select().eq("flight_id", flight_id).execute().data
     
     return {"status": "success", "data": flight_info}
 

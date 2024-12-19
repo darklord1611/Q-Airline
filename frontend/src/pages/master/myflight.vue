@@ -91,6 +91,9 @@ import Footer from '@/pages/master/footer.vue';
 import Profile from '@/pages/master/profile.vue';
 import Weather from '@/pages/master/weather.vue';
 import { useUserStore } from '@/stores/user';
+
+import { useBookingStore } from '@/stores/myFlight';
+
 import apiClient from '@/api/axios';
 
 export default {
@@ -109,25 +112,17 @@ export default {
         const userStore = useUserStore();
         console.log(userStore.user)
 
-        // get all bookings of an user (information includes flight details, price, meal, luggage, etc.)
-        const response = await apiClient.get(`/bookings?user_id=${userStore.user.id}`);
+        try {
+            // get all bookings of an user (information includes flight details, price, meal, luggage, etc.)
+            const bookingStore = useBookingStore();
 
+            this.bookings = await bookingStore.fetchBookings(userStore.user.id);
 
-        // Định dạng ngày tháng ngay khi component được khởi tạo
-
-        this.bookings = response.data.data;
-
-        console.log(this.bookings);
-
-        this.bookings = this.bookings.map((booking) => ({
-            ...booking,
-            totalMeal: this.calcTotalMeal(booking.flights[0].services),
-            totalLuggage: this.calcTotalLuggage(booking.flights[0].services),
-            formattedCheckIn: this.formatDate(booking.flights[0].checkin),
-            formattedCheckOut: this.formatDate(booking.flights[0].checkout),
-        }));
-
-        console.log(this.bookings);
+            console.log(this.bookings);
+        } catch (error) {
+            console.error(error);
+            this.$toastr.error('Failed to fetch bookings');
+        }
     },
 
     methods: {
@@ -147,40 +142,18 @@ export default {
             // If the difference is greater than 3 days, render the cancel button
             return daysDifference > 3;
         },
-        formatDate(inputDate) {
-            // Chuyển đổi định dạng ngày tháng
-            const date = new Date(inputDate);
-            const options = { weekday: "short", day: "numeric", month: "short" };
-            return date.toLocaleDateString("en-US", options);
-        },
         async removeFlight(id) {
             // Lọc bỏ chuyến bay có flightNumber tương ứng
             const response = await apiClient.delete(`/bookings/${id}`);
 
-            if (response.status == 200) {
-                alert('Booking has been canceled successfully');
-            } else {
-                alert('Failed to cancel booking');
-            }
-
             this.bookings = this.bookings.filter(booking => booking.id !== id);
 
-        },
-        calcTotalMeal(services) {
-            return services.reduce((total, service) => {
-                if (service.services.type === 'MEAL') {
-                    total += service.quantity;
-                }
-                return total;
-            }, 0);
-        },
-        calcTotalLuggage(services) {
-            return services.reduce((total, service) => {
-                if (service.services.type === 'LUGGAGE') {
-                    total += service.quantity;
-                }
-                return total;
-            }, 0);
+            if (response.status == 200) {
+                this.$toastr.success('Booking canceled successfully');
+            } else {
+                this.$toastr.error('Failed to cancel booking');
+            }
+
         },
     }
 };
