@@ -126,3 +126,16 @@ class CreateNewsRequest(BaseModel):
     body: str
     category: str = "Promotion"
     visibility: str = "PUBLIC"
+    image_url: str = ""
+    external_article_link: str = ""
+
+################## DISCOUNTS ##################
+
+class CreateDiscountRequest(BaseModel):
+    name: str
+    description: str
+    discount_factor: float
+    image_url: str = ""
+    start_time: str
+    end_time: str
+    is_active: bool = True

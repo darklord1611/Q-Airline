@@ -21,7 +21,7 @@ async def get_destination_news():
 
 
 @router.get("/promotions")
-async def get_destination_news():
+async def get_promotion_news():
     news = supabase.table("news").select().eq("visibility", "PUBLIC").eq("category", "Promotion").execute().data
     return {"status": "success", "data": news}
 
@@ -33,7 +33,9 @@ async def create_news(req: CreateNewsRequest):
         "title": req.title,
         "body": req.body,
         "category": req.category,
-        "visibility": req.visibility
+        "visibility": req.visibility,
+        "image_url": req.image_url,
+        "external_article_link": req.external_article_link
     }).execute().data[0]
 
     return {"status": "success", "data": res}
