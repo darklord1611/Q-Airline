@@ -91,50 +91,6 @@
         </div>
       </div>
 
-      <!-- Container chính của thông báo -->
-      <div v-if="showDelayNotification" class="notification-container">
-
-        <!-- Nội dung thông báo -->
-        <div class="notification-content">
-          <!-- Icon đồng hồ minh họa -->
-          <img src="@/assets/clock-icon.png" alt="Clock Icon" class="notification-icon" />
-
-          <!-- Nội dung chuyến bay delay -->
-          <p class="notification-title">
-            Your flight has been <span class="text-red">delayed</span>
-          </p>
-          <p class="notification-time">
-            New departure time: <span class="bold-text">18h30</span>
-          </p>
-        </div>
-
-        <!-- Nút Get It! -->
-        <button @click="handleGetIt" class="notification-button">
-          Get It!
-        </button>
-      </div>
-
-      <div v-if="showSuccessNotification" class="notification-container">
-        <!-- Nội dung thông báo -->
-        <div class="notification-content">
-          <!-- Icon minh họa -->
-          <img src="@/assets/success-icon.png" alt="Success Icon" class="notification-icon" />
-
-          <!-- Nội dung đặt vé thành công -->
-          <p class="notification-title">
-            Your ticket has been <span class="text-green">successfully booked!</span>
-          </p>
-          <p class="notification-details">
-            Booking reference: <span class="bold-text">ABC123XYZ</span>
-          </p>
-        </div>
-
-        <!-- Nút OK -->
-        <button @click="handleOk" class="notification-button">
-          Get It!
-        </button>
-      </div>
-
       <!-- Nội dung chính -->
       <div class="w-full content">
         <router-view v-slot="{ Component }">
@@ -162,9 +118,6 @@ export default {
       showDropDown: false,
       isNotified: true,
       userStore: useUserStore(), // Access the store in data to use it later
-      notifications: [],
-      showDelayNotification: false,
-      showSuccessNotification: true,
     };
   },
   computed: {
@@ -179,15 +132,6 @@ export default {
   async created() {
     // Any setup logic you want to run when the component is created
     console.log("User data on created:", this.user);
-
-    // fetch notifications
-
-    const response = await apiClient.get(`/notifications/${this.user.id}`);
-
-
-    this.notifications = response.data.data;
-
-    console.log("Notifications:", this.notifications);
   },
   methods: {
     // Toggles the dropdown state
@@ -198,14 +142,6 @@ export default {
     handleLogout() {
       this.userStore.logout();
       this.$router.push("/login");
-    },
-    handleGetIt() {
-      this.showDelayNotification = false;
-      this.isNotified = false;
-    },
-    handleOk() {
-      this.showSuccessNotification = false;
-      this.isNotified = false;
     },
   },
 };

@@ -189,7 +189,7 @@ async def notify_delay_to_users(flight_users, old_flight_info, new_flight_info):
     notify_res = supabase.table("notifications").insert({
         "title": f"Flight Schedule Changed",
         "description": message,
-        "notification_type": "SCHEDULE_CHANGE"
+        "type": "SCHEDULE_CHANGE"
     }).execute().data[0]
 
     res = supabase.rpc("associate_users_with_notification", params={"notification_id": notify_res["id"], "user_ids": [user["bookings"]["user_id"] for user in flight_users]}).execute()

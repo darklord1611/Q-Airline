@@ -1,10 +1,9 @@
 
 
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, UploadFile, File
 from supabase_client import supabase
 from utils.request_models import CreateNewsRequest
 router = APIRouter(prefix="/news", tags=["news"])
-
 
 @router.get("")
 async def get_news():
@@ -28,6 +27,7 @@ async def get_promotion_news():
 
 @router.post("")
 async def create_news(req: CreateNewsRequest):
+
     res = supabase.table("news").insert({
         "author_id": req.author_id,
         "title": req.title,
@@ -39,3 +39,4 @@ async def create_news(req: CreateNewsRequest):
     }).execute().data[0]
 
     return {"status": "success", "data": res}
+

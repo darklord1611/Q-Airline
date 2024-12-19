@@ -1,4 +1,50 @@
 <template>
+    <!-- Container chính của thông báo -->
+    <div v-if="showDelayNotification" class="notification-container">
+
+        <!-- Nội dung thông báo -->
+        <div class="notification-content">
+            <!-- Icon đồng hồ minh họa -->
+            <img src="@/assets/clock-icon.png" alt="Clock Icon" class="notification-icon" />
+
+            <!-- Nội dung chuyến bay delay -->
+            <p class="notification-title">
+                Your flight has been <span class="text-red">delayed</span>
+            </p>
+            <p class="notification-time">
+                {{ latest_notification.description }}
+            </p>
+        </div>
+
+        <!-- Nút Get It! -->
+        <button @click="handleGetIt" class="notification-button">
+            Get It!
+        </button>
+    </div>
+
+    <div v-if="showSuccessNotification" class="notification-container">
+        <!-- Nội dung thông báo -->
+        <div class="notification-content">
+            <!-- Icon minh họa -->
+            <img src="@/assets/success-icon.png" alt="Success Icon" class="notification-icon" />
+
+            <!-- Nội dung đặt vé thành công -->
+            <p class="notification-title">
+                Your ticket has been <span class="text-green">successfully booked!</span>
+            </p>
+            <p class="notification-details">
+                {{ latest_notification.description }}
+            </p>
+        </div>
+
+        <!-- Nút OK -->
+        <button @click="handleOk" class="notification-button">
+            Get It!
+        </button>
+    </div>
+
+    <AdminPost />
+
     <div class="myflight-profile">
         <div class="flight-list">
             <div class="search-bar">
@@ -78,7 +124,7 @@
         </div>
         <div class="profile-weather">
             <Profile />
-            <Weather />
+            <History />
         </div>
 
     </div>
@@ -89,7 +135,8 @@
 <script>
 import Footer from '@/pages/master/footer.vue';
 import Profile from '@/pages/master/profile.vue';
-import Weather from '@/pages/master/weather.vue';
+import History from '@/pages/master/history.vue';
+import AdminPost from '@/pages/master/adminPost.vue';
 import { useUserStore } from '@/stores/user';
 
 import { useBookingStore } from '@/stores/myFlight';
@@ -100,11 +147,15 @@ export default {
     components: {
         Footer,
         Profile,
-        Weather
+        History,
+        AdminPost
     },
     data() {
         return {
             bookings: [],
+            latest_notification: {},
+            showDelayNotification: false,
+            showSuccessNotification: false,
         };
     },
 
@@ -123,6 +174,30 @@ export default {
             console.error(error);
             this.$toastr.error('Failed to fetch bookings');
         }
+
+        // get latest notification
+        try {
+            const response = await apiClient.get(`/notifications/${userStore.user.id}/latest`);
+
+            this.latest_notification = response.data.data.notifications;
+            console.log(response.data.data);
+            console.log(this.latest_notification);
+
+            if (response.data.data.is_read == true) {
+                this.showDelayNotification = false;
+                this.showSuccessNotification = false;
+            } else if (this.latest_notification.type === 'SCHEDULE_CHANGE') {
+                this.showDelayNotification = true;
+                this.showSuccessNotification = false;
+            } else if (this.latest_notification.type === 'BOOKING_CONFIRMED') {
+                this.showDelayNotification = false;
+                this.showSuccessNotification = true;
+            }
+        } catch (error) {
+            console.error(error);
+            this.$toastr.error('Failed to fetch latest notification');
+        }
+
     },
 
     methods: {
@@ -154,6 +229,14 @@ export default {
                 this.$toastr.error('Failed to cancel booking');
             }
 
+        },
+        handleGetIt() {
+            this.showDelayNotification = false;
+            this.isNotified = false;
+        },
+        handleOk() {
+            this.showSuccessNotification = false;
+            this.isNotified = false;
         },
     }
 };
@@ -419,5 +502,85 @@ h2 {
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+.notification-container {
+    background-color: #ffffff;
+    width: 100%;
+    max-height: 300px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+}
+
+
+/* Nội dung thông báo */
+.notification-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    background-color: #f0f7ff;
+    width: 100%;
+    text-align: center;
+}
+
+/* Icon đồng hồ */
+.notification-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+}
+
+/* Tiêu đề thông báo */
+.notification-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+/* Nội dung giờ khởi hành */
+.notification-time {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+/* Văn bản màu đỏ */
+.text-red {
+    color: #e63946;
+}
+
+/* Chữ in đậm */
+.bold-text {
+    font-weight: bold;
+}
+
+/* Nút "Get It!" */
+.notification-button {
+    width: 100%;
+    padding: 12px 0;
+    background: linear-gradient(135deg, #00A8E8, #4FC3F7);
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.notification-button:hover {
+    opacity: 0.9;
+}
+
+.notification-details {
+    font-size: 0.95rem;
+    color: #555555;
+    margin-top: 5px;
 }
 </style>
