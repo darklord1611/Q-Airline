@@ -12,7 +12,7 @@
                 Your flight has been <span class="text-red">delayed</span>
             </p>
             <p class="notification-time">
-                New departure time: <span class="bold-text">18h30</span>
+                {{ latest_notification.description }}
             </p>
         </div>
 
@@ -33,7 +33,7 @@
                 Your ticket has been <span class="text-green">successfully booked!</span>
             </p>
             <p class="notification-details">
-                Booking reference: <span class="bold-text">ABC123XYZ</span>
+                {{ latest_notification.description }}
             </p>
         </div>
 
@@ -153,8 +153,9 @@ export default {
     data() {
         return {
             bookings: [],
+            latest_notification: {},
             showDelayNotification: false,
-            showSuccessNotification: true,
+            showSuccessNotification: false,
         };
     },
 
@@ -173,6 +174,30 @@ export default {
             console.error(error);
             this.$toastr.error('Failed to fetch bookings');
         }
+
+        // get latest notification
+        try {
+            const response = await apiClient.get(`/notifications/${userStore.user.id}/latest`);
+
+            this.latest_notification = response.data.data.notifications;
+            console.log(response.data.data);
+            console.log(this.latest_notification);
+
+            if (response.data.data.is_read == true) {
+                this.showDelayNotification = false;
+                this.showSuccessNotification = false;
+            } else if (this.latest_notification.type === 'SCHEDULE_CHANGE') {
+                this.showDelayNotification = true;
+                this.showSuccessNotification = false;
+            } else if (this.latest_notification.type === 'BOOKING_CONFIRMED') {
+                this.showDelayNotification = false;
+                this.showSuccessNotification = true;
+            }
+        } catch (error) {
+            console.error(error);
+            this.$toastr.error('Failed to fetch latest notification');
+        }
+
     },
 
     methods: {
@@ -204,6 +229,14 @@ export default {
                 this.$toastr.error('Failed to cancel booking');
             }
 
+        },
+        handleGetIt() {
+            this.showDelayNotification = false;
+            this.isNotified = false;
+        },
+        handleOk() {
+            this.showSuccessNotification = false;
+            this.isNotified = false;
         },
     }
 };

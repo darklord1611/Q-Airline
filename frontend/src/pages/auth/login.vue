@@ -40,8 +40,8 @@
 
 <script>
 import { useUserStore } from "@/stores/user";
-import axios from "axios";
-import { useRouter } from "vue-router";
+
+import apiClient from "@/api/axios";
 
 export default {
   data() {
@@ -54,20 +54,25 @@ export default {
   methods: {
     async handleSubmit() {
       try {
-        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/login`, {
+
+        const payload = {
           email: this.email,
           password: this.password,
-        });
+        }
 
-        console.log(response.data);
+        const response = await apiClient.post("/auth/login", payload);
+
+        console.log(response.data.data);
 
         // Assuming response includes { token, user }
-        const { access_token, refresh_token, user } = response.data;
-
+        const user = response.data.data;
+        const access_token = user.access_token
+        const refresh_token = user.refresh_token
+    
         // Store user info in Pinia
         const userStore = useUserStore();
         userStore.setUser(user, access_token, refresh_token);
-
+        
         // Show success message
         this.$toastr.success("Login successful! Redirecting...");
 

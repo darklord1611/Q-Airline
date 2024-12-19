@@ -82,8 +82,8 @@
   </template>
   
 <script>
-import axios from 'axios';
-import { useRouter } from 'vue-router';
+
+import apiClient from '@/api/axios';
 
 export default {
   data() {
@@ -92,7 +92,6 @@ export default {
       lastName: '',
       email: '',
       password: '',
-      errorMessage: '',
     };
   },
   computed: {
@@ -122,33 +121,30 @@ export default {
     // Registration handler function
     async handleRegister() {
       if (!this.isPasswordStrong) {
-        this.errorMessage =
-          'Password does not meet the required conditions. Please try again.';
-        return;
+        this.$toastr.error('Password does not meet the required conditions. Please try again.');
       }
 
       try {
         // Send POST request to backend for registration
-        const response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/auth/register`,
-          {
-            first_name: this.firstName,
-            last_name: this.lastName,
-            email: this.email,
-            password: this.password,
-          }
-        );
+        const payload = {
+          first_name: this.firstName,
+          last_name: this.lastName,
+          email: this.email,
+          password: this.password,
+        };
+
+        const response = await apiClient.post('/auth/register', payload);
 
         // Handle successful response
-        console.log(response.data);
+        console.log(response.data.data);
         this.$toastr.success("Register successfully!. Redirecting to login page...");
         setTimeout(() => {
           this.$router.push('/login');
         }, 2000);
       } catch (error) {
         // Handle error response
-        this.errorMessage =
-          error.response?.data?.message || 'An error occurred during registration.';
+        console.log(error)
+        this.$toastr.error('An error occurred during registration.');
       }
     },
   },

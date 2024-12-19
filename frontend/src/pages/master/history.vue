@@ -14,16 +14,37 @@
 </template>
 
 <script>
+
+import { useUserStore } from '@/stores/user';
+import apiClient from '@/api/axios';
+
 export default {
     data() {
         return {
             isOpen: false,
-            actions: [
-                { title: 'Thao tác 1', description: 'Miêu tả thao tác 1' },
-                { title: 'Thao tác 2', description: 'Miêu tả thao tác 2' },
-                { title: 'Thao tác 3', description: 'Miêu tả thao tác 3' },
-            ],
+            userId: null,
+            actions: [],
         };
+    },
+    async created() {
+        const userStore = useUserStore();
+        this.userId = userStore.user.id;
+
+        try {
+            // fetch all notifications of current user
+            const response = await apiClient.get(`/notifications/${userStore.user.id}`);
+
+            this.actions = response.data.data.map((noti) => ({
+                id: noti.notification_id,
+                title: noti.notifications.title,
+                is_read: noti.is_read,
+                description: noti.notifications.description,
+            }));
+            console.log(this.actions);
+        } catch(error) {
+            console.error(error);
+            this.$toastr.error('Failed to fetch notifications');
+        }
     },
     methods: {
         toggleDropdown() {
