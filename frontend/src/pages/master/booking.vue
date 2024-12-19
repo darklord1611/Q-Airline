@@ -81,8 +81,9 @@
           <div class="text-overlay">{{ item.text }}</div>
         </div>
         <div class="discount-buttons">
-            <button class="discount-button" v-for="(item, index) in items" :key="index" :class="{ active: activeButtonIndex === index }"
-              @click="handleDiscountButtonClick(index)">{{ item.title }}</button>
+          <button class="discount-button" v-for="(item, index) in items" :key="index"
+            :class="{ active: activeButtonIndex === index }" @click="handleDiscountButtonClick(index)">{{ item.title
+            }}</button>
         </div>
       </div>
       <button @click="nextSlide" class="next-btn">&#10095;</button>
@@ -581,7 +582,7 @@ export default {
         this.$toastr.success("Booking created successfully!");
       } else {
         this.$toastr.error("Error creating booking. Please try again.");
-        return 
+        return
       }
 
       this.isService = false;
