@@ -10,7 +10,7 @@
             <div v-for="(item, index) in visibleItems" :key="index" class="info-card" @click="selectItem(item)">
                 <div class="remove-row">
                     <span class="card-number">{{ item.number }}</span>
-                    <button v-if="user" class="circle-button" @click="handleRemoveNewClick(index)">
+                    <button v-if="isAdmin" class="circle-button" @click="handleRemoveNewClick(index)">
                         -
                     </button>
                 </div>
@@ -49,6 +49,7 @@ export default {
     data() {
         return {
             items: [],
+            user: null,
             startIndex: 0,
             visibleCount: 3,
             selectedItem: null,
@@ -62,10 +63,12 @@ export default {
         // fetch news from API
         const userStore = useUserStore();
         this.user = userStore.user;
+        this.isAdmin = this.user.role === "admin";
 
         const response = await apiClient.get("/news/promotions");
-
+        console.log(response.data.data);
         this.items = response.data.data.map((item, index) => ({
+            id: item.id,
             number: `0${index + 1}`,
             title: item.title,
             details: item.body,
@@ -86,6 +89,18 @@ export default {
         },
         selectItem(item) {
             this.selectedItem = item;
+        },
+        async handleRemoveNewClick(index) {
+            // send request to delete news at DB
+            const response = await apiClient.delete(`/news/${this.items[index].id}`);
+
+            if (response.status === 200) {
+                this.$toastr.success("News has been removed successfully");
+                this.items.splice(index, 1);
+                this.selectedItem = null;
+            } else {
+                this.$toastr.error("Failed to remove news");
+            }
         },
     },
 };

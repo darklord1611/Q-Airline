@@ -7,7 +7,7 @@ router = APIRouter(prefix="/news", tags=["news"])
 
 @router.get("")
 async def get_news():
-    news = supabase.table("news").select().eq("visibility", "PUBLIC").eq("category", "Promotion").execute().data
+    news = supabase.table("news").select().eq("visibility", "PUBLIC").eq("category", "Promotion").order("created_at", desc=True).execute().data
     return {"status": "success", "data": news}
 
 
@@ -21,7 +21,7 @@ async def get_destination_news():
 
 @router.get("/promotions")
 async def get_promotion_news():
-    news = supabase.table("news").select().eq("visibility", "PUBLIC").eq("category", "Promotion").execute().data
+    news = supabase.table("news").select().eq("visibility", "PUBLIC").eq("category", "Promotion").order("created_at", desc=True).execute().data
     return {"status": "success", "data": news}
 
 
@@ -38,5 +38,11 @@ async def create_news(req: CreateNewsRequest):
         "external_article_link": req.external_article_link
     }).execute().data[0]
 
+    return {"status": "success", "data": res}
+
+
+@router.delete("/{news_id}")
+async def delete_news(news_id: int):
+    res = supabase.table("news").delete().eq("id", news_id).execute().data[0]
     return {"status": "success", "data": res}
 
