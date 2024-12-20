@@ -2,8 +2,7 @@
     <div class="tourist-destinations">
         <h1 class="title">Trending Tourist Destinations</h1>
         <div class="destinations-grid">
-            <div v-for="(destination, index) in destinations" :key="index" class="destination-card"
-                @click="goToLink(destination.link)">
+            <div v-for="(destination, index) in destinations" :key="index" class="destination-card">
                 <div class="image-container">
                     <img :src="destination.image" :alt="destination.name" />
                     <div class="overlay">
@@ -11,7 +10,10 @@
                             <h2>{{ destination.name }}</h2>
                             <p>{{ destination.description }}</p>
                         </div>
-                        <button class="discover-btn">Discover</button>
+                        <div class="button-col">
+                            <button class="discover-btn" @click="goToLink(destination.link)">Discover</button>
+                            <button class="discover-btn" @click="remove()">Remove</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -21,6 +23,7 @@
 
 <script>
 import apiClient from '@/api/axios';
+import { useUserStore } from '@/stores/user';
 
 export default {
     name: "TouristDestinations",
@@ -31,6 +34,8 @@ export default {
     },
     async created() {
         const response = await apiClient.get('/news/destinations');
+        const userStore = useUserStore();
+        this.user = userStore.user;
 
         this.destinations = response.data.data.map((destination) => {
             const aspectRatio = destination.image_height / destination.image_width;
@@ -54,6 +59,7 @@ export default {
 <style scoped>
 .tourist-destinations {
     text-align: center;
+    margin-bottom: 1em;
 }
 
 .title {
@@ -149,5 +155,11 @@ export default {
 
 .discover-btn:hover {
     background-color: #B13A4A;
+}
+
+.button-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 </style>

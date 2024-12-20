@@ -8,7 +8,13 @@
         <!-- Cột trái: Danh sách thông tin -->
         <div class="info-list">
             <div v-for="(item, index) in visibleItems" :key="index" class="info-card" @click="selectItem(item)">
-                <span class="card-number">{{ item.number }}</span>
+                <div class="remove-row">
+                    <span class="card-number">{{ item.number }}</span>
+                    <button v-if="user" class="circle-button" @click="handleRemoveNewClick(index)">
+                        -
+                    </button>
+                </div>
+
                 <span class="card-title">{{ item.title }}</span>
             </div>
             <!-- Thanh cuốn -->
@@ -36,6 +42,7 @@
 <script>
 
 import apiClient from "@/api/axios";
+import { useUserStore } from '@/stores/user';
 
 export default {
     name: "TravelNews",
@@ -53,6 +60,8 @@ export default {
     },
     async created() {
         // fetch news from API
+        const userStore = useUserStore();
+        this.user = userStore.user;
 
         const response = await apiClient.get("/news/promotions");
 
@@ -241,5 +250,38 @@ export default {
 .news-details p {
     text-align: start;
 
+}
+
+.remove-row {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+}
+
+.remove-icon {
+    width: 15px;
+    height: 15px;
+}
+
+.circle-button {
+    /* Đảm bảo khoảng cách giữa nút chính và nút tròn */
+    font-size: 30px;
+    width: 20px;
+    height: 20px;
+    background-color: #003D5B;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.4s ease, transform 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.circle-button:hover {
+    background-color: #002940;
+    transform: scale(1.1);
 }
 </style>

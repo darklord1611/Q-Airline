@@ -80,10 +80,19 @@
           <img :src="item.image" :alt="'Image ' + (index + 1)">
           <div class="text-overlay">{{ item.text }}</div>
         </div>
-        <div class="discount-buttons">
-          <button class="discount-button" v-for="(item, index) in items" :key="index"
-            :class="{ active: activeButtonIndex === index }" @click="handleDiscountButtonClick(index)">{{ item.title
-            }}</button>
+        <div :class="{
+          'discount-buttons': user !== null,
+          'discount-buttons-admin': user === null,
+        }">
+          <div v-for="(item, index) in items" :key="index" class="button-container">
+            <button class="discount-button" :class="{ active: activeButtonIndex === index }"
+              @click="handleDiscountButtonClick(index)">
+              {{ item.title }}
+            </button>
+            <button v-if="user" class="circle-button" @click="handleRemoveDiscountClick(index)">
+              -
+            </button>
+          </div>
         </div>
       </div>
       <button @click="nextSlide" class="next-btn">&#10095;</button>
@@ -306,6 +315,7 @@ export default {
   name: "booking",
   data() {
     return {
+      isUser: true,
       user: null,
       totalPrice: 0,
       selectedWeight: 0, // Giá trị ban đầu của số cân nặng
@@ -1439,7 +1449,19 @@ button:hover {
 
 .discount-buttons {
   position: absolute;
-  bottom: -20px;
+  bottom: -40px;
+  /* Đẩy nửa dưới nút ra ngoài ảnh */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  z-index: 2;
+  /* Đảm bảo các nút không bị che */
+}
+
+.discount-buttons-admin {
+  position: absolute;
+  bottom: -90px;
   /* Đẩy nửa dưới nút ra ngoài ảnh */
   left: 50%;
   transform: translateX(-50%);
@@ -1697,5 +1719,46 @@ button:hover {
   font-weight: 700;
   font-size: 2rem;
   margin-bottom: 0.8rem;
+}
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  /* Khoảng cách giữa các nút */
+}
+
+.circle-button {
+  text-align: center;
+  font-size: 40px;
+  margin-top: 5px;
+  /* Đảm bảo khoảng cách giữa nút chính và nút tròn */
+  width: 40px;
+  height: 40px;
+  background-color: #003D5B;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.4s ease, transform 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.circle-button:hover {
+  background-color: #002940;
+  transform: scale(1.1);
+}
+
+.circle-button i {
+  font-size: 16px;
+}
+
+.remove-discount-icon {
+  width: 20px;
+  height: 20px;
 }
 </style>
