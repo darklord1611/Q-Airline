@@ -1,7 +1,9 @@
 <template>
   <div class="flight-search">
-    <Grow />
-    <Statistic />
+    <div v-if="isAdmin">
+      <Grow />
+      <Statistic />
+    </div>
     <div class="header-row">
       <label class="myheader">Flight Schedule</label>
       <div class="over-table">
@@ -480,7 +482,8 @@ export default {
 
   async created() {
     const userStore = useUserStore();
-    this.isAdmin = userStore.isAdmin;
+    this.user = userStore.user;
+    this.isAdmin = this.user.role === "admin";
 
     // get all flights
     try {
@@ -599,7 +602,7 @@ export default {
           const arrival = arrHours * 60 + arrMinutes;
 
           if (arrival <= departure) {
-              this.$toastr.error("Arrival time must be greater than Departure time when Check-in and Check-out dates are the same.");
+            this.$toastr.error("Arrival time must be greater than Departure time when Check-in and Check-out dates are the same.");
           } else {
             this.errors.timeError = ""; // Clear error if valid
           }
@@ -622,7 +625,7 @@ export default {
         console.error("Error in formatHour:", error.message);
         return "Invalid time";
       }
-  },
+    },
     // Format ISO date to "YYYY-MM-DD" for input[type="date"]
     formatDate(isoString) {
       if (!isoString) return "";

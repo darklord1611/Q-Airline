@@ -1,6 +1,6 @@
 <template>
     <!-- Container chính của thông báo -->
-    <div v-if="showDelayNotification" class="notification-container">
+    <div v-if="showDelayNotification && !isAdmin" class="notification-container">
 
         <!-- Nội dung thông báo -->
         <div class="notification-content">
@@ -64,10 +64,16 @@
         </button>
     </div>
 
+    <div v-if="isAdmin">
+        <AdminPost />
+    </div>
 
-    <AdminPost />
 
-    <div class="myflight-profile">
+    <div v-if="loading">
+        <Loading />
+    </div>
+
+    <div class="myflight-profile" v-if="!Loading && !isAdmin">
         <div class="flight-list">
             <div class="search-bar">
                 <img src="@/assets/search.png" alt="Search Icon" class="icon" />
@@ -165,6 +171,7 @@ import { useUserStore } from '@/stores/user';
 import { useBookingStore } from '@/stores/myFlight';
 
 import apiClient from '@/api/axios';
+import Loading from './loading.vue';
 
 export default {
     components: {
@@ -181,13 +188,16 @@ export default {
             showDelayNotification: false,
             showSuccessNotification: false,
             showCancelNotification: false,
+            loading: false
         };
     },
 
     async created() {
         const userStore = useUserStore();
         this.userId = userStore.user.id;
-
+        this.loading = true;
+        this.user = userStore.user;
+        this.isAdmin = this.user.role === "admin";
         try {
             // get all bookings of an user (information includes flight details, price, meal, luggage, etc.)
             const bookingStore = useBookingStore();
@@ -223,7 +233,10 @@ export default {
             console.error(error);
             this.$toastr.error('Failed to fetch latest notification');
         }
-
+        setTimeout(() => {
+            // Sau 2 giây, tắt loading và hiển thị danh sách
+            this.loading = false;
+        }, 2000);
     },
 
     methods: {

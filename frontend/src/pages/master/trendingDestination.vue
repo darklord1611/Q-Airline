@@ -12,7 +12,7 @@
                         </div>
                         <div class="button-col">
                             <button class="discover-btn" @click="goToLink(destination.link)">Discover</button>
-                            <button class="discover-btn" @click="remove(index)">Remove</button>
+                            <button v-if="isAdmin" class="discover-btn" @click="remove(index)">Remove</button>
                         </div>
                     </div>
                 </div>
@@ -29,7 +29,8 @@ export default {
     name: "TouristDestinations",
     data() {
         return {
-            destinations: []
+            destinations: [],
+            isAdmin: false,
         };
     },
     async created() {

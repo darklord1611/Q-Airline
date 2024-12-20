@@ -105,10 +105,10 @@ export default {
     animation: float 3s ease-in-out infinite;
     background: linear-gradient(135deg, #ff7eb3, #ff758c, #ffb199);
     background-size: 200% 200%;
-    animation: gradient 5s ease infinite, float 3s ease-in-out infinite;
+    /* animation: gradient 5s ease infinite, float 3s ease-in-out infinite; */
 }
 
-@keyframes gradient {
+/* @keyframes gradient {
     0% {
         background-position: 0% 50%;
     }
@@ -132,7 +132,7 @@ export default {
     50% {
         transform: translate(-50%, 5px);
     }
-}
+} */
 
 .info {
     width: 85%;

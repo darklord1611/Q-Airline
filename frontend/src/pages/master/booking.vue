@@ -11,6 +11,7 @@
       <img :src="image" class="planeimage" />
     </div>
 
+    <div class="overlay"></div>
     <div class="flight-search-container">
       <div class="input-group">
         <!-- From Dropdown -->
@@ -89,7 +90,7 @@
               @click="handleDiscountButtonClick(index)">
               {{ item.title }}
             </button>
-            <button v-if="user" class="circle-button" @click="handleRemoveDiscountClick(index)">
+            <button v-if="isAdmin" class="circle-button" @click="handleRemoveDiscountClick(index)">
               -
             </button>
           </div>
@@ -98,9 +99,11 @@
       <button @click="nextSlide" class="next-btn">&#10095;</button>
     </div>
 
+    <div v-if="loading">
+      <Loading />
+    </div>
 
-
-    <div class="flight-list" v-if="isSearched">
+    <div class="flight-list" v-if="isSearched && !loading">
       <h1 class="title">Available Flights</h1>
       <div class="flight-card" v-for="flight in filteredFlights" :key="flight.id">
         <div class="ticket-icon">
@@ -287,8 +290,10 @@
     </div>
 
     <News />
-    <Introduction />
-    <TopTraveler />
+    <div v-once>
+      <Introduction />
+      <TopTraveler />
+    </div>
     <TrendingDes />
     <Footer />
   </div>
@@ -309,7 +314,7 @@ import TrendingDes from '@/pages/master/trendingDestination.vue';
 import Introduction from "@/pages/master/introduction.vue";
 import TopTraveler from "@/pages/master/topTraveler.vue";
 import { useBookingStore } from "@/stores/myFlight";
-import TrendingDes from '@/pages/master/trendingDestination.vue'
+import Loading from "@/pages/master/loading.vue"
 
 
 export default {
@@ -318,11 +323,14 @@ export default {
     News,
     TrendingDes,
     Introduction,
-    TopTraveler
+    TopTraveler,
+    Loading
   },
   name: "booking",
   data() {
     return {
+      loading: false,
+      isAdmin: false,
       user: null,
       totalPrice: 0,
       selectedWeight: 0, // Giá trị ban đầu của số cân nặng
@@ -382,6 +390,7 @@ export default {
   async created() {
     const userStore = useUserStore();
     this.user = userStore.user;
+    this.isAdmin = this.user.role === "admin";
 
     const bookingStore = useBookingStore();
     this.bookingStore = bookingStore;
@@ -458,6 +467,16 @@ export default {
   },
 
   methods: {
+    toggleOverlay(isActive) {
+      const overlay = document.querySelector(".overlay");
+      if (isActive) {
+        document.body.classList.add("modal-active");
+        overlay.classList.add("active");
+      } else {
+        document.body.classList.remove("modal-active");
+        overlay.classList.remove("active");
+      }
+    },
     // Hàm khởi tạo trạng thái ghế
     initializeSeats(class_name) {
       const newSeats = {}; // fix this
@@ -618,6 +637,7 @@ export default {
       //this.searchFlights = null;
     },
     async searchFlights() {
+      this.loading = true;
       // validate input
       if (!this.airports.departureAirport || !this.airports.arrivalAirport) {
         this.$toastr.error("Please select departure and arrival airports.");
@@ -646,7 +666,11 @@ export default {
         formattedArrivalTime: this.formatDate(flight.checkout),
       }));
 
-      this.isSearched = true; // Đặt thành true khi bấm nút Search Flight
+      setTimeout(() => {
+        // Sau 2 giây, tắt loading và hiển thị danh sách
+        this.loading = false;
+        this.isSearched = true;
+      }, 2000);
     },
 
     async selectFlight(flight, class_name) {
@@ -687,6 +711,7 @@ export default {
       this.formattedDates[refName === 'checkInDate' ? 'checkIn' : 'checkOut'] = this.formatDate(inputDate);
     },
     formatDate(inputDate) {
+      this.toggleOverlay(false);
       // Chuyển đổi định dạng ngày
       const date = new Date(inputDate);
       const options = { weekday: 'short', day: 'numeric', month: 'short' };
@@ -763,6 +788,11 @@ export default {
     setInterval(() => {
       this.nextSlide();
     }, 5000);
+    const inputFields = document.querySelectorAll(".typeIn");
+    inputFields.forEach((field) => {
+      field.addEventListener("focus", () => this.toggleOverlay(true));
+      field.addEventListener("blur", () => this.toggleOverlay(false));
+    });
   }
 };
 </script>
@@ -839,10 +869,11 @@ export default {
   flex-direction: column;
   gap: 15px;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   background-color: #fff;
   width: 70%;
+  z-index: 1000;
 }
 
 .input-group {
@@ -1790,5 +1821,34 @@ button:hover {
 .remove-discount-icon {
   width: 20px;
   height: 20px;
+}
+
+body.modal-active {
+  overflow: hidden;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+  display: none;
+}
+
+.overlay.active {
+  display: block;
+}
+
+select.typeIn {
+  max-height: 200px;
+  /* Hiển thị tối đa 5 mục */
+  overflow-y: auto;
+}
+
+select[type="dropdown"] option {
+  padding: 8px;
 }
 </style>
