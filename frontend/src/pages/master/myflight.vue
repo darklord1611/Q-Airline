@@ -205,6 +205,14 @@ export default {
             }
 
         },
+        handleGetIt() {
+            this.showDelayNotification = false;
+            this.isNotified = false;
+        },
+        handleOk() {
+            this.showSuccessNotification = false;
+            this.isNotified = false;
+        },
     }
 };
 </script>

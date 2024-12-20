@@ -587,6 +587,7 @@ export default {
 
       this.isService = false;
       this.isSearched = false;
+      //this.searchFlights = null;
     },
     async searchFlights() {
       // validate input
@@ -801,7 +802,7 @@ export default {
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   background-color: #fff;
-  width: 90%;
+  width: 70%;
 }
 
 .input-group {

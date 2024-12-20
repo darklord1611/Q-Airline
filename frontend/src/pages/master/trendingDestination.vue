@@ -30,19 +30,18 @@ export default {
         };
     },
     async created() {
-        // Fetch data from an API and set it to the destinations array
-        
         const response = await apiClient.get('/news/destinations');
 
-        console.log(response.data.data);
-    
-        this.destinations = response.data.data.map(destination => ({
-            name: destination.title,
-            description: destination.body,
-            link: destination.external_article_link,
-            image: destination.image_url
-        }));
-
+        this.destinations = response.data.data.map((destination) => {
+            const aspectRatio = destination.image_height / destination.image_width;
+            return {
+                name: destination.title,
+                description: destination.body,
+                link: destination.external_article_link,
+                image: destination.image_url,
+                aspectRatio: Math.max(aspectRatio || 1, 1) // Avoid overly small ratios
+            };
+        });
     },
     methods: {
         goToLink(url) {
@@ -65,9 +64,9 @@ export default {
 
 .destinations-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1rem;
-    padding: 1rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    padding: 1.5rem;
 }
 
 .destination-card {
@@ -76,6 +75,9 @@ export default {
     overflow: hidden;
     border-radius: 10px;
     transition: transform 0.3s;
+    display: flex;
+    flex-direction: column;
+    height: 400px;
 }
 
 .destination-card:hover {
@@ -83,14 +85,18 @@ export default {
 }
 
 .image-container {
+    width: 100%;
+    height: 100%;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
 }
 
 .image-container img {
     width: 100%;
     height: 100%;
-    max-height: 600px;
-    display: block;
+    object-fit: cover;
     border-radius: 10px;
     transition: opacity 0.3s;
 }
@@ -109,6 +115,7 @@ export default {
     opacity: 0;
     transition: opacity 0.3s;
     padding: 1rem;
+    border-radius: 10px;
 }
 
 .image-container:hover .overlay {
