@@ -91,8 +91,6 @@
         </div>
       </div>
 
-
-
       <!-- Nội dung chính -->
       <div class="w-full content">
         <router-view v-slot="{ Component }">
@@ -120,8 +118,6 @@ export default {
       showDropDown: false,
       isNotified: true,
       userStore: useUserStore(), // Access the store in data to use it later
-      notifications: [],
-
     };
   },
   computed: {
@@ -136,15 +132,6 @@ export default {
   async created() {
     // Any setup logic you want to run when the component is created
     console.log("User data on created:", this.user);
-
-    // fetch notifications
-
-    const response = await apiClient.get(`/notifications/${this.user.id}`);
-
-
-    this.notifications = response.data.data;
-
-    console.log("Notifications:", this.notifications);
   },
   methods: {
     // Toggles the dropdown state
@@ -156,7 +143,6 @@ export default {
       this.userStore.logout();
       this.$router.push("/login");
     },
-
   },
 };
 </script>

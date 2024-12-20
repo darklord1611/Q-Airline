@@ -13,7 +13,7 @@ async def register(req: RegisterRequest):
     {"email": req.email, "password": req.password}
 )
     user_response = supabase.table('users').insert({"id": response.user.id, "first_name": req.first_name, "last_name": req.last_name, "username": req.username, "phone": req.phone, "role": req.role}).execute().data
-    return {"status": "success", "user": user_response}
+    return {"status": "success", "data": user_response}
 
 @router.post("/login")
 async def login(req: LoginRequest):
@@ -23,5 +23,7 @@ async def login(req: LoginRequest):
 )
     user = supabase.table('users').select("id", "first_name", "last_name", "role", "phone").eq('id', response.user.id).execute().data[0]
     user["email"] = req.email
-    return {"status": "success", "user": user, "access_token": response.session.access_token, "refresh_token": response.session.refresh_token}
+    user["access_token"] = response.session.access_token
+    user["refresh_token"] = response.session.refresh_token
+    return {"status": "success", "data": user}
 

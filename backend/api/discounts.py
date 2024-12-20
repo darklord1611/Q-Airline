@@ -20,6 +20,7 @@ async def create_discount(req: CreateDiscountRequest):
 
     res = supabase.table("discounts").insert({
         "name": req.name,
+        "description": req.description,
         "discount_factor": req.discount_factor,
         "start_time": req.start_time,
         "end_time": req.end_time,

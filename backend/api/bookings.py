@@ -129,7 +129,7 @@ async def notify_cancelled_booking_to_user(user_id, flight_id):
     notify_res = supabase.table("notifications").insert({
         "title": f"Flight Booking Cancelled",
         "description": message,
-        "notification_type": "BOOKING_CANCELLED"
+        "type": "BOOKING_CANCELLED"
     }).execute().data[0]
 
     res = supabase.rpc("associate_users_with_notification", params={"notification_id": notify_res["id"], "user_ids": [user_id]}).execute()
@@ -147,7 +147,7 @@ async def notify_successful_booking_to_user(user_id, flight_id):
     notify_res = supabase.table("notifications").insert({
         "title": f"Flight Booking Confirmed",
         "description": message,
-        "notification_type": "BOOKING_CONFIRMED"
+        "type": "BOOKING_CONFIRMED"
     }).execute().data[0]
 
     res = supabase.rpc("associate_users_with_notification", params={"notification_id": notify_res["id"], "user_ids": [user_id]}).execute()
