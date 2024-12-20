@@ -6,15 +6,16 @@
         </div>
         <div class="dropdown" v-if="isOpen">
             <div v-for="(action, index) in actions" :key="index" class="action-item">
-                <h3 class="action-title">{{ action.title }}</h3>
-                <p class="action-description">{{ action.description }}</p>
+                <div class="action-row">
+                    <h3 class="action-title">{{ action.title }}</h3>
+                    <p class="action-description">{{ action.description }}</p>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script>
-
 import { useUserStore } from '@/stores/user';
 import apiClient from '@/api/axios';
 
@@ -31,7 +32,6 @@ export default {
         this.userId = userStore.user.id;
 
         try {
-            // fetch all notifications of current user
             const response = await apiClient.get(`/notifications/${userStore.user.id}`);
 
             this.actions = response.data.data.map((noti) => ({
@@ -41,7 +41,7 @@ export default {
                 description: noti.notifications.description,
             }));
             console.log(this.actions);
-        } catch(error) {
+        } catch (error) {
             console.error(error);
             this.$toastr.error('Failed to fetch notifications');
         }
@@ -58,6 +58,7 @@ export default {
 .history-container {
     font-family: Arial, sans-serif;
     width: 100%;
+    max-width: 400px;
 }
 
 .header {
@@ -104,14 +105,28 @@ export default {
     margin-bottom: 10px;
 }
 
+.action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #ddd;
+    padding: 5px 0;
+}
+
 .action-title {
     font-size: 14px;
     font-weight: bold;
     margin: 0;
+    flex: 1;
+    color: #333;
 }
 
 .action-description {
     font-size: 12px;
     margin: 0;
+    flex: 2;
+    color: #555;
+    text-align: right;
+    padding-left: 10px;
 }
 </style>

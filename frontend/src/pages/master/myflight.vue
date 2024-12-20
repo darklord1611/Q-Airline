@@ -49,9 +49,10 @@
         <div class="flight-list">
             <div class="search-bar">
                 <img src="@/assets/search.png" alt="Search Icon" class="icon" />
-                <input type="text" class="search-input" placeholder="Find your ticket here" v-model="searchQuery" />
+                <input type="text" class="search-input" placeholder="Find your ticket by arrival city"
+                    v-model="searchQuery" />
             </div>
-            <div class="flight-card" v-for="booking in bookings" :key="booking.id">
+            <div class="flight-card" v-for="booking in filteredBookings" :key="booking.id">
                 <div class="flight-info-horizontal">
                     <!-- Cột trái: Thời gian -->
                     <div class="time-column">
@@ -238,6 +239,17 @@ export default {
             this.showSuccessNotification = false;
             this.isNotified = false;
         },
+    },
+    computed: {
+        filteredBookings() {
+            if (!this.searchQuery) {
+                return this.bookings; // Nếu không có từ khóa tìm kiếm, trả về toàn bộ danh sách
+            }
+            const query = this.searchQuery.toLowerCase(); // Chuyển từ khóa tìm kiếm về chữ thường để so sánh
+            return this.bookings.filter(booking =>
+                booking.flights[0].arrival_city.toLowerCase().includes(query)
+            );
+        }
     }
 };
 </script>

@@ -287,6 +287,8 @@
     </div>
 
     <News />
+    <Introduction />
+    <TopTraveler />
     <TrendingDes />
     <Footer />
   </div>
@@ -303,14 +305,17 @@ import News from '@/pages/master/news.vue';
 import apiClient from "@/api/axios";
 import { useUserStore } from '@/stores/user';
 import { useAirportStore } from "@/stores/airports";
-import TrendingDes from '@/pages/master/trendingDestination.vue'
-
+import TrendingDes from '@/pages/master/trendingDestination.vue';
+import Introduction from "@/pages/master/introduction.vue";
+import TopTraveler from "@/pages/master/topTraveler.vue";
 
 export default {
   components: {
     Footer,
     News,
-    TrendingDes
+    TrendingDes,
+    Introduction,
+    TopTraveler
   },
   name: "booking",
   data() {
