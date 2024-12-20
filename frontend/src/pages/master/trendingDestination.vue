@@ -12,7 +12,7 @@
                         </div>
                         <div class="button-col">
                             <button class="discover-btn" @click="goToLink(destination.link)">Discover</button>
-                            <button class="discover-btn" @click="remove()">Remove</button>
+                            <button class="discover-btn" @click="remove(index)">Remove</button>
                         </div>
                     </div>
                 </div>
@@ -36,10 +36,12 @@ export default {
         const response = await apiClient.get('/news/destinations');
         const userStore = useUserStore();
         this.user = userStore.user;
+        this.isAdmin = this.user.role === 'admin';
 
         this.destinations = response.data.data.map((destination) => {
             const aspectRatio = destination.image_height / destination.image_width;
             return {
+                id: destination.id,
                 name: destination.title,
                 description: destination.body,
                 link: destination.external_article_link,
@@ -51,6 +53,17 @@ export default {
     methods: {
         goToLink(url) {
             window.open(url, "_blank");
+        },
+        async remove(index) {
+            // send request to remove destination
+
+            const response = await apiClient.delete(`/news/${this.destinations[index].id}`);
+            if (response.status === 200) {
+                this.$toastr.success('Destination removed successfully');
+                this.destinations.splice(index, 1);
+            } else {
+                this.$toastr.error('Failed to remove destination');
+            }
         }
     }
 };

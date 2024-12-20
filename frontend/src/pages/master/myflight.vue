@@ -43,6 +43,28 @@
         </button>
     </div>
 
+    <div v-if="showCancelNotification" class="notification-container">
+        <!-- Nội dung thông báo -->
+        <div class="notification-content">
+            <!-- Icon minh họa -->
+            <img src="@/assets/success-icon.png" alt="Success Icon" class="notification-icon" />
+
+            <!-- Nội dung đặt vé thành công -->
+            <p class="notification-title">
+                Your ticket has been <span class="text-green">successfully booked!</span>
+            </p>
+            <p class="notification-details">
+                {{ latest_notification.description }}
+            </p>
+        </div>
+
+        <!-- Nút OK -->
+        <button @click="handleOk" class="notification-button">
+            Get It!
+        </button>
+    </div>
+
+
     <AdminPost />
 
     <div class="myflight-profile">
@@ -119,7 +141,7 @@
                     <span class="price">USD: {{ booking.total_price }}$</span>
                     <span class="ticket"> {{ booking.class_name }}</span>
                     <button v-if="shouldRenderCancelButton(booking)" class="cancel-button"
-                        @click="removeFlight(booking.id)">Cancel</button>
+                        @click="removeBooking(booking.id)">Cancel</button>
                 </div>
             </div>
         </div>
@@ -154,15 +176,17 @@ export default {
     data() {
         return {
             bookings: [],
+            userId: null,
             latest_notification: {},
             showDelayNotification: false,
             showSuccessNotification: false,
+            showCancelNotification: false,
         };
     },
 
     async created() {
         const userStore = useUserStore();
-        console.log(userStore.user)
+        this.userId = userStore.user.id;
 
         try {
             // get all bookings of an user (information includes flight details, price, meal, luggage, etc.)
@@ -178,9 +202,10 @@ export default {
 
         // get latest notification
         try {
-            const response = await apiClient.get(`/notifications/${userStore.user.id}/latest`);
-
+            const response = await apiClient.get(`/notifications/${this.userId}/latest`);
+            console.log("What the fck is going on here?")
             this.latest_notification = response.data.data.notifications;
+            this.latest_notification.id = response.data.data.notification_id;
             console.log(response.data.data);
             console.log(this.latest_notification);
 
@@ -218,7 +243,7 @@ export default {
             // If the difference is greater than 3 days, render the cancel button
             return daysDifference > 3;
         },
-        async removeFlight(id) {
+        async removeBooking(id) {
             // Lọc bỏ chuyến bay có flightNumber tương ứng
             const response = await apiClient.delete(`/bookings/${id}`);
 
@@ -226,18 +251,46 @@ export default {
 
             if (response.status == 200) {
                 this.$toastr.success('Booking canceled successfully');
+                this.bookings = this.bookings.filter(booking => booking.id !== id);
+                // remove from cache also
+                const bookingStore = useBookingStore();
+                bookingStore.removeBookingFromCache(id);
             } else {
                 this.$toastr.error('Failed to cancel booking');
             }
 
         },
-        handleGetIt() {
+        async handleGetIt() {
             this.showDelayNotification = false;
             this.isNotified = false;
+
+            // Mark the notification as read
+            const response = await apiClient.put(`/notifications/${this.userId}/${this.latest_notification.id}`);
+
+            console.log(response.data.data);
+
+            if (response.status == 200) {
+                this.$toastr.success('Notification marked as read');
+            } else {
+                this.$toastr.error('Failed to mark notification as read');
+            }
+
         },
-        handleOk() {
+        async handleOk() {
             this.showSuccessNotification = false;
             this.isNotified = false;
+
+
+            // Mark the notification as read
+            const response = await apiClient.put(`/notifications/${this.userId}/${this.latest_notification.id}`);
+
+            console.log(response.data.data);
+
+            if (response.status == 200) {
+                this.$toastr.success('Notification marked as read');
+            } else {
+                this.$toastr.error('Failed to mark notification as read');
+            }
         },
     },
     computed: {

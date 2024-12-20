@@ -308,6 +308,9 @@ import { useAirportStore } from "@/stores/airports";
 import TrendingDes from '@/pages/master/trendingDestination.vue';
 import Introduction from "@/pages/master/introduction.vue";
 import TopTraveler from "@/pages/master/topTraveler.vue";
+import { useBookingStore } from "@/stores/myFlight";
+import TrendingDes from '@/pages/master/trendingDestination.vue'
+
 
 export default {
   components: {
@@ -320,7 +323,6 @@ export default {
   name: "booking",
   data() {
     return {
-      isUser: true,
       user: null,
       totalPrice: 0,
       selectedWeight: 0, // Giá trị ban đầu của số cân nặng
@@ -370,6 +372,7 @@ export default {
         passengers: [],
       },
       passengerCount: 1,
+      bookingStore: null
     };
   },
   watch: {
@@ -379,6 +382,9 @@ export default {
   async created() {
     const userStore = useUserStore();
     this.user = userStore.user;
+
+    const bookingStore = useBookingStore();
+    this.bookingStore = bookingStore;
 
     const airportStore = useAirportStore()
 
@@ -430,7 +436,7 @@ export default {
     filteredFlights() {
       if (!this.selectedFlight.flightInfo) return this.flights;
       return this.flights.filter(
-        (flight) => flight.flightNumber === this.selectedFlight.flightNumber
+        (flight) => flight.flight_number === this.selectedFlight.flightInfo.flight_number
       );
     },
 
@@ -594,6 +600,13 @@ export default {
       const response = await apiClient.post(`/bookings`, payload);
 
       if (response.status === 200) {
+
+        // Add booking to store if data is already cached
+        if (this.bookingStore.isCached()) {
+          const booking_response = await apiClient.get(`/bookings/${this.user.id}/latest`);
+          this.bookingStore.addBookingToCache(booking_response.data.data);
+          console.log(response.data.data)
+        }
         this.$toastr.success("Booking created successfully!");
       } else {
         this.$toastr.error("Error creating booking. Please try again.");
@@ -720,6 +733,18 @@ export default {
 
     nextSlide() {
       this.showSlide(this.currentIndex + 1);
+    },
+    async handleRemoveDiscountClick(index) {
+
+      // send request to delete discount
+      const response = await apiClient.delete(`/discounts/${this.items[index].id}`);
+
+      if (response.status === 200) {
+        this.items.splice(index, 1);
+        this.$toastr.success("Discount removed successfully!");
+      } else {
+        this.$toastr.error("Error removing discount. Please try again.");
+      }
     },
 
     handleDiscountButtonClick(index) {

@@ -11,6 +11,23 @@ export const useBookingStore = defineStore("bookingsStore", {
         cacheTimeout: 15 * 60 * 1000, // Cache expiration time in milliseconds (default: 15 minutes)
     }),
     actions: {
+        // check if the data is cached
+        isCached() {
+            const cachedBookings = localStorage.getItem(CACHE_KEY);
+            const cacheMetadata = JSON.parse(localStorage.getItem(CACHE_METADATA_KEY) || "{}");
+
+            if (cachedBookings && cacheMetadata.lastUpdated) {
+                const currentTime = Date.now();
+                const isCacheValid = currentTime - cacheMetadata.lastUpdated < this.cacheTimeout;
+
+                if (isCacheValid) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            return false;
+        },
         async fetchBookings(userId) {
             const currentTime = Date.now();
 
@@ -105,6 +122,26 @@ export const useBookingStore = defineStore("bookingsStore", {
                 JSON.stringify({ lastUpdated: currentTime })
             );
             console.log(`Booking with ID ${newBooking.id} added to the cache.`);
+        },
+
+        // Remove a specific booking from the cache by ID
+        removeBookingFromCache(bookingId) {
+            // Find and remove the booking with the given ID
+            const index = this.bookings.findIndex((booking) => booking.id === bookingId);
+            if (index !== -1) {
+                this.bookings.splice(index, 1);
+                console.log(`Booking with ID ${bookingId} removed from the cache.`);
+
+                // Update the cached data
+                const currentTime = Date.now();
+                localStorage.setItem(CACHE_KEY, JSON.stringify(this.bookings));
+                localStorage.setItem(
+                    CACHE_METADATA_KEY,
+                    JSON.stringify({ lastUpdated: currentTime })
+                );
+            } else {
+                console.log(`Booking with ID ${bookingId} not found in the cache.`);
+            }
         },
 
         calcTotalMeal(services) {

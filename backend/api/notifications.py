@@ -36,3 +36,9 @@ async def get_latest_user_notification(user_id: str):
     notification = supabase.table("notification_user").select("notification_id, is_read, notifications!notification_user_notification_id_fkey(title, description, type)").eq("user_id", user_id).order("notification_id", desc=True).limit(1).execute().data[0]
 
     return {"status": "success", "data": notification}
+
+@router.put("/{user_id}/{notification_id}")
+async def mark_notification_as_read(user_id: str, notification_id: int):
+    res = supabase.table("notification_user").update({"is_read": True}).eq("user_id", user_id).eq("notification_id", notification_id).execute().data[0]
+
+    return {"status": "success", "data": res}
