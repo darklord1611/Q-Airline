@@ -29,3 +29,8 @@ async def create_discount(req: CreateDiscountRequest):
     }).execute().data[0]
 
     return {"status": "success", "data": res}
+
+@router.delete("/{discount_id}", description="Delete discount")
+async def delete_discount(discount_id: int):
+    res = supabase.table("discounts").delete().eq("id", discount_id).execute().data[0]
+    return {"status": "success", "data": res}

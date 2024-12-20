@@ -80,10 +80,19 @@
           <img :src="item.image" :alt="'Image ' + (index + 1)">
           <div class="text-overlay">{{ item.text }}</div>
         </div>
-        <div class="discount-buttons">
-          <button class="discount-button" v-for="(item, index) in items" :key="index"
-            :class="{ active: activeButtonIndex === index }" @click="handleDiscountButtonClick(index)">{{ item.title
-            }}</button>
+        <div :class="{
+          'discount-buttons': user !== null,
+          'discount-buttons-admin': user === null,
+        }">
+          <div v-for="(item, index) in items" :key="index" class="button-container">
+            <button class="discount-button" :class="{ active: activeButtonIndex === index }"
+              @click="handleDiscountButtonClick(index)">
+              {{ item.title }}
+            </button>
+            <button v-if="user" class="circle-button" @click="handleRemoveDiscountClick(index)">
+              -
+            </button>
+          </div>
         </div>
       </div>
       <button @click="nextSlide" class="next-btn">&#10095;</button>
@@ -294,6 +303,7 @@ import News from '@/pages/master/news.vue';
 import apiClient from "@/api/axios";
 import { useUserStore } from '@/stores/user';
 import { useAirportStore } from "@/stores/airports";
+import { useBookingStore } from "@/stores/myFlight";
 import TrendingDes from '@/pages/master/trendingDestination.vue'
 
 
@@ -355,6 +365,7 @@ export default {
         passengers: [],
       },
       passengerCount: 1,
+      bookingStore: null
     };
   },
   watch: {
@@ -364,6 +375,9 @@ export default {
   async created() {
     const userStore = useUserStore();
     this.user = userStore.user;
+
+    const bookingStore = useBookingStore();
+    this.bookingStore = bookingStore;
 
     const airportStore = useAirportStore()
 
@@ -415,7 +429,7 @@ export default {
     filteredFlights() {
       if (!this.selectedFlight.flightInfo) return this.flights;
       return this.flights.filter(
-        (flight) => flight.flightNumber === this.selectedFlight.flightNumber
+        (flight) => flight.flight_number === this.selectedFlight.flightInfo.flight_number
       );
     },
 
@@ -579,6 +593,13 @@ export default {
       const response = await apiClient.post(`/bookings`, payload);
 
       if (response.status === 200) {
+
+        // Add booking to store if data is already cached
+        if (this.bookingStore.isCached()) {
+          const booking_response = await apiClient.get(`/bookings/${this.user.id}/latest`);
+          this.bookingStore.addBookingToCache(booking_response.data.data);
+          console.log(response.data.data)
+        }
         this.$toastr.success("Booking created successfully!");
       } else {
         this.$toastr.error("Error creating booking. Please try again.");
@@ -587,6 +608,7 @@ export default {
 
       this.isService = false;
       this.isSearched = false;
+      //this.searchFlights = null;
     },
     async searchFlights() {
       // validate input
@@ -705,6 +727,18 @@ export default {
     nextSlide() {
       this.showSlide(this.currentIndex + 1);
     },
+    async handleRemoveDiscountClick(index) {
+
+      // send request to delete discount
+      const response = await apiClient.delete(`/discounts/${this.items[index].id}`);
+
+      if (response.status === 200) {
+        this.items.splice(index, 1);
+        this.$toastr.success("Discount removed successfully!");
+      } else {
+        this.$toastr.error("Error removing discount. Please try again.");
+      }
+    },
 
     handleDiscountButtonClick(index) {
       if (this.activeButtonIndex === index) {
@@ -801,7 +835,7 @@ export default {
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   background-color: #fff;
-  width: 90%;
+  width: 70%;
 }
 
 .input-group {
@@ -1438,7 +1472,19 @@ button:hover {
 
 .discount-buttons {
   position: absolute;
-  bottom: -20px;
+  bottom: -40px;
+  /* Đẩy nửa dưới nút ra ngoài ảnh */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  z-index: 2;
+  /* Đảm bảo các nút không bị che */
+}
+
+.discount-buttons-admin {
+  position: absolute;
+  bottom: -90px;
   /* Đẩy nửa dưới nút ra ngoài ảnh */
   left: 50%;
   transform: translateX(-50%);
@@ -1696,5 +1742,46 @@ button:hover {
   font-weight: 700;
   font-size: 2rem;
   margin-bottom: 0.8rem;
+}
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  /* Khoảng cách giữa các nút */
+}
+
+.circle-button {
+  text-align: center;
+  font-size: 40px;
+  margin-top: 5px;
+  /* Đảm bảo khoảng cách giữa nút chính và nút tròn */
+  width: 40px;
+  height: 40px;
+  background-color: #003D5B;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.4s ease, transform 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.circle-button:hover {
+  background-color: #002940;
+  transform: scale(1.1);
+}
+
+.circle-button i {
+  font-size: 16px;
+}
+
+.remove-discount-icon {
+  width: 20px;
+  height: 20px;
 }
 </style>

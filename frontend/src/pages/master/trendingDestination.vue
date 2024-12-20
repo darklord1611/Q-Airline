@@ -2,8 +2,7 @@
     <div class="tourist-destinations">
         <h1 class="title">Trending Tourist Destinations</h1>
         <div class="destinations-grid">
-            <div v-for="(destination, index) in destinations" :key="index" class="destination-card"
-                @click="goToLink(destination.link)">
+            <div v-for="(destination, index) in destinations" :key="index" class="destination-card">
                 <div class="image-container">
                     <img :src="destination.image" :alt="destination.name" />
                     <div class="overlay">
@@ -11,7 +10,10 @@
                             <h2>{{ destination.name }}</h2>
                             <p>{{ destination.description }}</p>
                         </div>
-                        <button class="discover-btn">Discover</button>
+                        <div class="button-col">
+                            <button class="discover-btn" @click="goToLink(destination.link)">Discover</button>
+                            <button class="discover-btn" @click="remove(index)">Remove</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -21,6 +23,7 @@
 
 <script>
 import apiClient from '@/api/axios';
+import { useUserStore } from '@/stores/user';
 
 export default {
     name: "TouristDestinations",
@@ -30,23 +33,37 @@ export default {
         };
     },
     async created() {
-        // Fetch data from an API and set it to the destinations array
-        
         const response = await apiClient.get('/news/destinations');
+        const userStore = useUserStore();
+        this.user = userStore.user;
+        this.isAdmin = this.user.role === 'admin';
 
-        console.log(response.data.data);
-    
-        this.destinations = response.data.data.map(destination => ({
-            name: destination.title,
-            description: destination.body,
-            link: destination.external_article_link,
-            image: destination.image_url
-        }));
-
+        this.destinations = response.data.data.map((destination) => {
+            const aspectRatio = destination.image_height / destination.image_width;
+            return {
+                id: destination.id,
+                name: destination.title,
+                description: destination.body,
+                link: destination.external_article_link,
+                image: destination.image_url,
+                aspectRatio: Math.max(aspectRatio || 1, 1) // Avoid overly small ratios
+            };
+        });
     },
     methods: {
         goToLink(url) {
             window.open(url, "_blank");
+        },
+        async remove(index) {
+            // send request to remove destination
+
+            const response = await apiClient.delete(`/news/${this.destinations[index].id}`);
+            if (response.status === 200) {
+                this.$toastr.success('Destination removed successfully');
+                this.destinations.splice(index, 1);
+            } else {
+                this.$toastr.error('Failed to remove destination');
+            }
         }
     }
 };
@@ -55,6 +72,7 @@ export default {
 <style scoped>
 .tourist-destinations {
     text-align: center;
+    margin-bottom: 1em;
 }
 
 .title {
@@ -65,9 +83,9 @@ export default {
 
 .destinations-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1rem;
-    padding: 1rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    padding: 1.5rem;
 }
 
 .destination-card {
@@ -76,6 +94,9 @@ export default {
     overflow: hidden;
     border-radius: 10px;
     transition: transform 0.3s;
+    display: flex;
+    flex-direction: column;
+    height: 400px;
 }
 
 .destination-card:hover {
@@ -83,14 +104,18 @@ export default {
 }
 
 .image-container {
+    width: 100%;
+    height: 100%;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
 }
 
 .image-container img {
     width: 100%;
     height: 100%;
-    max-height: 600px;
-    display: block;
+    object-fit: cover;
     border-radius: 10px;
     transition: opacity 0.3s;
 }
@@ -109,6 +134,7 @@ export default {
     opacity: 0;
     transition: opacity 0.3s;
     padding: 1rem;
+    border-radius: 10px;
 }
 
 .image-container:hover .overlay {
@@ -142,5 +168,11 @@ export default {
 
 .discover-btn:hover {
     background-color: #B13A4A;
+}
+
+.button-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 </style>

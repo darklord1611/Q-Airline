@@ -40,6 +40,32 @@ async def get_bookings(flight_id: Optional[str] = None, user_id: Optional[str] =
         bookings = supabase.table("bookings").select().execute().data
     return {"status" : "success", "data": bookings}
 
+@router.get("/{user_id}/latest", description="Get the latest booking of a user")
+async def get_latest_booking(user_id: str):
+    # get the latest booking
+    booking = supabase.table("bookings").select().eq("user_id", user_id).eq("booking_status", "CONFIRMED").order("created_at", desc=True).limit(1).execute().data[0]
+    # get flight ids according to the booking
+    flights = supabase.from_("booking_flight").select("flight_id", "id").eq("booking_id", booking["id"]).execute().data
+    booking["flights"] = []
+    total_price = 0
+    for flight in flights:
+        # get flight details
+        temp_flight_info = supabase.from_("flight_details").select().eq("flight_id", flight["flight_id"]).execute().data[0]
+        temp_flight_info["checkin"] = convert_timestamp_to_date(temp_flight_info["departure_time"])
+        temp_flight_info["checkout"] = convert_timestamp_to_date(temp_flight_info["arrival_time"])
+        temp_flight_info["departure_time"] = convert_timestamp_to_time(temp_flight_info["departure_time"])
+        temp_flight_info["arrival_time"] = convert_timestamp_to_time(temp_flight_info["arrival_time"])
+        temp_flight_info["duration"] = time_difference(temp_flight_info["departure_time"], temp_flight_info["arrival_time"])
+        
+        # get external services
+        if flight["id"]:
+            temp_flight_info["services"] = supabase.from_("booking_flight_service").select("total_price", "quantity", "services!booking_flight_service_service_id_fkey(id, name, price, type)").eq("booking_flight_id", flight["id"]).execute().data
+            total_price += sum([service["total_price"] for service in temp_flight_info["services"]])
+        booking["flights"].append(temp_flight_info)
+    booking["total_price"] = total_price + booking["total_amount"]
+
+    return {"status" : "success", "data": booking}
+
 @router.post("", description="Create a new booking")
 async def create_booking(req: CreateBookingRequest):
 
