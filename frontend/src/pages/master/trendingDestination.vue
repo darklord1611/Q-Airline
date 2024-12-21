@@ -37,7 +37,7 @@ export default {
         const response = await apiClient.get('/news/destinations');
         const userStore = useUserStore();
         this.user = userStore.user;
-        this.isAdmin = this.user.role === 'admin';
+        this.isAdmin = userStore.isAdmin;
 
         this.destinations = response.data.data.map((destination) => {
             const aspectRatio = destination.image_height / destination.image_width;

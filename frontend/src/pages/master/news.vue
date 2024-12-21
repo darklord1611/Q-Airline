@@ -64,7 +64,7 @@ export default {
         // fetch news from API
         const userStore = useUserStore();
         this.user = userStore.user;
-        this.isAdmin = this.user.role === "admin";
+        this.isAdmin = userStore.isAdmin;
 
         const response = await apiClient.get("/news/promotions");
         console.log(response.data.data);

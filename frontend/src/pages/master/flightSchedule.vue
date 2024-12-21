@@ -786,7 +786,8 @@ export default {
           arrival_time: this.assembleDateTime(this.newFlight.checkoutDate, this.newFlight.arrivalTime),
           class_pricing: this.newFlight.classPricing
         }
-        console.log(payload);
+
+        console.log("Flight", payload);
         const response = await apiClient.post('/flights', payload);
 
         if (response.status === 200) {

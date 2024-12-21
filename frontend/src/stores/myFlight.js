@@ -29,24 +29,24 @@ export const useBookingStore = defineStore("bookingsStore", {
             return false;
         },
         async fetchBookings(userId) {
-            const currentTime = Date.now();
+            // const currentTime = Date.now();
 
-            // Check if bookings are already cached
-            const cachedBookings = localStorage.getItem(CACHE_KEY);
-            const cacheMetadata = JSON.parse(localStorage.getItem(CACHE_METADATA_KEY) || "{}");
+            // // Check if bookings are already cached
+            // const cachedBookings = localStorage.getItem(CACHE_KEY);
+            // const cacheMetadata = JSON.parse(localStorage.getItem(CACHE_METADATA_KEY) || "{}");
 
-            if (cachedBookings && cacheMetadata.lastUpdated) {
-                const isCacheValid = currentTime - cacheMetadata.lastUpdated < this.cacheTimeout;
+            // if (cachedBookings && cacheMetadata.lastUpdated) {
+            //     const isCacheValid = currentTime - cacheMetadata.lastUpdated < this.cacheTimeout;
 
-                if (isCacheValid) {
-                    console.log("Using cached bookings data");
-                    this.bookings = JSON.parse(cachedBookings);
-                    return this.bookings;
-                } else {
-                    console.log("Cache expired. Fetching fresh data...");
-                    this.clearCache();
-                }
-            }
+            //     if (isCacheValid) {
+            //         console.log("Using cached bookings data");
+            //         this.bookings = JSON.parse(cachedBookings);
+            //         return this.bookings;
+            //     } else {
+            //         console.log("Cache expired. Fetching fresh data...");
+            //         this.clearCache();
+            //     }
+            // }
 
             try {
                 console.log("Fetching bookings data from API");
