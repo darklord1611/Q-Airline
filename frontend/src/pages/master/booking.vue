@@ -314,7 +314,8 @@ import TrendingDes from '@/pages/master/trendingDestination.vue';
 import Introduction from "@/pages/master/introduction.vue";
 import TopTraveler from "@/pages/master/topTraveler.vue";
 import { useBookingStore } from "@/stores/myFlight";
-import Loading from "@/pages/master/loading.vue"
+import Loading from "@/pages/master/loading.vue";
+import { ElMessageBox, ElMessage } from "element-plus";
 
 
 export default {
@@ -390,7 +391,7 @@ export default {
   async created() {
     const userStore = useUserStore();
     this.user = userStore.user;
-    this.isAdmin = this.user.role === "admin";
+    this.isAdmin = userStore.isAdmin;
 
     const bookingStore = useBookingStore();
     this.bookingStore = bookingStore;
@@ -416,6 +417,8 @@ export default {
         id: discount.id,
         image: discount.image_url,
         text: discount.description,
+        startDate: new Date(discount.start_time),
+        endDate: new Date(discount.end_time),
         title: discount.name,
         discountFactor: discount.discount_factor
       }));
@@ -457,7 +460,19 @@ export default {
       } else {
         oneTicketPrice = this.selectedFlight.flightInfo.class_pricing[1].base_price;
       }
-      const ticketPrice = oneTicketPrice * this.passengerCount;
+
+      // compare seletected flight date vs discount date
+      const discount = this.items[this.activeButtonIndex];
+
+      const flightDate = new Date(this.selectedFlight.flightInfo.departure_time);
+      
+      if (flightDate >= discount.startDate && flightDate <= discount.endDate) {
+        oneTicketPrice = oneTicketPrice * (1 - discount.discountFactor);
+      }
+
+      console.log(oneTicketPrice)
+
+      const ticketPrice = oneTicketPrice * this.passengerCount * (1 - this.items[this.activeButtonIndex].discountFactor);
       const mealsPrice = this.externalServices.meals.reduce((sum, meal) => sum + meal.quantity * meal.price, 0);
       const luggagePrice = this.calculatePrice(this.selectedWeight);
 
@@ -621,11 +636,6 @@ export default {
       if (response.status === 200) {
 
         // Add booking to store if data is already cached
-        if (this.bookingStore.isCached()) {
-          const booking_response = await apiClient.get(`/bookings/${this.user.id}/latest`);
-          this.bookingStore.addBookingToCache(booking_response.data.data);
-          console.log(response.data.data)
-        }
         this.$toastr.success("Booking created successfully!");
       } else {
         this.$toastr.error("Error creating booking. Please try again.");
@@ -638,39 +648,40 @@ export default {
     },
     async searchFlights() {
       this.loading = true;
+
       // validate input
       if (!this.airports.departureAirport || !this.airports.arrivalAirport) {
         this.$toastr.error("Please select departure and arrival airports.");
+        this.loading = false; // Tắt loading ngay khi có lỗi
         return;
       }
 
       if (!this.$refs["checkInDate"].value) {
         this.$toastr.error("Please select a departure date.");
+        this.loading = false; // Tắt loading ngay khi có lỗi
         return;
       }
 
-      console.log(this.$refs["checkInDate"].value);
+      try {
+        const iso_date = new Date(this.$refs["checkInDate"].value).toISOString();
 
-      const iso_date = new Date(this.$refs["checkInDate"].value).toISOString();
+        // get all valid flights based on selected options and departure_date
+        const response = await apiClient.get(
+          `/flights/search?departure_airport_id=${this.airports.departureAirport.id}&arrival_airport_id=${this.airports.arrivalAirport.id}&departure_date=${iso_date}`
+        );
 
-      // get all valid flights based on selected options and departure_date
-      const response = await apiClient.get(`/flights/search?departure_airport_id=${this.airports.departureAirport.id}&arrival_airport_id=${this.airports.arrivalAirport.id}&departure_date=${iso_date}`);
+        this.flights = response.data.data.map((flight) => ({
+          ...flight,
+          formattedDepartureTime: this.formatDate(flight.checkin),
+          formattedArrivalTime: this.formatDate(flight.checkout),
+        }));
 
-      this.flights = response.data.data;
-
-      console.log(this.flights);
-
-      this.flights = this.flights.map((flight) => ({
-        ...flight,
-        formattedDepartureTime: this.formatDate(flight.checkin),
-        formattedArrivalTime: this.formatDate(flight.checkout),
-      }));
-
-      setTimeout(() => {
-        // Sau 2 giây, tắt loading và hiển thị danh sách
-        this.loading = false;
         this.isSearched = true;
-      }, 2000);
+      } catch (error) {
+        this.$toastr.error("Failed to fetch flights. Please try again.");
+      } finally {
+        this.loading = false; // Tắt loading ngay sau khi hoàn tất
+      }
     },
 
     async selectFlight(flight, class_name) {
@@ -760,15 +771,23 @@ export default {
       this.showSlide(this.currentIndex + 1);
     },
     async handleRemoveDiscountClick(index) {
+      // Show confirmation dialog
+      const confirmDelete = window.confirm("Are you sure you want to delete this discount?");
+      if (!confirmDelete) {
+        return; // User canceled the action
+      }
 
-      // send request to delete discount
-      const response = await apiClient.delete(`/discounts/${this.items[index].id}`);
-
-      if (response.status === 200) {
-        this.items.splice(index, 1);
-        this.$toastr.success("Discount removed successfully!");
-      } else {
-        this.$toastr.error("Error removing discount. Please try again.");
+      // Send delete request
+      try {
+        const response = await apiClient.delete(`/discounts/${this.items[index].id}`);
+        if (response.status === 200) {
+          this.items.splice(index, 1);
+          this.$toastr.success("Discount removed successfully!");
+        } else {
+          this.$toastr.error("Error removing discount. Please try again.");
+        }
+      } catch (error) {
+        this.$toastr.error("An error occurred while connecting to the server.");
       }
     },
 
