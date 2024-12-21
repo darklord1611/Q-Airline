@@ -78,7 +78,8 @@
           <router-link to="/myflight"
             class="flex-1 py-3 px-4 text-sm text-center border-r border-gray-300 hover:bg-gray-100 transition rounded-md flex items-center justify-center">
             <!-- Nội dung My Flight -->
-            <span>My Flight</span>
+            <span v-if="!isAdmin">My Flight</span>
+            <span v-if="isAdmin">Posting</span>
 
             <!-- Hiển thị icon chuông nếu isDelay = true -->
             <!-- <img v-if="isNotified" src="@/assets/bell-icon.png" alt="Delay Icon"
@@ -117,6 +118,7 @@ export default {
     return {
       showDropDown: false,
       isNotified: true,
+      isAdmin: false,
       userStore: useUserStore(), // Access the store in data to use it later
     };
   },
@@ -130,6 +132,10 @@ export default {
     },
   },
   async created() {
+    const userStore = useUserStore();
+    this.user = userStore.user;
+    this.isAdmin = this.user.role === "admin";
+
     // Any setup logic you want to run when the component is created
     console.log("User data on created:", this.user);
   },

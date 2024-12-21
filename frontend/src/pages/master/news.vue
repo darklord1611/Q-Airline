@@ -92,6 +92,11 @@ export default {
             this.selectedItem = item;
         },
         async handleRemoveNewClick(index) {
+            const confirmDelete = window.confirm("Are you sure you want to delete this new?");
+            if (!confirmDelete) {
+                return; // User canceled the action
+            }
+
             // send request to delete news at DB
             const response = await apiClient.delete(`/news/${this.items[index].id}`);
 
@@ -113,6 +118,7 @@ export default {
     text-align: center;
     margin: 1.8rem auto;
     max-width: 800px;
+    width: 100%;
 }
 
 .travel-heading {

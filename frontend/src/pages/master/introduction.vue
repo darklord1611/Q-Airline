@@ -54,6 +54,7 @@ export default {
     padding: 2rem;
     margin-bottom: 60px;
     margin-top: 50px;
+    width: 100%;
 }
 
 .left-column {
