@@ -1,10 +1,14 @@
 # Q-Airline
 
 ## How to run
-Setting up .env file from .env.example
+Create `.env` file and copy env variables from .env.example into `.env` file
+
+
 ```sh
 $ npm i
 
 $ npm run dev
 
 ```
+
+Go to `http://localhost:3000` to see the frontend.
