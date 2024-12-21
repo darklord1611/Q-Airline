@@ -48,6 +48,7 @@ export default {
     name: "TravelNews",
     data() {
         return {
+            isAdmin: false,
             items: [],
             user: null,
             startIndex: 0,

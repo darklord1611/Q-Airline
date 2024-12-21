@@ -314,7 +314,8 @@ import TrendingDes from '@/pages/master/trendingDestination.vue';
 import Introduction from "@/pages/master/introduction.vue";
 import TopTraveler from "@/pages/master/topTraveler.vue";
 import { useBookingStore } from "@/stores/myFlight";
-import Loading from "@/pages/master/loading.vue"
+import Loading from "@/pages/master/loading.vue";
+import { ElMessageBox, ElMessage } from "element-plus";
 
 
 export default {
@@ -638,39 +639,40 @@ export default {
     },
     async searchFlights() {
       this.loading = true;
+
       // validate input
       if (!this.airports.departureAirport || !this.airports.arrivalAirport) {
         this.$toastr.error("Please select departure and arrival airports.");
+        this.loading = false; // Tắt loading ngay khi có lỗi
         return;
       }
 
       if (!this.$refs["checkInDate"].value) {
         this.$toastr.error("Please select a departure date.");
+        this.loading = false; // Tắt loading ngay khi có lỗi
         return;
       }
 
-      console.log(this.$refs["checkInDate"].value);
+      try {
+        const iso_date = new Date(this.$refs["checkInDate"].value).toISOString();
 
-      const iso_date = new Date(this.$refs["checkInDate"].value).toISOString();
+        // get all valid flights based on selected options and departure_date
+        const response = await apiClient.get(
+          `/flights/search?departure_airport_id=${this.airports.departureAirport.id}&arrival_airport_id=${this.airports.arrivalAirport.id}&departure_date=${iso_date}`
+        );
 
-      // get all valid flights based on selected options and departure_date
-      const response = await apiClient.get(`/flights/search?departure_airport_id=${this.airports.departureAirport.id}&arrival_airport_id=${this.airports.arrivalAirport.id}&departure_date=${iso_date}`);
+        this.flights = response.data.data.map((flight) => ({
+          ...flight,
+          formattedDepartureTime: this.formatDate(flight.checkin),
+          formattedArrivalTime: this.formatDate(flight.checkout),
+        }));
 
-      this.flights = response.data.data;
-
-      console.log(this.flights);
-
-      this.flights = this.flights.map((flight) => ({
-        ...flight,
-        formattedDepartureTime: this.formatDate(flight.checkin),
-        formattedArrivalTime: this.formatDate(flight.checkout),
-      }));
-
-      setTimeout(() => {
-        // Sau 2 giây, tắt loading và hiển thị danh sách
-        this.loading = false;
         this.isSearched = true;
-      }, 2000);
+      } catch (error) {
+        this.$toastr.error("Failed to fetch flights. Please try again.");
+      } finally {
+        this.loading = false; // Tắt loading ngay sau khi hoàn tất
+      }
     },
 
     async selectFlight(flight, class_name) {
@@ -760,15 +762,23 @@ export default {
       this.showSlide(this.currentIndex + 1);
     },
     async handleRemoveDiscountClick(index) {
+      // Show confirmation dialog
+      const confirmDelete = window.confirm("Are you sure you want to delete this discount?");
+      if (!confirmDelete) {
+        return; // User canceled the action
+      }
 
-      // send request to delete discount
-      const response = await apiClient.delete(`/discounts/${this.items[index].id}`);
-
-      if (response.status === 200) {
-        this.items.splice(index, 1);
-        this.$toastr.success("Discount removed successfully!");
-      } else {
-        this.$toastr.error("Error removing discount. Please try again.");
+      // Send delete request
+      try {
+        const response = await apiClient.delete(`/discounts/${this.items[index].id}`);
+        if (response.status === 200) {
+          this.items.splice(index, 1);
+          this.$toastr.success("Discount removed successfully!");
+        } else {
+          this.$toastr.error("Error removing discount. Please try again.");
+        }
+      } catch (error) {
+        this.$toastr.error("An error occurred while connecting to the server.");
       }
     },
 

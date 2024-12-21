@@ -98,7 +98,7 @@
 
                     <!-- Cột giữa: Đường bay -->
                     <div class="route-column">
-                        <div class="icon icon-departure">●</div>
+                        <div class="icon icon-departure"> ●</div>
                         <div class="line"></div>
                         <div class="icon icon-plane">
                             <img src="@/assets/plane.png" alt="plane icon" />
@@ -178,7 +178,8 @@ export default {
         Footer,
         Profile,
         History,
-        AdminPost
+        AdminPost,
+        Loading
     },
     data() {
         return {
@@ -232,11 +233,9 @@ export default {
         } catch (error) {
             console.error(error);
             this.$toastr.error('Failed to fetch latest notification');
-        }
-        setTimeout(() => {
-            // Sau 2 giây, tắt loading và hiển thị danh sách
+        } finally {
             this.loading = false;
-        }, 2000);
+        }
     },
 
     methods: {
@@ -385,6 +384,7 @@ h2 {
 .icon-departure,
 .icon-arrival {
     font-size: 1.2em;
+    margin-bottom: 3px;
 }
 
 .line {
@@ -558,7 +558,6 @@ h2 {
 .icon {
     width: 20px;
     height: 20px;
-    margin-right: 8px;
 }
 
 .search-input {

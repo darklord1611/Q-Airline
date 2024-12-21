@@ -59,6 +59,7 @@ export default {
     font-family: Arial, sans-serif;
     width: 100%;
     max-width: 400px;
+    margin-bottom: 20px;
 }
 
 .header {

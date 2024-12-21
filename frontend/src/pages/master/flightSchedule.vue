@@ -1,16 +1,19 @@
 <template>
   <div class="flight-search">
-    <div v-if="isAdmin">
+    <div v-if="loading">
+      <Loading />
+    </div>
+    <div v-if="isAdmin && !loading">
       <Grow />
       <Statistic />
     </div>
     <div class="header-row">
       <label class="myheader">Flight Schedule</label>
       <div class="over-table">
-        <button @click="openAddFlight" class="add-flight-btn">
+        <button v-if="isAdmin" @click="openAddFlight" class="add-flight-btn">
           <img src="@/assets/plus.png" class="add-flight-icon" /> Add Flight
         </button>
-        <button @click="toggleAircraft" class="add-aircraft-btn">
+        <button v-if="isAdmin" @click="toggleAircraft" class="add-aircraft-btn">
           <img src="@/assets/plus.png" class="add-aircraft-icon" /> Add Aircraft
         </button>
         <button @click="toggleFilters" class="filter-btn">
@@ -402,12 +405,15 @@ import { useFlightAnalyticStore } from '@/stores/flightAnalytics';
 import { faker } from '@faker-js/faker';
 import apiClient from '@/api/axios';
 import Grow from '@/pages/master/grow.vue';
+import loading from '@/pages/master/loading.vue';
+import Loading from '@/pages/master/loading.vue';
 
 export default {
   components: {
     Footer,
     Statistic,
-    Grow
+    Grow,
+    Loading
   },
   data() {
     return {
@@ -423,6 +429,7 @@ export default {
           cols: 0,
         },
       },
+      loading: false,
       isAddFlight: false,
       selectedFlight: null,
       originalFlight: null,
@@ -484,6 +491,7 @@ export default {
     const userStore = useUserStore();
     this.user = userStore.user;
     this.isAdmin = this.user.role === "admin";
+    this.loading = true;
 
     // get all flights
     try {
@@ -536,6 +544,8 @@ export default {
     } catch (error) {
       console.log("Error fetching aircrafts:", error);
       this.$toastr.error("Failed to fetch aircrafts");
+    } finally {
+      this.loading = false;
     }
   },
 
@@ -757,7 +767,7 @@ export default {
           arrival_time: this.assembleDateTime(this.newFlight.checkoutDate, this.newFlight.arrivalTime),
           class_pricing: this.newFlight.classPricing
         }
-
+        console.log(payload);
         const response = await apiClient.post('/flights', payload);
 
         if (response.status === 200) {
