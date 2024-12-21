@@ -391,7 +391,7 @@ export default {
   async created() {
     const userStore = useUserStore();
     this.user = userStore.user;
-    this.isAdmin = this.user.role === "admin";
+    this.isAdmin = userStore.isAdmin;
 
     const bookingStore = useBookingStore();
     this.bookingStore = bookingStore;
@@ -458,7 +458,7 @@ export default {
       } else {
         oneTicketPrice = this.selectedFlight.flightInfo.class_pricing[1].base_price;
       }
-      const ticketPrice = oneTicketPrice * this.passengerCount;
+      const ticketPrice = oneTicketPrice * this.passengerCount * (1 - this.items[this.activeButtonIndex].discountFactor);
       const mealsPrice = this.externalServices.meals.reduce((sum, meal) => sum + meal.quantity * meal.price, 0);
       const luggagePrice = this.calculatePrice(this.selectedWeight);
 
@@ -622,11 +622,6 @@ export default {
       if (response.status === 200) {
 
         // Add booking to store if data is already cached
-        if (this.bookingStore.isCached()) {
-          const booking_response = await apiClient.get(`/bookings/${this.user.id}/latest`);
-          this.bookingStore.addBookingToCache(booking_response.data.data);
-          console.log(response.data.data)
-        }
         this.$toastr.success("Booking created successfully!");
       } else {
         this.$toastr.error("Error creating booking. Please try again.");

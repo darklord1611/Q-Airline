@@ -7,7 +7,7 @@ from config import SUPABASE_JWT_SECRET
 
 
 # Define routes to exclude from authentication
-EXCLUDED_PATHS = ["/", "/docs", "/open-endpoint", "/openapi.json"]
+EXCLUDED_PATHS = ["/", "/docs", "/open-endpoint", "/openapi.json", "api/v1/auth/login", "api/v1/auth/register"]
 
 def validate_access_token(token: str):
     """

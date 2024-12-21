@@ -34,6 +34,8 @@ async def create_aircraft(req: CreateAircraftRequest):
         "seat_configuration": req.seat_configuration
     }).execute().data[0]
 
+    print(res)
+
     
     # create seats according to the seat configuration
 

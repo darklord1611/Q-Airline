@@ -198,7 +198,7 @@ export default {
         this.userId = userStore.user.id;
         this.loading = true;
         this.user = userStore.user;
-        this.isAdmin = this.user.role === "admin";
+        this.isAdmin = userStore.isAdmin;
         try {
             // get all bookings of an user (information includes flight details, price, meal, luggage, etc.)
             const bookingStore = useBookingStore();
