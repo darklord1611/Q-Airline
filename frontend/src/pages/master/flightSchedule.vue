@@ -1,7 +1,9 @@
 <template>
   <div class="flight-search">
-    <Grow />
-    <Statistic />
+    <div v-if="isAdmin">
+      <Grow />
+      <Statistic />
+    </div>
     <div class="header-row">
       <label class="myheader">Flight Schedule</label>
       <div class="over-table">
@@ -130,15 +132,17 @@
 
       <!-- Hàng 2: Bộ lọc From và To -->
       <div class="filter-row">
-        <select v-model="filters.from" class="half-width">
-          <option value="">All</option>
-          <option value="Hanoi">Hanoi</option>
-          <option value="Ho Chi Minh City">Ho Chi Minh City</option>
+        <select id="filter-departureAirport" v-model="filters.departureAirport" @change="updateToFilterOptions">
+          <option value="" disabled>Select Departure Airport</option>
+          <option v-for="airport in airports.fromOptions" :key="airport.id" :value="airport">
+            {{ airport.city }}
+          </option>
         </select>
-        <select v-model="filters.to" class="half-width">
-          <option value="">All</option>
-          <option value="JFK">JFK</option>
-          <option value="LAX">LAX</option>
+        <select id="arrivalAirport" v-model="filters.arrivalAirport">
+          <option value="" disabled>Select Arrival Airport</option>
+          <option v-for="airport in airports.toOptions" :key="airport.id" :value="airport">
+            {{ airport.city }}
+          </option>
         </select>
       </div>
 
@@ -155,27 +159,27 @@
       </div>
 
       <!-- Hàng 5: Ticket Type -->
-      <div class="filter-row">
+      <!-- <div class="filter-row">
         <div class="filter-title full-width">Ticket Type:</div>
-      </div>
+      </div> -->
 
       <!-- Hàng 6: Bộ lọc Ticket Type -->
-      <div class="filter-row">
+      <!-- <div class="filter-row">
         <select v-model="filters.ticketType" class="full-width">
           <option value="">All</option>
           <option value="Economy">Economy</option>
           <option value="Business">Business</option>
           <option value="First Class">First Class</option>
         </select>
-      </div>
+      </div> -->
 
       <!-- Hàng 9: Price Range -->
-      <div class="filter-row">
+      <!-- <div class="filter-row">
         <div class="filter-title full-width">Price Range:</div>
-      </div>
+      </div> -->
 
       <!-- Hàng 10: Bộ lọc Price Range -->
-      <div class="filter-row">
+      <!-- <div class="filter-row">
         <div class="price-range full-width">
           <input type="range" v-model="filters.minPrice" :max="filters.maxPrice" min="0" step="10"
             @input="checkPriceOrder" />
@@ -186,7 +190,7 @@
           <span>Min: {{ filters.minPrice }} USD</span>
           <span>Max: {{ filters.maxPrice }} USD</span>
         </div>
-      </div>
+      </div> -->
 
       <!-- Hàng cuối: Nút Clear và Apply -->
       <div class="filter-actions">
@@ -431,8 +435,16 @@ export default {
       filters: {
         from: "",
         to: "",
-        departureAirport: "",
-        arrivalAirport: "",
+        departureAirport: {
+          id: null,
+          iata_code: "",
+          city: ""
+        },
+        arrivalAirport: {
+          id: null,
+          iata_code: "",
+          city: ""
+        },
         departureTime: "",
         arrivalTime: "",
         minPrice: 0,
@@ -480,7 +492,8 @@ export default {
 
   async created() {
     const userStore = useUserStore();
-    this.isAdmin = userStore.isAdmin;
+    this.user = userStore.user;
+    this.isAdmin = this.user.role === "admin";
 
     // get all flights
     try {
@@ -504,6 +517,9 @@ export default {
           to: flight.arrival_city
         };
       })
+
+      console.log(this.flights)
+
     } catch (error) {
       console.error("Error fetching flights:", error);
       this.$toastr.error("Failed to fetch flights");
@@ -539,18 +555,12 @@ export default {
   computed: {
     filteredFlights() {
       return this.flights.filter(flight => {
-        const matchFrom = !this.filters.from || flight.from === this.filters.from;
-        const matchTo = !this.filters.to || flight.to === this.filters.to;
-        const matchDepartureTime = !this.filters.departureTime || flight.departureTime === this.filters.departureTime;
-        const matchArrivalTime = !this.filters.arrivalTime || flight.arrivalTime === this.filters.arrivalTime;
+        const matchFrom = !this.filters.departureAirport.iata_code || flight.departureAirport === this.filters.departureAirport.iata_code;
+        const matchTo = !this.filters.arrivalAirport.iata_code || flight.arrivalAirport === this.filters.arrivalAirport.iata_code;
+        const matchDepartureTime = !this.filters.departureTime || flight.checkin === this.filters.departureTime;
+        const matchArrivalTime = !this.filters.arrivalTime || flight.checkout === this.filters.arrivalTime;
 
-        const matchPrice =
-          parseFloat(flight.price.replace('$', '')) >= this.filters.minPrice &&
-          parseFloat(flight.price.replace('$', '')) <= this.filters.maxPrice;
-
-        const matchTicketType = !this.filters.ticketType || flight.ticketType === this.filters.ticketType;
-
-        return matchFrom && matchTo && matchDepartureTime && matchArrivalTime && matchPrice && matchTicketType;
+        return matchFrom && matchTo && matchDepartureTime && matchArrivalTime;
       });
     },
 
@@ -599,7 +609,7 @@ export default {
           const arrival = arrHours * 60 + arrMinutes;
 
           if (arrival <= departure) {
-              this.$toastr.error("Arrival time must be greater than Departure time when Check-in and Check-out dates are the same.");
+            this.$toastr.error("Arrival time must be greater than Departure time when Check-in and Check-out dates are the same.");
           } else {
             this.errors.timeError = ""; // Clear error if valid
           }
@@ -622,7 +632,7 @@ export default {
         console.error("Error in formatHour:", error.message);
         return "Invalid time";
       }
-  },
+    },
     // Format ISO date to "YYYY-MM-DD" for input[type="date"]
     formatDate(isoString) {
       if (!isoString) return "";
@@ -635,6 +645,18 @@ export default {
     // Helper function to combine checkin and time into ISO format
     assembleDateTime(date, time) {
       return `${date}T${time}:00.000Z`;
+    },
+    async updateToFilterOptions() {
+      if (!this.filters.departureAirport.id) return;
+
+      try {
+        // Fetch possible "To" options based on selected "From"
+        const response = await apiClient.get(`/airports/${this.filters.departureAirport.id}/get_arrival_airports`);
+        this.airports.toOptions = response.data.data;
+      } catch (error) {
+        console.error("Error updating 'To' options:", error);
+        this.$toastr.error("Error fetching arrival airports");
+      }
     },
     async updateToOptions() {
       if (!this.newFlight.departureAirportId) return;
@@ -863,8 +885,16 @@ export default {
         from: '',
         to: '',
         ticketType: '',
-        departureTime: '',
-        arrivalTime: '',
+        departureTime: {
+          id: null,
+          iata_code: "",
+          city: ""
+        },
+        arrivalTime: {
+          id: null,
+          iata_code: "",
+          city: ""
+        },
         minPrice: 0,
         maxPrice: 1000,
       };
