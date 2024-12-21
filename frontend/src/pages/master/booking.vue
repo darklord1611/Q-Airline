@@ -417,6 +417,8 @@ export default {
         id: discount.id,
         image: discount.image_url,
         text: discount.description,
+        startDate: new Date(discount.start_time),
+        endDate: new Date(discount.end_time),
         title: discount.name,
         discountFactor: discount.discount_factor
       }));
@@ -458,6 +460,18 @@ export default {
       } else {
         oneTicketPrice = this.selectedFlight.flightInfo.class_pricing[1].base_price;
       }
+
+      // compare seletected flight date vs discount date
+      const discount = this.items[this.activeButtonIndex];
+
+      const flightDate = new Date(this.selectedFlight.flightInfo.departure_time);
+      
+      if (flightDate >= discount.startDate && flightDate <= discount.endDate) {
+        oneTicketPrice = oneTicketPrice * (1 - discount.discountFactor);
+      }
+
+      console.log(oneTicketPrice)
+
       const ticketPrice = oneTicketPrice * this.passengerCount * (1 - this.items[this.activeButtonIndex].discountFactor);
       const mealsPrice = this.externalServices.meals.reduce((sum, meal) => sum + meal.quantity * meal.price, 0);
       const luggagePrice = this.calculatePrice(this.selectedWeight);
