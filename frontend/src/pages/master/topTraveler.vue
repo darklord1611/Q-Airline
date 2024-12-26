@@ -63,6 +63,7 @@ export default {
 .best-travelers {
     text-align: left;
     padding: 20px;
+    width: 100%;
 }
 
 .title {
@@ -75,6 +76,7 @@ export default {
     display: flex;
     justify-content: space-between;
     gap: 50px;
+    flex-wrap: wrap;
 }
 
 .traveler-card {

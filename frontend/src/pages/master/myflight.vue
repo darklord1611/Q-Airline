@@ -256,6 +256,10 @@ export default {
             return daysDifference > 3;
         },
         async removeBooking(id) {
+            const confirmDelete = window.confirm("Are you sure you want to delete this new?");
+            if (!confirmDelete) {
+                return; // User canceled the action
+            }
             // Lọc bỏ chuyến bay có flightNumber tương ứng
             const response = await apiClient.delete(`/bookings/${id}`);
 

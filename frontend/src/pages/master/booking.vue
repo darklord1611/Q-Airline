@@ -83,7 +83,7 @@
         </div>
         <div :class="{
           'discount-buttons': user !== null,
-          'discount-buttons-admin': user === null,
+          'discount-buttons-admin': isAdmin === true,
         }">
           <div v-for="(item, index) in items" :key="index" class="button-container">
             <button class="discount-button" :class="{ active: activeButtonIndex === index }"

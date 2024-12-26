@@ -57,7 +57,10 @@ export default {
         },
         async remove(index) {
             // send request to remove destination
-
+            const confirmDelete = window.confirm("Are you sure you want to delete this new?");
+            if (!confirmDelete) {
+                return; // User canceled the action
+            }
             const response = await apiClient.delete(`/news/${this.destinations[index].id}`);
             if (response.status === 200) {
                 this.$toastr.success('Destination removed successfully');
@@ -88,6 +91,19 @@ export default {
     gap: 1.5rem;
     padding: 1.5rem;
 }
+
+@media (max-width: 1024px) {
+    .destinations-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .destinations-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
 
 .destination-card {
     position: relative;
